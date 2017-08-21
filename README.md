@@ -1,2 +1,2 @@
-# eventsourcing_helpers
-Helper methods for practicing the Event sourcing pattern
+# confluent_kafka_helpers
+Helper methods for Confluent's Kafka Python client
