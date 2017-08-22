@@ -1,3 +1,4 @@
 .pyc
 __pycache__
 .venv/*
+eventsourcing_helpers.egg-info/*

@@ -1,0 +1,1 @@
+from eventsourcing_helpers.repository.backends.kafka import KafkaBackend

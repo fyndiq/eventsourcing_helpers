@@ -6,11 +6,14 @@ class BaseCommandHandler:
 
     aggregate = None
     aggregate_id_attr = None
-
     handlers = {}
+    repository = None
 
-    def __init__(self, repository, *args, **kwargs):
-        self._repository = repository(*args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        assert self.aggregate
+        assert self.aggregate_id_attr
+        assert self.handlers
+        assert self.repository
 
     def key_filter(self, key, message_key):
         """
@@ -26,7 +29,7 @@ class BaseCommandHandler:
         Create an empty aggregate and load/apply historical events.
         """
         aggregate_id = getattr(command, self.aggregate_id_attr)
-        messages = self._repository.load(aggregate_id, self.key_filter)
+        messages = self.repository.load(aggregate_id, self.key_filter)
         historical_events = map(from_message_to_dto, messages)
 
         aggregate = self.aggregate()
@@ -36,7 +39,7 @@ class BaseCommandHandler:
 
     def handle(self, message):
         """
-        Route a command to the correct handler.
+        Apply correct aggregate method for each command.
         """
         if not message['class'] in self.handlers:
             return
@@ -55,4 +58,4 @@ class BaseCommandHandler:
             log.error("Missing command handler")
         else:
             handler(command)
-            self._repository.save(aggregate)
+            self.repository.save(aggregate)
