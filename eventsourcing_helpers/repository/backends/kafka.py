@@ -39,7 +39,7 @@ class KafkaBackend:
         aggregate.mark_events_as_commited()
 
     def load(self, key, *args, **kwargs):
-        logger.info("Loading messages")
+        logger.info("Loading messages from event store")
         loader = AvroMessageLoader(self.loader_config)
         messages = loader.load(key, *args, **kwargs)
 
