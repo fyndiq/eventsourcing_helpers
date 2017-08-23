@@ -12,16 +12,15 @@ class KafkaBackend:
                  default_value_schema, default_key_schema):
         self.topic = topic
         self.producer_config = producer_config
-        self.loader_config = loader_config
         self.default_value_schema = default_value_schema
         self.default_key_schema = default_key_schema
 
-        # TODO: make sure we only create one instance
         self.producer = AvroProducer(
             producer_config,
             default_value_schema=default_value_schema,
             default_key_schema=default_key_schema
         )
+        self.loader = AvroMessageLoader(loader_config)
 
     def _publish(self, topic, key, value):
         logger.info("Publishing message", topic=topic, key=key, value=value)
@@ -40,7 +39,5 @@ class KafkaBackend:
 
     def load(self, key, *args, **kwargs):
         logger.info("Loading messages from event store")
-        loader = AvroMessageLoader(self.loader_config)
-        messages = loader.load(key, *args, **kwargs)
-
+        messages = self.loader.load(key, *args, **kwargs)
         return messages
