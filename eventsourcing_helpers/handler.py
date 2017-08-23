@@ -15,21 +15,12 @@ class BaseCommandHandler:
         assert self.handlers
         assert self.repository
 
-    def key_filter(self, key, message_key):
-        """
-        Only load messages if the condition is true.
-
-        Default we are only interested in keys that belong
-        to the same aggregate.
-        """
-        return key == message_key
-
     def load_aggregate(self, command):
         """
         Create an empty aggregate and load/apply historical events.
         """
         aggregate_id = getattr(command, self.aggregate_id_attr)
-        messages = self.repository.load(aggregate_id, self.key_filter)
+        messages = self.repository.load(aggregate_id)
         historical_events = map(from_message_to_dto, messages)
 
         aggregate = self.aggregate()

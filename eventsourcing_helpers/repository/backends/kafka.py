@@ -1,17 +1,20 @@
 from confluent_kafka.avro import AvroProducer
 
+from confluent_kafka_helpers.loader import AvroMessageLoader
+
 from eventsourcing_helpers import logger
 from eventsourcing_helpers.message import to_message_from_dto
 
 
 class KafkaBackend:
 
-    def __init__(self, topic, producer_config, default_value_schema,
-                 default_key_schema):
-        assert producer_config
-        assert default_key_schema
-        assert default_value_schema
-        assert topic
+    def __init__(self, topic, producer_config, loader_config,
+                 default_value_schema, default_key_schema):
+        self.topic = topic
+        self.producer_config = producer_config
+        self.loader_config = loader_config
+        self.default_value_schema = default_value_schema
+        self.default_key_schema = default_key_schema
 
         # TODO: make sure we only create one instance
         self.producer = AvroProducer(
@@ -19,7 +22,6 @@ class KafkaBackend:
             default_value_schema=default_value_schema,
             default_key_schema=default_key_schema
         )
-        self.topic = topic
 
     def _publish(self, topic, key, value):
         logger.info("Publishing message", topic=topic, key=key, value=value)
@@ -36,6 +38,9 @@ class KafkaBackend:
 
         aggregate.mark_events_as_commited()
 
-    def load(self, *args, **kwargs):
+    def load(self, key, *args, **kwargs):
         logger.info("Loading messages")
-        return []
+        loader = AvroMessageLoader(self.loader_config)
+        messages = loader.load(key, *args, **kwargs)
+
+        return messages
