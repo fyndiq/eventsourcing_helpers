@@ -1,7 +1,7 @@
 from confluent_kafka.avro import AvroProducer
 
 from confluent_kafka_helpers.loader import AvroMessageLoader
-from confluent_kafka_helpers.schema_registry import get_client
+from confluent_kafka_helpers.schema_registry import SchemaRegistry
 
 from eventsourcing_helpers import logger
 from eventsourcing_helpers.message import to_message_from_dto
@@ -18,14 +18,14 @@ class KafkaBackend:
         value_subject_name = producer_config.pop('value_subject_name')
 
         # fetch latest schemas from schema registry
-        registry_client = get_client(schema_registry_url)
-        key_schema = registry_client.get_latest_schema(key_subject_name)
-        value_schema = registry_client.get_latest_schema(value_subject_name)
+        schema_registry = SchemaRegistry(schema_registry_url)
+        key_schema = schema_registry.get_latest_schema(key_subject_name)
+        value_schema = schema_registry.get_latest_schema(value_subject_name)
 
         self.producer = AvroProducer(
             producer_config,
-            default_key_schema=key_schema[1],
-            default_value_schema=value_schema[1]
+            default_key_schema=key_schema,
+            default_value_schema=value_schema
         )
         self.loader = AvroMessageLoader(loader_config)
 
