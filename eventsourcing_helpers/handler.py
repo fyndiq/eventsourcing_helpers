@@ -30,7 +30,7 @@ class BaseCommandHandler:
 
     def handle(self, message):
         """
-        Apply correct aggregate method for each command.
+        Apply correct aggregate method for given command.
         """
         if not message['class'] in self.handlers:
             return
@@ -50,3 +50,35 @@ class BaseCommandHandler:
         else:
             handler(command)
             self.repository.save(aggregate)
+
+
+class BaseEventHandler:
+
+    handlers = {}
+    handler_class = None
+
+    def __init__(self):
+        assert self.handlers
+
+    def handle(self, message):
+        """
+        Apply correct method for given event.
+        """
+        if not message['class'] in self.handlers:
+            return
+
+        log = logger.bind(event=message['class'])
+        log.info("Handling event")
+
+        event = from_message_to_dto(message)
+        event_name = event.__class__.__name__
+
+        try:
+            handler = self.handlers[event_name]
+            if isinstance(handler, str):
+                handler = getattr(self.handler_class, handler)
+
+        except AttributeError:
+            log.error("Missing event handler")
+        else:
+            handler(event)
