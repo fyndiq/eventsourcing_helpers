@@ -36,7 +36,7 @@ class BaseCommandHandler:
             return
 
         log = logger.bind(command=message['class'])
-        log.info("Routing command")
+        log.info("Handling command")
 
         command = from_message_to_dto(message)
         command_name = command.__class__.__name__
