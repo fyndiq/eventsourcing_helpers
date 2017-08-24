@@ -2,7 +2,6 @@ from confluent_kafka_helpers.loader import AvroMessageLoader
 from confluent_kafka_helpers.producer import AvroProducer
 
 from eventsourcing_helpers import logger
-from eventsourcing_helpers.message import to_message_from_dto
 
 
 class KafkaBackend:
@@ -13,9 +12,7 @@ class KafkaBackend:
 
     def save(self, aggregate, **kwargs):
         for event in aggregate._uncommitted_events:
-            message = to_message_from_dto(event)
-            self.producer.produce(key=aggregate._id, value=message,
-                                  **kwargs)
+            self.producer.produce(key=aggregate._id, value=event, **kwargs)
 
         aggregate.mark_events_as_commited()
 
