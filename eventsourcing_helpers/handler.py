@@ -3,13 +3,13 @@ from eventsourcing_helpers.message import from_message_to_dto
 
 
 class BaseCommandHandler:
-
     aggregate = None
     aggregate_id_attr = None
     handlers = {}
     repository = None
 
     def __init__(self, *args, **kwargs):
+        # TODO: Send these as parameters, makes the dependency explicit?
         assert self.aggregate
         assert self.aggregate_id_attr
         assert self.handlers
@@ -53,17 +53,17 @@ class BaseCommandHandler:
 
 
 class BaseEventHandler:
-
     handlers = {}
-    handler_class = None
 
-    def __init__(self):
+    def __init__(self, handlers):
+        self.handlers = handlers
         assert self.handlers
 
     def handle(self, message):
         """
         Apply correct method for given event.
         """
+
         if not message['class'] in self.handlers:
             return
 
@@ -75,8 +75,6 @@ class BaseEventHandler:
 
         try:
             handler = self.handlers[event_name]
-            if isinstance(handler, str):
-                handler = getattr(self.handler_class, handler)
 
         except AttributeError:
             log.error("Missing event handler")
