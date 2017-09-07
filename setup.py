@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(name="eventsourcing-helpers",
       version="0.1",
@@ -7,7 +7,7 @@ setup(name="eventsourcing-helpers",
       author="Fyndiq AB",
       author_email="support@fyndiq.com",
       license="MIT",
-      packages=["eventsourcing_helpers"],
+      packages=find_packages(),
       install_requires=[
           'structlog==17.2.0'
       ],
