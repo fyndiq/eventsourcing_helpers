@@ -1,28 +1,32 @@
 import re
+import uuid
 
 from eventsourcing_helpers import logger
 
 word_regexp = re.compile('[A-Z][^A-Z]*')
 
 
-class BaseAggregate:
+class Entity:
 
     def __init__(self):
-        self._id = None
+        self._guid = None
         self._version = 0
-        self._uncommitted_events = []
+        self._events = []
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self.__dict__})"
+
+    def _create_uuid(self):
+        return str(uuid.uuid4())
 
     def apply_events(self, events):
         logger.info("Apply historical events from repository")
         for event in events:
             self.apply(event, is_new=False)
 
-    def mark_events_as_commited(self):
-        logger.info("Marking new events as committed")
-        self._uncommitted_events = []
+    def commit_events(self):
+        logger.info("Commit events")
+        self._events = []
 
     def apply(self, event, is_new=True):
         event_name = event.__class__.__name__
@@ -42,4 +46,8 @@ class BaseAggregate:
         else:
             apply_method(event)
             if is_new:
-                self._uncommitted_events.append(event)
+                self._events.append(event)
+
+
+class AggregateRoot(Entity):
+    pass
