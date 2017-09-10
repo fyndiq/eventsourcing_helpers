@@ -11,10 +11,10 @@ class KafkaBackend:
         self.loader = AvroMessageLoader(loader_config)
 
     def save(self, aggregate, **kwargs):
-        for event in aggregate._uncommitted_events:
-            self.producer.produce(key=aggregate._id, value=event, **kwargs)
+        for event in aggregate._events:
+            self.producer.produce(key=aggregate._guid, value=event, **kwargs)
 
-        aggregate.mark_events_as_commited()
+        aggregate.commit_events()
 
     def load(self, key, *args, **kwargs):
         logger.info("Loading messages from event store")
