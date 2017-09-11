@@ -6,9 +6,9 @@ from eventsourcing_helpers import logger
 
 class KafkaBackend:
 
-    def __init__(self, producer_config, loader_config):
-        self.producer = AvroProducer(producer_config)
-        self.loader = AvroMessageLoader(loader_config)
+    def __init__(self, config):
+        self.producer = AvroProducer(config.get('producer'))
+        self.loader = AvroMessageLoader(config.get('loader'))
 
     def save(self, aggregate, **kwargs):
         for event in aggregate._events:

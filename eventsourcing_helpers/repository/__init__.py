@@ -1,11 +1,18 @@
 from eventsourcing_helpers.models import AggregateRoot
 from eventsourcing_helpers.repository.backends import KafkaBackend
 
+BACKENDS = {
+    'kafka': KafkaBackend,
+}
+
 
 class Repository:
 
-    def __init__(self, *args, backend=KafkaBackend, **kwargs):
-        self.backend = backend(*args, **kwargs)
+    DEFAULT_BACKEND = 'kafka'
+
+    def __init__(self, config):
+        backend = config.pop('backend', self.DEFAULT_BACKEND)
+        self.backend = BACKENDS[backend](config)
 
     def save(self, aggregate, *args, **kwargs):
         assert isinstance(aggregate, AggregateRoot)
