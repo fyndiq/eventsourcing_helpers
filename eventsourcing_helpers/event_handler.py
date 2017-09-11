@@ -1,5 +1,5 @@
 from eventsourcing_helpers import logger
-from eventsourcing_helpers.message import from_message_to_dto
+from eventsourcing_helpers.serializers import from_message_to_dto
 
 
 class EventHandler:

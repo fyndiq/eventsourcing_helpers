@@ -1,17 +1,17 @@
 from eventsourcing_helpers import logger
-from eventsourcing_helpers.message import from_message_to_dto
+from eventsourcing_helpers.serializers import from_message_to_dto
 
 
 class CommandHandler:
-    aggregate = None
-    aggregate_id_attr = None
+
+    aggregate_root = None
+    aggregate_guid_attr = None
     handlers = {}
     repository = None
 
-    def __init__(self, *args, **kwargs):
-        # TODO: Send these as parameters, makes the dependency explicit?
-        assert self.aggregate
-        assert self.aggregate_id_attr
+    def __init__(self):
+        assert self.aggregate_root
+        assert self.aggregate_guid_attr
         assert self.handlers
         assert self.repository
 
@@ -19,11 +19,11 @@ class CommandHandler:
         """
         Create an empty aggregate and load/apply historical events.
         """
-        aggregate_id = getattr(command, self.aggregate_id_attr)
+        aggregate_id = getattr(command, self.aggregate_guid_attr)
         messages = self.repository.load(aggregate_id)
         historical_events = map(from_message_to_dto, messages)
 
-        aggregate = self.aggregate()
+        aggregate = self.aggregate_root()
         aggregate.apply_events(historical_events)
 
         return aggregate
