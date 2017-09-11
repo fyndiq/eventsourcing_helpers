@@ -14,7 +14,7 @@ class KafkaBackend:
         for event in aggregate._events:
             self.producer.produce(key=aggregate._guid, value=event, **kwargs)
 
-        aggregate.commit_events()
+        aggregate.clear_commited_events()
 
     def load(self, key, *args, **kwargs):
         logger.info("Loading messages from event store")
