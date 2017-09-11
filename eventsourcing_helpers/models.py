@@ -16,7 +16,7 @@ class Entity:
     def __repr__(self):
         return f"{self.__class__.__name__}({self.__dict__})"
 
-    def _create_uuid(self):
+    def _create_guid(self):
         return str(uuid.uuid4())
 
     def apply_events(self, events):
@@ -24,8 +24,8 @@ class Entity:
         for event in events:
             self.apply(event, is_new=False)
 
-    def commit_events(self):
-        logger.info("Commit events")
+    def clear_commited_events(self):
+        logger.info("Clearing commited events")
         self._events = []
 
     def apply(self, event, is_new=True):
@@ -46,7 +46,13 @@ class Entity:
         else:
             apply_method(event)
             if is_new:
-                self._events.append(event)
+                self.save_event(event)
+                return event
+        return
+
+    def save_event(self, event):
+        if event:
+            self._events.append(event)
 
 
 class AggregateRoot(Entity):
