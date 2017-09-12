@@ -11,7 +11,7 @@ class Entity:
     _events = []
 
     def __init__(self):
-        self._guid = None
+        self.guid = None
         self._version = 0
 
     def __repr__(self):

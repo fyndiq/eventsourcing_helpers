@@ -10,7 +10,7 @@ class KafkaBackend:
 
     def save(self, aggregate, **kwargs):
         for event in aggregate._events:
-            self.producer.produce(key=aggregate._guid, value=event, **kwargs)
+            self.producer.produce(key=aggregate.guid, value=event, **kwargs)
 
     def load(self, key, *args, **kwargs):
         return self.loader.load(key, *args, **kwargs)
