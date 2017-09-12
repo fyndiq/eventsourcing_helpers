@@ -15,7 +15,7 @@ class CommandHandler:
         assert self.handlers
         assert self.repository
 
-    def load_aggregate(self, command):
+    def _load_aggregate(self, command):
         """
         Create an empty aggregate and load/apply historical events.
         """
@@ -41,7 +41,7 @@ class CommandHandler:
         command = from_message_to_dto(message)
         command_name = command.__class__.__name__
 
-        aggregate = self.load_aggregate(command)
+        aggregate = self._load_aggregate(command)
 
         try:
             handler = getattr(aggregate, self.handlers[command_name])
