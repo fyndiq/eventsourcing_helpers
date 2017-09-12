@@ -8,10 +8,11 @@ word_regexp = re.compile('[A-Z][^A-Z]*')
 
 class Entity:
 
+    _events = []
+
     def __init__(self):
         self._guid = None
         self._version = 0
-        self._events = []
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self.__dict__})"
@@ -26,7 +27,7 @@ class Entity:
 
     def clear_commited_events(self):
         logger.info("Clearing commited events")
-        self._events = []
+        Entity._events = []
 
     def apply(self, event, is_new=True):
         event_name = event.__class__.__name__
@@ -46,13 +47,7 @@ class Entity:
         else:
             apply_method(event)
             if is_new:
-                self.save_event(event)
-                return event
-        return
-
-    def save_event(self, event):
-        if event:
-            self._events.append(event)
+                self._events.append(event)
 
 
 class AggregateRoot(Entity):
