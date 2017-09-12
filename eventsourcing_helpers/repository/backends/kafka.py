@@ -1,8 +1,6 @@
 from confluent_kafka_helpers.loader import AvroMessageLoader
 from confluent_kafka_helpers.producer import AvroProducer
 
-from eventsourcing_helpers import logger
-
 
 class KafkaBackend:
 
@@ -14,9 +12,5 @@ class KafkaBackend:
         for event in aggregate._events:
             self.producer.produce(key=aggregate._guid, value=event, **kwargs)
 
-        aggregate.clear_commited_events()
-
     def load(self, key, *args, **kwargs):
-        logger.info("Loading messages from event store")
-        messages = self.loader.load(key, *args, **kwargs)
-        return messages
+        return self.loader.load(key, *args, **kwargs)

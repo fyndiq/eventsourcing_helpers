@@ -1,3 +1,4 @@
+from eventsourcing_helpers import logger
 from eventsourcing_helpers.models import AggregateRoot
 from eventsourcing_helpers.repository.backends import KafkaBackend
 
@@ -16,7 +17,11 @@ class Repository:
 
     def save(self, aggregate, *args, **kwargs):
         assert isinstance(aggregate, AggregateRoot)
-        return self.backend.save(aggregate, *args, **kwargs)
+        logger.info("Saving events to repository")
+        self.backend.save(aggregate, *args, **kwargs)
+        aggregate.clear_commited_events()
+        return
 
     def load(self, *args, **kwargs):
+        logger.info("Loading events from repository")
         return self.backend.load(*args, **kwargs)
