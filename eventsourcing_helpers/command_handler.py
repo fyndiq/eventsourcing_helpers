@@ -5,13 +5,11 @@ from eventsourcing_helpers.serializers import from_message_to_dto
 class CommandHandler:
 
     aggregate_root = None
-    aggregate_guid_attr = None
     handlers = {}
     repository = None
 
     def __init__(self):
         assert self.aggregate_root
-        assert self.aggregate_guid_attr
         assert self.handlers
         assert self.repository
 
@@ -19,7 +17,7 @@ class CommandHandler:
         """
         Create an empty aggregate and load/apply historical events.
         """
-        aggregate_id = getattr(command, self.aggregate_guid_attr)
+        aggregate_id = command.guid
         messages = self.repository.load(aggregate_id)
         historical_events = map(from_message_to_dto, messages)
 
@@ -33,6 +31,7 @@ class CommandHandler:
         Apply correct aggregate method for given command.
         """
         if not message['class'] in self.handlers:
+            logger.debug("Unhandled command", command=message['class'])
             return
 
         log = logger.bind(command=message['class'])
@@ -43,10 +42,6 @@ class CommandHandler:
 
         aggregate = self._load_aggregate(command)
 
-        try:
-            handler = getattr(aggregate, self.handlers[command_name])
-        except AttributeError:
-            log.error("Missing command handler")
-        else:
-            handler(command)
-            self.repository.save(aggregate)
+        handler = getattr(aggregate, self.handlers[command_name])
+        handler(command)
+        self.repository.save(aggregate)
