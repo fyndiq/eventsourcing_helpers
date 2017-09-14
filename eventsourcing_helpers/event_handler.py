@@ -5,27 +5,23 @@ from eventsourcing_helpers.serializers import from_message_to_dto
 class EventHandler:
     handlers = {}
 
-    def __init__(self, handlers):
-        self.handlers = handlers
+    def __init__(self):
         assert self.handlers
 
     def handle(self, message):
         """
         Apply correct method for given event.
         """
-
         if not message['class'] in self.handlers:
             return
 
-        log = logger.bind(event=message['class'])
+        event_class = message['class']
+        log = logger.bind(event_class=event_class)
         log.info("Handling event")
 
         event = from_message_to_dto(message)
-        event_name = event.__class__.__name__
-
         try:
-            handler = self.handlers[event_name]
-
+            handler = self.handlers[event_class]
         except AttributeError:
             log.error("Missing event handler")
         else:
