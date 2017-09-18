@@ -19,8 +19,10 @@ class Entity:
         return f"{self.__class__.__name__}({self.__dict__})"
 
     def _get_child_entities(self):
-        entities = [e._get_all_entities() for e in self.__dict__.values()
-                    if isinstance(e, (Entity, EntityDict))]
+        entities = [
+            e._get_all_entities() for e in self.__dict__.values()
+            if isinstance(e, (Entity, EntityDict))
+        ]
         return chain.from_iterable(entities)
 
     def _get_all_entities(self):
@@ -52,14 +54,14 @@ class Entity:
 
         entity = self._get_entity(event.guid)
         entity_class = entity.__class__.__name__
-        log = logger.bind(guid=event.guid, event_class=event_class,
-                          entity_class=entity_class)
+        log = logger.bind(
+            guid=event.guid, event_class=event_class, entity_class=entity_class
+        )
 
         try:
             apply_method = getattr(entity, apply_method_name)
         except AttributeError:
-            log.error("Missing event apply method",
-                      method=apply_method_name)
+            log.error("Missing event apply method", method=apply_method_name)
         else:
             log.info("Applying event", is_new=is_new)
             apply_method(event)
@@ -77,8 +79,10 @@ class EntityDict(dict):
         super().__setitem__(key, value)
 
     def _get_child_entities(self):
-        entities = [e._get_all_entities() for e in self.values()
-                    if isinstance(e, (Entity, EntityDict))]
+        entities = [
+            e._get_all_entities() for e in self.values()
+            if isinstance(e, (Entity, EntityDict))
+        ]
         return chain.from_iterable(entities)
 
     def _get_all_entities(self):
