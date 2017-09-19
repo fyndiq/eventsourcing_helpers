@@ -17,9 +17,9 @@ class Repository:
 
     def save(self, aggregate, *args, **kwargs):
         assert isinstance(aggregate, AggregateRoot)
-        logger.info("Saving events to repository")
+        logger.info("Committing events to repository")
         self.backend.save(aggregate, *args, **kwargs)
-        aggregate.clear_commited_events()
+        aggregate.clear_staged_events()
         return
 
     def load(self, *args, **kwargs):
