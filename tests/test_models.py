@@ -16,7 +16,7 @@ class Bar(Entity):
     pass
 
 
-class TestAggregateRoot:
+class AggregateRootTests:
 
     def test_subclass(self):
         """
@@ -28,7 +28,7 @@ class TestAggregateRoot:
         assert isinstance(aggregate_root, Entity)
 
 
-class TestEntity:
+class EntityTests:
 
     def setup_method(self):
         self.aggregate_root = Foo()
@@ -172,7 +172,7 @@ class TestEntity:
         mock_stage.assert_called_once_with(self.event, is_new)
 
 
-class TestEntityDict:
+class EntityDictTests:
 
     def setup_method(self):
         self.entity = Bar()
