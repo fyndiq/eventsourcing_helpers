@@ -1,4 +1,6 @@
 .pyc
 __pycache__
 .venv/*
+.mypy_cache/*
+.cache/*
 eventsourcing_helpers.egg-info/*
