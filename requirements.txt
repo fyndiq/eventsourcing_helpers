@@ -3,3 +3,5 @@ pytest
 structlog
 ipdb
 mypy
+
+git+https://github.com/fyndiq/confluent_kafka_helpers@v0.2#egg=confluent-kafka-helpers
