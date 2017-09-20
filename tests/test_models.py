@@ -49,9 +49,8 @@ class EntityTests:
 
         mock_apply.called_once_with(self.event.__class__.__name__)
         mock_entity.called_once_with(self.event.guid)
-        mock_event.called_once_with(
-            self.event, self.aggregate_root, 'apply_foo_event', is_new
-        )
+        mock_event.called_once_with( self.event, self.aggregate_root,
+                                    'apply_foo_event', is_new)
 
     @patch('eventsourcing_helpers.models.Entity.apply_event')
     def test_apply_events(self, mock_apply):
@@ -193,7 +192,7 @@ class EntityDictTests:
         Test that correct methods are invoked.
         """
         self.entity_dict._get_all_entities()
-        assert mock_entities.called_once()
+        mock_entities.assert_called_once()
 
     @patch('eventsourcing_helpers.models.Entity._get_all_entities')
     def test_get_child_entities(self, mock_entities):
@@ -204,4 +203,4 @@ class EntityDictTests:
         entities = self.entity_dict._get_child_entities()
 
         assert list(entities) == [self.entity]
-        assert mock_entities.called_once()
+        mock_entities.assert_called_once()
