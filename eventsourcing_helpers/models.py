@@ -10,8 +10,10 @@ word_regexp = re.compile('[A-Z][^A-Z]*')
 
 class Entity:
     """
-    A domain entity that exposes behaviour (rich domain model)
-    with an identity (guid) and a lifecycle.
+    A rich domain model that exposes attributes and behaviour
+    with an identity and a lifecycle.
+
+    An entity may only hold references to local models.
     """
     # a shared list between all entities with staged events
     # that later will be committed to the repository.
@@ -226,10 +228,15 @@ class EntityDict(dict):
 
 class AggregateRoot(Entity):
     """
-    This represents a single entity which may or may not contain an object
-    graph which represents a cohesive group of domain models.
+    The aggregate root represents a single entity and acts as a gateway for all
+    modifications within the aggregate.
 
-    The AggregateRoot acts as a gateway for all modifications within
-    the aggregate.
+    The aggregate root may or may not contain an object graph which represents
+    a logical cohesive group of domain models (entities, value objects).
+
+    Only the aggregate root may reference other aggregate roots with an
+    identity.
+
+    Only ONE aggregate root must be modified in a single transaction.
     """
     pass
