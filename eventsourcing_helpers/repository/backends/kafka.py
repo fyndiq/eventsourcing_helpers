@@ -8,7 +8,7 @@ class KafkaBackend:
         self.producer = AvroProducer(config.get('producer'))
         self.loader = AvroMessageLoader(config.get('loader'))
 
-    def save(self, aggregate, **kwargs):
+    def commit(self, aggregate, **kwargs):
         for event in aggregate._events:
             self.producer.produce(key=aggregate.guid, value=event, **kwargs)
 
