@@ -4,3 +4,4 @@ __pycache__
 .mypy_cache/*
 .cache/*
 eventsourcing_helpers.egg-info/*
+.coverage
