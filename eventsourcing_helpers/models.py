@@ -23,9 +23,19 @@ class Entity:
         self.guid: bool = None
         self._version: int = 0
 
+    def __call__(self, *args, **kwargs):
+        """
+        Fixes https://github.com/python/mypy/issues/2113
+        """
+        super().__call__(*args, **kwargs)
+
     def __repr__(self) -> str:
         attrs = {k: v for k, v in self.__dict__.items() if v is not None}
-        return f"{self.__class__.__name__}({attrs})"
+        return f"{self.name}({attrs})"
+
+    @property
+    def name(self):
+        return self.__class__.__name__
 
     def _get_apply_method(self, entity: Any, method_name: str) -> Callable:
         """
@@ -53,7 +63,7 @@ class Entity:
         """
         log = logger.bind(
             guid=event.guid, event_class=event.__class__.__name__,
-            entity_class=entity.__class__.__name__
+            entity_class=entity.name
         )
         try:
             apply_method = self._get_apply_method(entity, method_name)
@@ -170,7 +180,7 @@ class Entity:
         for event in events:
             self.apply_event(event, is_new=False)
 
-    def apply_event(self, event: Any, is_new: bool = True) -> None:
+    def apply_event(self, event: Any, is_new: bool=True) -> None:
         """
         Applies an event by calling the correct entity apply method.
 
