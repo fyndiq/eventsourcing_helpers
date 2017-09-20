@@ -24,9 +24,7 @@ class Entity:
         self._version: int = 0
 
     def __call__(self, *args, **kwargs):
-        """
-        Fixes https://github.com/python/mypy/issues/2113
-        """
+        # fixes https://github.com/python/mypy/issues/2113
         super().__call__(*args, **kwargs)
 
     def __repr__(self) -> str:
