@@ -7,7 +7,11 @@ from eventsourcing_helpers.serializers import from_message_to_dto
 
 
 class CommandHandler:
-
+    """
+    A domain service that turns a command into events by calling methods on an
+    aggregate root, publishes the resulting events, and handles transactions
+    and persistence.
+    """
     aggregate_root: AggregateRoot = None
     handlers: dict = {}
     repository_config: dict = None
