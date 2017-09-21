@@ -1,28 +1,59 @@
+from typing import Any
+
 from eventsourcing_helpers import logger
 from eventsourcing_helpers.serializers import from_message_to_dto
 
 
 class EventHandler:
-    handlers = {}
+    """
+    A domain service that calls the correct handler for an event.
+    """
+    handlers: dict = {}
 
-    def __init__(self):
+    def __init__(self, message_deserializer=from_message_to_dto) -> None:
         assert self.handlers
 
-    def handle(self, message):
+        self.message_deserializer = message_deserializer
+
+    def _can_handle_command(self, message: dict) -> bool:
         """
-        Apply correct method for given event.
+        Checks if the event is something we can handle.
+
+        Args:
+            message: Consumed message from the bus.
+
+        Returns:
+            bool: Flag to indicate if we can handle the event.
         """
         if not message['class'] in self.handlers:
+            logger.debug("Unhandled event", event_class=message['class'])
+            return False
+
+        return True
+
+    def _handle_event(self, event: Any) -> None:
+        """
+        Get and call the correct event handler.
+
+        Args:
+            event: Event to be handled.
+        """
+        event_class = event.__class__.__name__
+        handler = self.handlers[event_class]
+        handler(event)
+
+    def handle(self, message: dict) -> None:
+        """
+        Apply correct handler for received event.
+
+        Args:
+            message: Consumed message from the bus.
+        """
+        if not self._can_handle_command(message):
             return
 
-        event_class = message['class']
-        log = logger.bind(event_class=event_class)
-        log.info("Handling event")
+        event = self.message_deserializer(message)
+        event_class = event.__class__.__name__
+        logger.info("Handling event", event_class=event_class)
 
-        event = from_message_to_dto(message)
-        try:
-            handler = self.handlers[event_class]
-        except AttributeError:
-            log.error("Missing event handler")
-        else:
-            handler(event)
+        self._handle_event(event)
