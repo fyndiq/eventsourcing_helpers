@@ -36,7 +36,7 @@ class CommandHandler:
             bool: Flag to indicate if we can handle the command.
         """
         if not message['class'] in self.handlers:
-            logger.debug("Unhandled command", command=message['class'])
+            logger.debug("Unhandled command", command_class=message['class'])
             return False
 
         return True
@@ -80,13 +80,15 @@ class CommandHandler:
 
         Args:
             aggregate_root: Entity which implements the command handlers.
-            command: DTO with the requested command to be executed.
+            command: Command to be handled.
         """
-        command_name = command.__class__.__name__
-        logger.info("Handling command", command=command_name,
+        command_class = command.__class__.__name__
+        handler_name = self.handlers[command_class]
+        logger.info("Calling command handler", command_class=command_class,
+                    handler_name=handler_name,
                     aggregate_root=aggregate_root.name)
 
-        handler = getattr(aggregate_root, self.handlers[command_name])
+        handler = getattr(aggregate_root, handler_name)
         handler(command)
 
     def _commit_staged_events(self, aggregate_root: AggregateRoot) -> None:
@@ -112,7 +114,9 @@ class CommandHandler:
             return
 
         command = self.message_deserializer(message)
-        aggregate_root = self._get_aggregate_root(command.guid)
+        command_class = command.__class__.__name__
+        logger.info("Handling command", command_class=command_class)
 
+        aggregate_root = self._get_aggregate_root(command.guid)
         self._handle_command(aggregate_root, command)
         self._commit_staged_events(aggregate_root)
