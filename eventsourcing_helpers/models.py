@@ -51,7 +51,7 @@ class Entity:
     def _apply_event(self, event: Any, entity: 'Entity', method_name,
                      is_new) -> None:
         """
-        Apply an event on the correct entity.
+        Apply an event on one entity.
 
         Args:
             event: Event to be applied.
@@ -65,6 +65,7 @@ class Entity:
         )
         try:
             apply_method = self._get_apply_method(entity, method_name)
+            # TODO: apply the event in the aggregate root if it's defined.
         except AttributeError:
             log.error("Missing event apply method", method=method_name)
         else:
@@ -241,6 +242,10 @@ class AggregateRoot(Entity):
 
     The aggregate root may or may not contain an object graph which represents
     a logical cohesive group of domain models (entities, value objects).
+
+    The aggregate root is meant to be used as a facade which means that
+    all commands must go through it. This gives us the flexibility to run
+    business logic in multiple models in the same command.
 
     Only the aggregate root may reference other aggregate roots with an
     identity.
