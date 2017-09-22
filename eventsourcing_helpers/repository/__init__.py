@@ -56,15 +56,15 @@ class Repository:
         assert isinstance(aggregate_root, AggregateRoot)
         guid, events = aggregate_root.guid, aggregate_root._events
 
-        logger.info("Committing staged events to repository")
-        self.backend.commit(guid, events, *args, **kwargs)
-        aggregate_root.clear_staged_events()
+        if events:
+            logger.info("Committing staged events to repository")
+            self.backend.commit(guid, events, *args, **kwargs)
+            aggregate_root.clear_staged_events()
 
     def load(self, guid: str, *args, **kwargs) -> list:
         """
         Load events from the repository.
         """
-        logger.info("Loading events from repository")
         events = self.backend.load(guid, *args, **kwargs)
 
         return events
