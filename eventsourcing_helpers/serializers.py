@@ -1,15 +1,20 @@
 from collections import namedtuple
+from typing import Any
 
 
-def from_message_to_dto(message):
-    """Serialize a message to a Data Transfer Object (DTO).
-    
+def from_message_to_dto(message: dict) -> Any:
+    """
+    Deserialize a message to a data transfer object (DTO).
+
+    The message is expected to include a 'class' and 'data' attribute. The
+    class defines the type of the object and data the attributes.
+
     Args:
-        message (dict): A dict containing the `class` and `data` keys, the `data` should be dict.
-    
+        message: Message to deserialize.
+
     Returns:
-        A namedtuple instance represented by message `class` name and the `data` values.
-        
+        namedtuple: DTO of type 'class' hydrated with 'data'.
+
     Example:
         >>> message = {
             'class': 'OrderCompleted',
@@ -18,12 +23,8 @@ def from_message_to_dto(message):
                 'date': '2017-09-08'
             }
         }
-        >>> dto = from_message_to_dto(message)
-        >>> dto
+        >>> from_message_to_dto(message)
         OrderCompleted(order_id='UA123', date='2017-09-08')
-        >>> assert dto.order_id == message['data']['order_id']
-        >>> assert dto.date == message['data']['date']
-        
     """
     obj = namedtuple(message['class'], message['data'].keys())
     dto = obj(**message['data'])
@@ -31,22 +32,23 @@ def from_message_to_dto(message):
     return dto
 
 
-def to_message_from_dto(dto):
+def to_message_from_dto(dto: Any) -> dict:
     """
-    Serialize a Data Transfer Object (DTO) to a message.
+    Serialize a data transfer object (DTO) to a message.
+
+    The message will include two attributes 'class' and 'data. The class will
+    be the type of the instance and the data will be a dict of all attributes.
 
     Args:
-        dto (obj): A namedtuple instance
-    
+        dto: A namedtuple instance.
+
     Returns:
-        A dict with the keys `class` and `data`, the values are extracted from the dto object.
+        dict: Serialized message.
 
     Example:
-        >>> from collections import namedtuple
         >>> OrderCompleted = namedtuple('OrderCompleted', ['order_id', 'date'])
         >>> dto = OrderCompleted('UA123', '2017-09-08')
-        >>> message = to_message_from_dto(dto)
-        >>> message 
+        >>> to_message_from_dto(dto)
         {
             'class': 'OrderCompleted',
             'data': {
@@ -54,12 +56,8 @@ def to_message_from_dto(dto):
                 'date': '2017-09-08'
             }
         }
-        >>> assert message['class'] == 'OrderCompleted'
-        >>> assert message['data']['order_id'] == dto.order_id
-        >>> assert message['data']['date'] == dto.date
     """
-    message = {
-        'class': dto.__class__.__name__,
-        'data': dict(dto._asdict())
-    }
+    data = dict(dto._asdict())
+    message = {'class': dto.__class__.__name__, 'data': data}
+
     return message
