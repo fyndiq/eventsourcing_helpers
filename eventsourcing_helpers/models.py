@@ -246,10 +246,5 @@ class AggregateRoot(Entity):
     The aggregate root is meant to be used as a facade which means that
     all commands must go through it. This gives us the flexibility to run
     business logic in multiple models in the same command.
-
-    Only the aggregate root may reference other aggregate roots with an
-    identity.
-
-    Only ONE aggregate root must be modified in a single transaction.
     """
     pass
