@@ -26,8 +26,9 @@ def from_message_to_dto(message: dict) -> Any:
         >>> from_message_to_dto(message)
         OrderCompleted(order_id='UA123', date='2017-09-08')
     """
-    obj = namedtuple(message['class'], message['data'].keys())
-    dto = obj(**message['data'])
+    data = message['data']
+    obj = namedtuple(message['class'], data.keys())
+    dto = obj(**data)
 
     return dto
 
