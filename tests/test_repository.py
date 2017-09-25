@@ -43,8 +43,8 @@ class RepositoryTests:
         repository = self.repository(self.config, self.importer)
         repository.commit(self.aggregate_root)
 
-        expected_args = (self.guid, self.events)
-        backend_cls.return_value.commit.assert_called_once_with(*expected_args)
+        expected_args = {'guid': self.guid, 'events': self.events}
+        backend_cls.return_value.commit.assert_called_once_with(**expected_args)
 
     def test_load(self):
         """

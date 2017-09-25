@@ -49,22 +49,31 @@ class Repository:
         self.backend = importer(BACKENDS[backend])(config)
         logger.debug(f"Using {backend} as repository backend")
 
-    def commit(self, aggregate_root: AggregateRoot, *args, **kwargs) -> None:
+    def commit(self, aggregate_root: AggregateRoot, **kwargs) -> None:
         """
         Commit staged events to the repository.
+
+        Args:
+            aggregate_root: Aggregate root to commit.
         """
         assert isinstance(aggregate_root, AggregateRoot)
         guid, events = aggregate_root.guid, aggregate_root._events
 
         if events:
             logger.info("Committing staged events to repository")
-            self.backend.commit(guid, events, *args, **kwargs)
+            self.backend.commit(guid=guid, events=events, **kwargs)
             aggregate_root.clear_staged_events()
 
-    def load(self, guid: str, *args, **kwargs) -> list:
+    def load(self, guid: str, **kwargs) -> list:
         """
         Load events from the repository.
+
+        Args:
+            guid: Aggregate root guid to load.
+
+        Returns:
+            list: Loaded events.
         """
-        events = self.backend.load(guid, *args, **kwargs)
+        events = self.backend.load(guid, **kwargs)
 
         return events
