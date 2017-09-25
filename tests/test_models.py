@@ -49,8 +49,9 @@ class EntityTests:
 
         mock_apply.called_once_with(self.event.__class__.__name__)
         mock_entity.called_once_with(self.event.guid)
-        mock_event.called_once_with( self.event, self.aggregate_root,
-                                    'apply_foo_event', is_new)
+        mock_event.called_once_with(
+            self.event, self.aggregate_root, 'apply_foo_event', is_new
+        )
 
     @patch('eventsourcing_helpers.models.Entity.apply_event')
     def test_apply_events(self, mock_apply):

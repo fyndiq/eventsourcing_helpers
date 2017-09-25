@@ -9,14 +9,14 @@ class CommandHandlerTests:
 
     def setup_method(self):
         command_class, guid = 'FooCommand', '1'
+
         self.message = {'class': command_class, 'data': {'guid': guid}}
         self.events = [1, 2, 3]
         self.aggregate_root = Mock()
 
-        command = Mock()
-        command.__class__.__name__ = command_class
-        command.guid = guid
-        self.command = command
+        self.command = Mock()
+        self.command.__class__.__name__ = command_class
+        self.command.guid = guid
 
         config = {'return_value.load.return_value': self.events}
         self.repository = Mock()
@@ -29,6 +29,7 @@ class CommandHandlerTests:
         handler.aggregate_root = self.aggregate_root
         handler.handlers = {command_class: 'foo_method'}
         handler.repository_config = {'empty_config': None}
+
         self.handler = handler(
             message_deserializer=self.message_deserializer,
             repository=self.repository

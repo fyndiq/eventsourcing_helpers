@@ -18,10 +18,10 @@ class EventHandlerTests:
         self.message_deserializer = Mock()
         self.message_deserializer.return_value = self.event
 
-        self.foo_event_handler = Mock()
-        event_handler = EventHandler
-        event_handler.handlers = {self.event_class: self.foo_event_handler}
-        self.handler = event_handler(self.message_deserializer)
+        self.event_handler = Mock()
+        self.handler = EventHandler
+        self.handler.handlers = {self.event_class: self.event_handler}
+        self.handler = self.handler(self.message_deserializer)
 
     @patch(f'{module}.EventHandler._handle_event')
     @patch(f'{module}.EventHandler._can_handle_command')
@@ -39,7 +39,7 @@ class EventHandlerTests:
         Test that the correct event handler is invoked.
         """
         self.handler._handle_event(self.event)
-        self.foo_event_handler.called_once_with(self.event)
+        self.event_handler.called_once_with(self.event)
 
     def test_can_handle_command(self):
         """
