@@ -31,7 +31,7 @@ def from_message_to_dto(message: dict) -> Message:
     fields = [(k, None) for k in data.keys()]
 
     cls = NamedTuple(class_name, fields)  # type: ignore
-    dto = message_factory(cls)(**data)
+    dto = message_factory(cls)(**data)  # type: ignore
 
     return dto
 
