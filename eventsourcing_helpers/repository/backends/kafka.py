@@ -11,7 +11,7 @@ class KafkaBackend(RepositoryBackend):
         self.producer = producer(config.get('producer'))
         self.loader = loader(config.get('loader'))
 
-    def commit(self, guid, events, **kwargs) -> None:
+    def commit(self, guid: str, events: list, **kwargs) -> None:
         """
         Commit events to Kafka.
 
@@ -22,7 +22,7 @@ class KafkaBackend(RepositoryBackend):
         for event in events:
             self.producer.produce(key=guid, value=event, **kwargs)
 
-    def load(self, guid, **kwargs) -> list:
+    def load(self, guid: str, **kwargs) -> list:
         """
         Load events from Kafka.
 

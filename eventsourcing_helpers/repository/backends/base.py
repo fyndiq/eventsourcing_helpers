@@ -2,8 +2,8 @@ class RepositoryBackend:
     """
     Repository interface.
     """
-    def commit(self, guid, events, **kwargs) -> None:
+    def commit(self, guid: str, events: list, **kwargs) -> None:
         raise NotImplementedError()
 
-    def load(self, guid, *args, **kwargs) -> list:
+    def load(self, guid: str, **kwargs) -> list:
         raise NotADirectoryError()
