@@ -1,5 +1,5 @@
 check:
 	./scripts/check.sh
 
-unit-test:
-	./scripts/unit-test.sh
+test:
+	./scripts/test.sh
