@@ -1,5 +1,6 @@
 from collections import namedtuple
 
+from eventsourcing_helpers.message import Message, message_factory
 from eventsourcing_helpers.serializers import (
     from_message_to_dto, to_message_from_dto)
 
@@ -13,14 +14,15 @@ class SerializerTests:
         message = {'class': 'FooClass', 'data': {'foo': 'bar'}}
         dto = from_message_to_dto(message)
 
-        assert dto.__class__.__name__ == 'FooClass'
+        assert dto._name == 'FooClass'
         assert dto.foo == 'bar'
+        assert isinstance(dto, Message)
 
     def test_to_message_from_dto(self):
         """
         Test that we can deserialize a DTO to a message.
         """
-        FooEvent = namedtuple('FooEvent', 'guid')
+        FooEvent = message_factory(namedtuple('FooEvent', 'guid'))
         dto = FooEvent(guid=1)
         message = to_message_from_dto(dto)
 
