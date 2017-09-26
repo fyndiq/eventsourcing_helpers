@@ -1,28 +1,32 @@
-from collections import namedtuple
+from typing import NamedTuple
 
-from eventsourcing_helpers.message import Message, message_factory
+from mock import patch
+
+from eventsourcing_helpers.message import message_factory
 from eventsourcing_helpers.serializers import (
     from_message_to_dto, to_message_from_dto)
 
 
 class SerializerTests:
 
-    def test_from_message_to_dto(self):
+    @patch('eventsourcing_helpers.serializers.message_factory')
+    def test_from_message_to_dto(self, mock_factory):
         """
-        Test that we can serialize a message to a DTO.
+        Test that the message factory is invoked correctly when
+        deserializing a message.
         """
         message = {'class': 'FooClass', 'data': {'foo': 'bar'}}
-        dto = from_message_to_dto(message)
+        from_message_to_dto(message)
 
-        assert dto._name == 'FooClass'
-        assert dto.foo == 'bar'
-        assert isinstance(dto, Message)
+        assert mock_factory.call_args[0][0].__name__ == 'FooClass'
+        assert mock_factory.call_args[0][0]._fields == ('foo', )
 
     def test_to_message_from_dto(self):
         """
-        Test that we can deserialize a DTO to a message.
+        Test that we can serialize a DTO to a message.
         """
-        FooEvent = message_factory(namedtuple('FooEvent', 'guid'))
+        fields = [('guid', None)]
+        FooEvent = message_factory(NamedTuple('FooEvent', fields))
         dto = FooEvent(guid=1)
         message = to_message_from_dto(dto)
 
