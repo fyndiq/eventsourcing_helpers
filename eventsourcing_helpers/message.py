@@ -25,8 +25,9 @@ class Message:
 
 def message_factory(cls: NamedTuple) -> type:
     """
-    Class decorator used for "enriching" a namedtuple object with some common
-    features.
+    Class decorator used constructing messages.
+
+    A message is basically a namedtuple "enriched" with some common features.
 
     Currently namedtuples doesn't support inheritance from a base class - which
     means we can't easily add common methods/properties for a message.
@@ -36,6 +37,19 @@ def message_factory(cls: NamedTuple) -> type:
     To work around this we can wrap the namedtuple in a "proxy class" which
     adds all the common features and redirects all attribute lookups to the
     underlying namedtuple.
+
+    Example:
+        >>> @Event
+        ... class OrderCreated(NamedTuple):
+        ...     guid: str
+        ...     state: str
+        >>> event = OrderCreated(guid='1', state='open')
+        >>> event.guid, event.state, event._name
+        ('1', 'open', 'OrderCreated')
+        >>> event.to_dict()
+        {'guid': '1', 'state': 'open'}
+        >>> isinstance(event, Message)
+        True
     """
 
     class MessageProxy(Message):
@@ -48,5 +62,5 @@ def message_factory(cls: NamedTuple) -> type:
     return proxy
 
 
-event = lambda cls: message_factory(cls)
-command = lambda cls: message_factory(cls)
+Event = lambda cls: message_factory(cls)
+Command = lambda cls: message_factory(cls)
