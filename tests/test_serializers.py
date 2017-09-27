@@ -1,6 +1,5 @@
 from typing import NamedTuple
-
-from mock import patch
+from unittest.mock import patch
 
 from eventsourcing_helpers.message import message_factory
 from eventsourcing_helpers.serializers import (

@@ -1,7 +1,7 @@
 from collections import namedtuple
+from unittest.mock import Mock, patch
 
 import pytest
-from mock import Mock, patch
 
 from eventsourcing_helpers.models import AggregateRoot, Entity, EntityDict
 

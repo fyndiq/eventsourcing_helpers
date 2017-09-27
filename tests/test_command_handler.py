@@ -1,4 +1,4 @@
-from mock import Mock, patch
+from unittest.mock import Mock, patch
 
 from eventsourcing_helpers.command_handler import CommandHandler
 

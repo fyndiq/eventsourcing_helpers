@@ -1,4 +1,4 @@
-from mock import Mock, patch
+from unittest.mock import Mock, patch
 
 from eventsourcing_helpers.models import AggregateRoot
 from eventsourcing_helpers.repository import Repository, import_backend

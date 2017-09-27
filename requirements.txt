@@ -1,4 +1,3 @@
-mock
 pytest
 pytest-coverage
 structlog
