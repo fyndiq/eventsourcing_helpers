@@ -6,7 +6,9 @@ from eventsourcing_helpers.repository.backends import RepositoryBackend
 from eventsourcing_helpers.repository.backends.kafka import KafkaBackend
 
 backend_cls = Mock(spec=RepositoryBackend)
+
 BACKENDS = {'foo': backend_cls}
+BACKENDS_PACKAGE = 'eventsourcing_helpers.repository.backends'
 
 
 @patch('eventsourcing_helpers.repository.BACKENDS', BACKENDS)
@@ -33,7 +35,9 @@ class RepositoryTests:
         the repository.
         """
         self.repository(self.config, self.importer)
-        self.importer.assert_called_once_with(BACKENDS[self.backend])
+        self.importer.assert_called_once_with(
+            BACKENDS_PACKAGE, BACKENDS[self.backend]
+        )
         self.importer.return_value.assert_called_once_with(self.config)
 
     def test_commit(self):
@@ -63,5 +67,5 @@ class ImporterTests:
         """
         Test that we import the correct backend class.
         """
-        backend_cls = import_backend('kafka.KafkaBackend')
+        backend_cls = import_backend(BACKENDS_PACKAGE, 'kafka.KafkaBackend')
         assert backend_cls == KafkaBackend

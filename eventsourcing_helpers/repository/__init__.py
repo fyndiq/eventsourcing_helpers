@@ -1,37 +1,13 @@
-from importlib import import_module
 from typing import Callable
 
 from eventsourcing_helpers import logger
 from eventsourcing_helpers.models import AggregateRoot
-from eventsourcing_helpers.repository.backends import RepositoryBackend
+from eventsourcing_helpers.utils import import_backend
 
 BACKENDS = {
     'kafka': 'kafka.KafkaBackend',
 }
-
-
-def import_backend(location: str) -> RepositoryBackend:
-    """
-    Dynamically load a repository backend.
-
-    Args:
-        location: Location of the backend class in the
-            backends package. Format: 'module.class'.
-
-    Returns:
-        RepositoryBackend: The backend class.
-
-    Example:
-        >>> load_backend('kafka.KafkaBackend')
-        <class 'eventsourcing_helpers.repository.backends.kafka.KafkaBackend'>
-    """
-    module_name, class_name = location.rsplit('.', 1)
-
-    package = 'eventsourcing_helpers.repository.backends'
-    module = import_module(f'{package}.{module_name}')
-    backend_cls = getattr(module, class_name)
-
-    return backend_cls
+BACKENDS_PACKAGE = 'eventsourcing_helpers.repository.backends'
 
 
 class Repository:
@@ -46,7 +22,7 @@ class Repository:
 
     def __init__(self, config: dict, importer: Callable=import_backend) -> None:
         backend = config.pop('backend', self.DEFAULT_BACKEND)
-        self.backend = importer(BACKENDS[backend])(config)
+        self.backend = importer(BACKENDS_PACKAGE, BACKENDS[backend])(config)
         logger.debug(f"Using {backend} as repository backend")
 
     def commit(self, aggregate_root: AggregateRoot, **kwargs) -> None:
