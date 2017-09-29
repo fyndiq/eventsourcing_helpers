@@ -4,4 +4,4 @@ structlog
 ipdb
 mypy
 
-git+https://github.com/fyndiq/confluent_kafka_helpers@v0.2#egg=confluent-kafka-helpers
+git+https://github.com/fyndiq/confluent_kafka_helpers#egg=confluent-kafka-helpers
