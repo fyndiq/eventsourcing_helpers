@@ -1,7 +1,8 @@
+coveralls
+ipdb
+mypy
 pytest
 pytest-coverage
 structlog
-ipdb
-mypy
 
 git+https://github.com/fyndiq/confluent_kafka_helpers#egg=confluent-kafka-helpers
