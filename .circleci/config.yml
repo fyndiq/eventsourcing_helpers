@@ -1,5 +1,11 @@
 version: 2
 jobs:
+  build:
+    working_directory: ~/build
+    docker:
+      - image: fyndiq/python-alpine-kafka:latest
+    steps:
+      - checkout
   test:
     docker:
       - image: fyndiq/python-alpine-kafka:latest
