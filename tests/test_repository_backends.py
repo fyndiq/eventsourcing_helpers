@@ -1,6 +1,6 @@
 from unittest.mock import Mock
 
-from eventsourcing_helpers.repository.backends.kafka import KafkaBackend
+from eventsourcing_helpers.repository.backends.kafka import KafkaAvroBackend
 
 
 class KafkaBackendTests:
@@ -16,7 +16,7 @@ class KafkaBackendTests:
         Test that the dependencies are setup correctly when
         initializing the backend.
         """
-        KafkaBackend(self.config, loader=self.loader, producer=self.producer)
+        KafkaAvroBackend(self.config, loader=self.loader, producer=self.producer)
         self.loader.assert_called_once_with(self.config['loader'])
         self.producer.assert_called_once_with(self.config['producer'])
 
@@ -24,7 +24,7 @@ class KafkaBackendTests:
         """
         Test that the produce method are invoked correctly.
         """
-        backend = KafkaBackend(
+        backend = KafkaAvroBackend(
             self.config, loader=self.loader, producer=self.producer
         )
         backend.commit(self.guid, self.events)
@@ -37,7 +37,7 @@ class KafkaBackendTests:
         """
         Test that the load method are invoked correctly.
         """
-        backend = KafkaBackend(
+        backend = KafkaAvroBackend(
             self.config, loader=self.loader, producer=self.producer
         )
         backend.load(self.guid)

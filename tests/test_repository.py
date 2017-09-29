@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 from eventsourcing_helpers.models import AggregateRoot
 from eventsourcing_helpers.repository import Repository, import_backend
 from eventsourcing_helpers.repository.backends import RepositoryBackend
-from eventsourcing_helpers.repository.backends.kafka import KafkaBackend
+from eventsourcing_helpers.repository.backends.kafka import KafkaAvroBackend
 
 backend_cls = Mock(spec=RepositoryBackend)
 
@@ -67,5 +67,5 @@ class ImporterTests:
         """
         Test that we import the correct backend class.
         """
-        backend_cls = import_backend(BACKENDS_PACKAGE, 'kafka.KafkaBackend')
-        assert backend_cls == KafkaBackend
+        backend_cls = import_backend(BACKENDS_PACKAGE, 'kafka.KafkaAvroBackend')
+        assert backend_cls == KafkaAvroBackend
