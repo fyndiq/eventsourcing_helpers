@@ -6,3 +6,6 @@ check:
 
 test:
 	./scripts/test.sh
+
+test-ci:
+	./scripts/test.sh ci
