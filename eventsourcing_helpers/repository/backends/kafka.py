@@ -4,7 +4,7 @@ from confluent_kafka_helpers.producer import AvroProducer
 from eventsourcing_helpers.repository.backends import RepositoryBackend
 
 
-class KafkaBackend(RepositoryBackend):
+class KafkaAvroBackend(RepositoryBackend):
 
     def __init__(self, config: dict, producer=AvroProducer,
                  loader=AvroMessageLoader) -> None:

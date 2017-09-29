@@ -5,7 +5,7 @@ from eventsourcing_helpers.models import AggregateRoot
 from eventsourcing_helpers.utils import import_backend
 
 BACKENDS = {
-    'kafka': 'kafka.KafkaBackend',
+    'kafka_avro': 'kafka.KafkaAvroBackend',
 }
 BACKENDS_PACKAGE = 'eventsourcing_helpers.repository.backends'
 
@@ -18,12 +18,12 @@ class Repository:
     More concrete it provides a way to store and retrieve events that
     belongs to an aggregate root - from/to some kind of storage.
     """
-    DEFAULT_BACKEND = 'kafka'
+    DEFAULT_BACKEND = 'kafka_avro'
 
     def __init__(self, config: dict, importer: Callable=import_backend) -> None:
         backend = config.pop('backend', self.DEFAULT_BACKEND)
         self.backend = importer(BACKENDS_PACKAGE, BACKENDS[backend])(config)
-        logger.debug(f"Using {backend} as repository backend")
+        logger.debug("Using repository backend", backend=backend)
 
     def commit(self, aggregate_root: AggregateRoot, **kwargs) -> None:
         """
