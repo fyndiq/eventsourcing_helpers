@@ -20,7 +20,7 @@ jobs:
             - ".venv"
       - run:
           name: Running tests
-          command: make test
+          command: make test-ci
       - run:
           name: Running checks
           command: make check
