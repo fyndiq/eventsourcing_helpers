@@ -1,3 +1,6 @@
+setup:
+	./scripts/setup.sh
+
 check:
 	./scripts/check.sh
 
