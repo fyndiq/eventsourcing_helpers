@@ -6,14 +6,23 @@ jobs:
       - image: fyndiq/python-alpine-kafka:latest
     steps:
       - checkout
+      - run:
+          name: Install dependencies
+          command: pip install -r requirements.txt
   test:
     docker:
       - image: fyndiq/python-alpine-kafka:latest
     steps:
       - checkout
       - run:
-          name: Install dependencies
-          command: pip install -r requirements.txt
-      - run:
           name: Running tests
           command: make test
+
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      - build
+      - test
+          requires:
+            - build
