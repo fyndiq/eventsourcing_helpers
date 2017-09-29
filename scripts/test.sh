@@ -4,4 +4,5 @@ pytest --cov=eventsourcing_helpers/
 
 if [ "$1" == "ci" ]; then
     COVERALLS_REPO_TOKEN=$COVERALLS_REPO_TOKEN coveralls
+    codecov -t $CODECOV_TOKEN
 fi
