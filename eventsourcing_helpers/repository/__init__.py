@@ -3,7 +3,7 @@ from typing import Callable
 
 from eventsourcing_helpers import logger
 from eventsourcing_helpers.models import AggregateRoot
-from eventsourcing_helpers.repository.backends.base import RepositoryBackend
+from eventsourcing_helpers.repository.backends import RepositoryBackend
 
 BACKENDS = {
     'kafka': 'kafka.KafkaBackend',

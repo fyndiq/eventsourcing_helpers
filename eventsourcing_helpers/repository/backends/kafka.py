@@ -1,7 +1,7 @@
 from confluent_kafka_helpers.loader import AvroMessageLoader
 from confluent_kafka_helpers.producer import AvroProducer
 
-from eventsourcing_helpers.repository.backends.base import RepositoryBackend
+from eventsourcing_helpers.repository.backends import RepositoryBackend
 
 
 class KafkaBackend(RepositoryBackend):

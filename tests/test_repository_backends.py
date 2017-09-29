@@ -1,6 +1,6 @@
 from unittest.mock import Mock
 
-from eventsourcing_helpers.repository.backends import KafkaBackend
+from eventsourcing_helpers.repository.backends.kafka import KafkaBackend
 
 
 class KafkaBackendTests:
