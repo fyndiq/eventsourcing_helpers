@@ -2,13 +2,16 @@ from confluent_kafka_helpers.loader import AvroMessageLoader
 from confluent_kafka_helpers.producer import AvroProducer
 
 from eventsourcing_helpers.repository.backends import RepositoryBackend
+from eventsourcing_helpers.serializers import to_message_from_dto
 
 
 class KafkaAvroBackend(RepositoryBackend):
 
     def __init__(self, config: dict, producer=AvroProducer,
                  loader=AvroMessageLoader) -> None:
-        self.producer = producer(config.get('producer'))
+        self.producer = producer(
+            config.get('producer'), value_serializer=to_message_from_dto
+        )
         self.loader = loader(config.get('loader'))
 
     def commit(self, guid: str, events: list, **kwargs) -> None:

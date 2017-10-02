@@ -22,8 +22,13 @@ class Repository:
 
     def __init__(self, config: dict, importer: Callable=import_backend) -> None:
         backend = config.pop('backend', self.DEFAULT_BACKEND)
-        self.backend = importer(BACKENDS_PACKAGE, BACKENDS[backend])(config)
-        logger.debug("Using repository backend", backend=backend)
+        assert 'backend_config' in config, "You must pass a backend config"
+        backend_config = config.pop('backend_config')
+
+        logger.debug("Using repository backend", backend=backend,
+                     config=backend_config)
+        backend_class = importer(BACKENDS_PACKAGE, BACKENDS[backend])
+        self.backend = backend_class(backend_config)
 
     def commit(self, aggregate_root: AggregateRoot, **kwargs) -> None:
         """
