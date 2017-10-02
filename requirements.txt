@@ -4,6 +4,7 @@ ipdb
 mypy
 pytest
 pytest-coverage
+pytest-mock
 structlog
 
 git+https://github.com/fyndiq/confluent_kafka_helpers#egg=confluent-kafka-helpers
