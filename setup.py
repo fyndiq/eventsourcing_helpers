@@ -12,6 +12,6 @@ setup(name="eventsourcing-helpers",
           'structlog==17.2.0'
       ],
       dependency_links=[
-          'git+https://github.com/fyndiq/confluent_kafka_helpers@v0.2#egg=confluent-kafka-helpers'
+          'git+https://github.com/fyndiq/confluent_kafka_helpers#egg=confluent-kafka-helpers'
       ],
       zip_safe=False)
