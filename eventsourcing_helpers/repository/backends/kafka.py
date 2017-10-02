@@ -1,3 +1,5 @@
+from typing import Callable
+
 from confluent_kafka_helpers.loader import AvroMessageLoader
 from confluent_kafka_helpers.producer import AvroProducer
 
@@ -8,9 +10,10 @@ from eventsourcing_helpers.serializers import to_message_from_dto
 class KafkaAvroBackend(RepositoryBackend):
 
     def __init__(self, config: dict, producer=AvroProducer,
-                 loader=AvroMessageLoader) -> None:
+                 loader=AvroMessageLoader,
+                 value_serializer: Callable=to_message_from_dto) -> None:
         self.producer = producer(
-            config.get('producer'), value_serializer=to_message_from_dto
+            config.get('producer'), value_serializer=value_serializer
         )
         self.loader = loader(config.get('loader'))
 

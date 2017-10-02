@@ -12,6 +12,8 @@ BACKENDS_PACKAGE = 'eventsourcing_helpers.repository.backends'
 
 class Repository:
     """
+    Generic interface to communicate with a repository backend.
+
     The repository acts as a mediator between the domain and the
     data mapping layer.
 
@@ -21,9 +23,9 @@ class Repository:
     DEFAULT_BACKEND = 'kafka_avro'
 
     def __init__(self, config: dict, importer: Callable=import_backend) -> None:
-        backend = config.pop('backend', self.DEFAULT_BACKEND)
+        backend = config.get('backend', self.DEFAULT_BACKEND)
         assert 'backend_config' in config, "You must pass a backend config"
-        backend_config = config.pop('backend_config')
+        backend_config = config.get('backend_config')
 
         logger.debug("Using repository backend", backend=backend,
                      config=backend_config)

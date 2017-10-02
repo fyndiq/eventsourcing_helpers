@@ -1,4 +1,5 @@
 from functools import partial
+from typing import Callable
 
 from confluent_kafka_helpers.consumer import AvroConsumer
 from confluent_kafka_helpers.producer import AvroProducer
@@ -10,7 +11,8 @@ from eventsourcing_helpers.serializers import to_message_from_dto
 class KafkaAvroBackend(MessageBusBackend):
 
     def __init__(self, config: dict, producer: AvroProducer=AvroProducer,
-                 consumer: AvroConsumer=AvroConsumer) -> None:
+                 consumer: AvroConsumer=AvroConsumer,
+                 value_serializer: Callable=to_message_from_dto) -> None:
         producer_config = config.pop('producer', None)
         consumer_config = config.pop('consumer', None)
 
@@ -19,7 +21,7 @@ class KafkaAvroBackend(MessageBusBackend):
             self.consumer = partial(consumer, config=consumer_config)
         if producer_config:
             self.producer = producer(
-                producer_config, value_serializer=to_message_from_dto
+                producer_config, value_serializer=value_serializer
             )
 
     def produce(self, key: str, value: dict, topic: str=None) -> None:
