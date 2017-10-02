@@ -21,8 +21,10 @@ class RepositoryTests:
 
         self.importer = Mock(return_value=backend_cls)
         self.backend = 'foo'
-        self.config = {'foo': 'bar', 'backend': self.backend}
-
+        self.config = {
+            'backend_config': {'foo': 'bar'},
+            'backend': self.backend
+        }
         self.aggregate_root = Mock(spec=AggregateRoot)
         self.aggregate_root.guid = self.guid
         self.aggregate_root._events = self.events
@@ -38,7 +40,8 @@ class RepositoryTests:
         self.importer.assert_called_once_with(
             BACKENDS_PACKAGE, BACKENDS[self.backend]
         )
-        self.importer.return_value.assert_called_once_with(self.config)
+        expected_config = self.config['backend_config']
+        self.importer.return_value.assert_called_once_with(expected_config)
 
     def test_commit(self):
         """
