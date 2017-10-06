@@ -3,9 +3,10 @@ import uuid
 from itertools import chain
 from typing import Any, Callable, Iterator, List
 
-from eventsourcing_helpers import logger
+import structlog
 
 word_regexp = re.compile('[A-Z][^A-Z]*')
+logger = structlog.get_logger(__name__)
 
 
 class Entity:

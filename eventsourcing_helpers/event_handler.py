@@ -1,7 +1,10 @@
 from typing import Any
 
-from eventsourcing_helpers import logger
+import structlog
+
 from eventsourcing_helpers.serializers import from_message_to_dto
+
+logger = structlog.get_logger()
 
 
 class EventHandler:

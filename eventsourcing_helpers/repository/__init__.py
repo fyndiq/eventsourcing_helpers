@@ -1,6 +1,7 @@
 from typing import Callable
 
-from eventsourcing_helpers import logger
+import structlog
+
 from eventsourcing_helpers.models import AggregateRoot
 from eventsourcing_helpers.utils import import_backend
 
@@ -8,6 +9,8 @@ BACKENDS = {
     'kafka_avro': 'kafka.KafkaAvroBackend',
 }
 BACKENDS_PACKAGE = 'eventsourcing_helpers.repository.backends'
+
+logger = structlog.get_logger(__name__)
 
 
 class Repository:
