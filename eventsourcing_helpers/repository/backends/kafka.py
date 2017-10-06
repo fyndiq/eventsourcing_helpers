@@ -12,10 +12,16 @@ class KafkaAvroBackend(RepositoryBackend):
     def __init__(self, config: dict, producer=AvroProducer,
                  loader=AvroMessageLoader,
                  value_serializer: Callable=to_message_from_dto) -> None:
-        self.producer = producer(
-            config.get('producer'), value_serializer=value_serializer
-        )
-        self.loader = loader(config.get('loader'))
+        producer_config = config.pop('producer', None)
+        loader_config = config.pop('loader', None)
+
+        self.producer, self.loader = None, None
+        if producer_config:
+            self.producer = producer(
+                producer_config, value_serializer=value_serializer
+            )
+        if loader_config:
+            self.loader = loader(loader_config)
 
     def commit(self, guid: str, events: list, **kwargs) -> None:
         """
@@ -25,6 +31,8 @@ class KafkaAvroBackend(RepositoryBackend):
             guid: Aggregate root guid to be used as key in the message.
             events: List of staged events to be committed.
         """
+        assert self.producer is not None, "Producer is not configured"
+
         for event in events:
             self.producer.produce(key=guid, value=event, **kwargs)
 
@@ -38,4 +46,5 @@ class KafkaAvroBackend(RepositoryBackend):
         Returns:
             list: Loaded events.
         """
+        assert self.loader is not None, "Loader is not configured"
         return self.loader.load(guid, **kwargs)

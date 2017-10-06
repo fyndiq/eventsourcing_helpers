@@ -10,7 +10,10 @@ class KafkaBackendTests:
         self.loader = Mock()
         self.producer = Mock()
         self.value_serializer = Mock()
-        self.config = {'backend_config': {'producer': None, 'loader': None}}
+        self.config = {
+            'producer': {'foo': 'bar'},
+            'loader': {'foo': 'bar'}
+        }
         self.guid, self.events = 1, [1, 2, 3]
         self.backend = partial(
             KafkaAvroBackend, self.config, self.producer, self.loader,
@@ -24,12 +27,9 @@ class KafkaBackendTests:
         """
         self.backend()
 
-        expected_config = self.config['backend_config']['loader']
-        self.loader.assert_called_once_with(expected_config)
-
-        expected_config = self.config['backend_config']['producer']
+        self.loader.assert_called_once_with({'foo': 'bar'})
         self.producer.assert_called_once_with(
-            expected_config, value_serializer=self.value_serializer
+            {'foo': 'bar'}, value_serializer=self.value_serializer
         )
 
     def test_commit(self):
