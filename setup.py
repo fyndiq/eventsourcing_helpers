@@ -9,7 +9,7 @@ setup(name="eventsourcing-helpers",
       license="MIT",
       packages=find_packages(),
       install_requires=[
-          'structlog==17.2.0',
+          'structlog>=17.2.0',
           'confluent-kafka-helpers>=0'
       ],
       dependency_links=[
