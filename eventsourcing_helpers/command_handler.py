@@ -85,11 +85,11 @@ class CommandHandler:
             aggregate_root: Entity which implements the command handlers.
             command: Command to be handled.
         """
-        command_class = command.__class__.__name__
+        command_class = command._class
         handler_name = self.handlers[command_class]
         logger.info("Calling command handler", command_class=command_class,
                     handler_name=handler_name,
-                    aggregate_root=aggregate_root.name)
+                    aggregate_root=aggregate_root._class)
 
         handler = getattr(aggregate_root, handler_name)
         handler(command)
@@ -117,8 +117,7 @@ class CommandHandler:
             return
 
         command = self.message_deserializer(message)
-        command_class = command.__class__.__name__
-        logger.info("Handling command", command_class=command_class)
+        logger.info("Handling command", command_class=command._class)
 
         aggregate_root = self._get_aggregate_root(command.guid)
         self._handle_command(aggregate_root, command)

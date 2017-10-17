@@ -61,6 +61,6 @@ def to_message_from_dto(dto: Message) -> dict:
             }
         }
     """
-    message = {'class': dto._name, 'data': dto.to_dict()}
+    message = {'class': dto._class, 'data': dto.to_dict()}
 
     return message

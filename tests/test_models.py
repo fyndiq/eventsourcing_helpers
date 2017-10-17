@@ -1,11 +1,8 @@
-from collections import namedtuple
 from unittest.mock import Mock, patch
 
 import pytest
 
 from eventsourcing_helpers.models import AggregateRoot, Entity, EntityDict
-
-FooEvent = namedtuple('FooEvent', 'guid')
 
 
 class Foo(AggregateRoot):
@@ -33,7 +30,9 @@ class EntityTests:
     def setup_method(self):
         self.aggregate_root = Foo()
         self.entity = Bar()
-        self.event = FooEvent(guid=1)
+        self.event = Mock()
+        self.event._class = 'FooEvent'
+        self.event.guid = 1
 
     @patch('eventsourcing_helpers.models.Entity._get_apply_method_name')
     @patch('eventsourcing_helpers.models.Entity._get_entity')
@@ -59,7 +58,7 @@ class EntityTests:
         Test that the apply method is run multiple times.
         """
         num_events = 4
-        events = [FooEvent(guid=i) for i in range(0, num_events)]
+        events = [None] * num_events
 
         self.aggregate_root.apply_events(events)
         assert mock_apply.call_count == num_events
@@ -91,9 +90,7 @@ class EntityTests:
         """
         Test that we get the correct apply method name for an event.
         """
-        apply_method_name = self.entity._get_apply_method_name(
-            self.event.__class__.__name__
-        )
+        apply_method_name = self.entity._get_apply_method_name(self.event._class)
         assert apply_method_name == 'apply_foo_event'
 
     @patch('eventsourcing_helpers.models.Entity._get_all_entities')

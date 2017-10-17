@@ -12,7 +12,7 @@ class EventHandlerTests:
         self.message = {'class': self.event_class, 'data': {'guid': self.guid}}
 
         self.event = Mock()
-        self.event.__class__.__name__ = self.event_class
+        self.event._class = self.event_class
         self.event.guid = self.guid
 
         self.message_deserializer = Mock()

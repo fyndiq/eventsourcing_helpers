@@ -15,7 +15,7 @@ class CommandHandlerTests:
         self.aggregate_root = Mock()
 
         self.command = Mock()
-        self.command.__class__.__name__ = command_class
+        self.command._class = command_class
         self.command.guid = guid
 
         config = {'return_value.load.return_value': self.events}

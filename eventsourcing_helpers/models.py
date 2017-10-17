@@ -13,8 +13,6 @@ class Entity:
     """
     A rich domain model that exposes attributes and behaviour
     with an identity and a lifecycle.
-
-    An entity may only hold references to local models.
     """
     # a shared list between all entities with staged events
     # that later will be committed to the repository.
@@ -30,10 +28,10 @@ class Entity:
 
     def __repr__(self) -> str:
         attrs = {k: v for k, v in self.__dict__.items() if v is not None}
-        return f"{self.name}({attrs})"
+        return f"{self._class}({attrs})"
 
     @property
-    def name(self):
+    def _class(self):
         return self.__class__.__name__
 
     def _get_apply_method(self, entity: Any, method_name: str) -> Callable:
@@ -61,8 +59,8 @@ class Entity:
             is_new: Flag to indicate if the event should be staged.
         """
         log = logger.bind(
-            guid=event.guid, event_class=event.__class__.__name__,
-            entity_class=entity.name
+            guid=event.guid, event_class=event._class,
+            entity_class=entity._class
         )
         try:
             apply_method = self._get_apply_method(entity, method_name)
@@ -86,8 +84,7 @@ class Entity:
             is_new: Flag that indicates if the event should be staged.
         """
         if is_new:
-            event_name = event.__class__.__name__
-            logger.info("Staging event", event_name=event_name)
+            logger.info("Staging event", event_class=event._class)
             self._events.append(event)
 
     def _get_child_entities(self) -> Iterator['Entity']:
@@ -134,12 +131,12 @@ class Entity:
         entities = self._get_all_entities()
         return next((e for e in entities if e.guid == guid), self)
 
-    def _get_apply_method_name(self, event_name: str) -> str:
+    def _get_apply_method_name(self, event_class: str) -> str:
         """
         Gets the apply method name for a given event.
 
         Args:
-            event_name: Name of the event. Probably the class
+            event_class: Name of the event. Probably the class
                 name of the event.
 
         Returns:
@@ -147,10 +144,10 @@ class Entity:
 
         Example:
             >>> event = FooEvent(guid=1)
-            >>> Entity._get_apply_method_name(event.__class__.__name__)
+            >>> Entity._get_apply_method_name(event._class)
             'apply_foo_event'
         """
-        words = re.findall(word_regexp, event_name)
+        words = re.findall(word_regexp, event_class)
         lowered_words = list(map(str.lower, words))
         apply_method_name = 'apply_' + '_'.join(lowered_words)
 
@@ -191,8 +188,7 @@ class Entity:
             is_new: Flag that indicates if the event should be staged
                 (haven't yet been committed).
         """
-        event_name = event.__class__.__name__
-        apply_method_name = self._get_apply_method_name(event_name)
+        apply_method_name = self._get_apply_method_name(event._class)
         entity = self._get_entity(event.guid)
 
         self._apply_event(event, entity, apply_method_name, is_new)
@@ -204,11 +200,15 @@ class EntityDict(dict):
     fast lookup by a key.
     """
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({self.values()})"
+        return f"{self._class}({self.values()})"
 
     def __setitem__(self, key: str, value: Entity) -> None:
         assert isinstance(value, Entity)
         super().__setitem__(key, value)
+
+    @property
+    def _class(self):
+        return self.__class__.__name__
 
     def _get_child_entities(self) -> Iterator[Entity]:
         """

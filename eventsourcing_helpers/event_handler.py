@@ -41,8 +41,7 @@ class EventHandler:
         Args:
             event: Event to be handled.
         """
-        event_class = event.__class__.__name__
-        handler = self.handlers[event_class]
+        handler = self.handlers[event._class]
         handler(event)
 
     def handle(self, message: dict) -> None:
@@ -56,7 +55,6 @@ class EventHandler:
             return
 
         event = self.message_deserializer(message)
-        event_class = event.__class__.__name__
-        logger.info("Handling event", event_class=event_class)
+        logger.info("Handling event", event_class=event._class)
 
         self._handle_event(event)

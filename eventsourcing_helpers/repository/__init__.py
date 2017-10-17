@@ -44,6 +44,7 @@ class Repository:
         """
         assert isinstance(aggregate_root, AggregateRoot)
         guid, events = aggregate_root.guid, aggregate_root._events
+        assert guid, "The guid must be set on the aggregate root"
 
         if events:
             logger.info("Committing staged events to repository")
