@@ -3,15 +3,17 @@ from typing import Callable, NamedTuple
 
 class Message:
 
-    def __init__(self, cls: NamedTuple, **kwargs) -> None:
-        self.__dict__['message'] = cls(**kwargs)  # type: ignore
+    def __init__(self, message: NamedTuple, **kwargs) -> None:
+        self.__dict__['message'] = message(**kwargs)  # type: ignore
 
     @property
-    def _name(self) -> str:
+    def _class(self) -> str:
         return self.message.__class__.__name__
 
     def to_dict(self) -> dict:
-        return dict(self.message._asdict())  # type: ignore
+        items = self.message._asdict().items()  # type: ignore
+        filtered = {k: v for k, v in items if v is not None}
+        return filtered
 
     def __repr__(self) -> str:
         return repr(self.message)
@@ -23,7 +25,7 @@ class Message:
         raise AttributeError("Messages are read only")
 
 
-def message_factory(cls: NamedTuple) -> type:
+def message_factory(message: NamedTuple) -> type:
     """
     Class decorator used constructing messages.
 
@@ -44,7 +46,7 @@ def message_factory(cls: NamedTuple) -> type:
         ...     guid: str
         ...     state: str
         >>> event = OrderCreated(guid='1', state='open')
-        >>> event.guid, event.state, event._name
+        >>> event.guid, event.state, event._class
         ('1', 'open', 'OrderCreated')
         >>> event.to_dict()
         {'guid': '1', 'state': 'open'}
@@ -55,12 +57,12 @@ def message_factory(cls: NamedTuple) -> type:
     class MessageProxy(Message):
 
         def __init__(self, *args, **kwargs) -> None:
-            super().__init__(cls, **kwargs)
+            super().__init__(message, **kwargs)
 
     # create a new proxy class that inherits from MessageProxy
-    proxy = type(cls.__name__, (MessageProxy, object), {})  # type: ignore
+    proxy = type(message.__name__, (MessageProxy, object), {})  # type: ignore
     return proxy
 
 
-Event = lambda cls: message_factory(cls)
-Command = lambda cls: message_factory(cls)
+Event = lambda message: message_factory(message)
+Command = lambda message: message_factory(message)

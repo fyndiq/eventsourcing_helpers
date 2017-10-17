@@ -8,7 +8,7 @@ from eventsourcing_helpers.message import message_factory, Message
 class MessageTests:
 
     def setup_method(self):
-        self.data = {'guid': 1, 'foo': 'bar'}
+        self.data = {'guid': 1, 'foo': 'bar', 'baz': None}
         fields = [(k, None) for k in self.data.keys()]
         self.namedtuple = NamedTuple('FooEvent', fields)
         self.message = message_factory(self.namedtuple)(**self.data)
@@ -29,15 +29,16 @@ class MessageTests:
 
     def test_to_dict(self):
         """
-        Test that the namedtuple is serialized correctly.
+        Test that the message is serialized correctly.
         """
+        self.data.pop('baz')
         assert self.message.to_dict() == self.data
 
     def test_name(self):
         """
         Test that the correct name is returned.
         """
-        assert self.message._name == self.namedtuple.__name__
+        assert self.message._class == self.namedtuple.__name__
 
     def test_read_only(self):
         """
