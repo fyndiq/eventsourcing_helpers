@@ -6,7 +6,7 @@ from eventsourcing_helpers.models import AggregateRoot
 from eventsourcing_helpers.repository import Repository
 from eventsourcing_helpers.serializers import from_message_to_dto
 
-logger = structlog.get_logger()
+logger = structlog.get_logger(__name__)
 
 
 class CommandHandler:

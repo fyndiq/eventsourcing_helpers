@@ -4,7 +4,7 @@ import structlog
 
 from eventsourcing_helpers.serializers import from_message_to_dto
 
-logger = structlog.get_logger()
+logger = structlog.get_logger(__name__)
 
 
 class EventHandler:
