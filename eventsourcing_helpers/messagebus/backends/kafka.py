@@ -12,7 +12,7 @@ class KafkaAvroBackend(MessageBusBackend):
 
     def __init__(self, config: dict, producer: AvroProducer=AvroProducer,
                  consumer: AvroConsumer=AvroConsumer,
-                 value_serializer: Callable=to_message_from_dto) -> None:
+                 value_serializer: Callable=to_message_from_dto) -> None:  # yapf: disable
         producer_config = config.pop('producer', None)
         consumer_config = config.pop('consumer', None)
 
@@ -25,7 +25,8 @@ class KafkaAvroBackend(MessageBusBackend):
                 producer_config, value_serializer=value_serializer
             )
 
-    def produce(self, key: str, value: dict, topic: str=None, **kwargs) -> None:
+    def produce(self, value: dict, key: str=None, topic: str=None,
+                **kwargs) -> None:  # yapf:disable
         assert self.producer is not None, "Producer is not configured"
         # produce message to a topic.
         #
@@ -33,7 +34,7 @@ class KafkaAvroBackend(MessageBusBackend):
         # callback argument to pass a function that will be called from poll()
         # when the message has been successfully delivered or permanently fails
         # delivery.
-        self.producer.produce(key, value, topic, **kwargs)
+        self.producer.produce(key=key, value=value, topic=topic, **kwargs)
 
         # polls the producer for events and calls the corresponding callbacks.
         #

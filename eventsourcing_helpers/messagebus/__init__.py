@@ -31,7 +31,7 @@ class MessageBus:
         backend_class = importer(BACKENDS_PACKAGE, BACKENDS[backend])
         self.backend = backend_class(backend_config)
 
-    def produce(self, key, value, **kwargs):
+    def produce(self, value, key=None, **kwargs):
         """
         Produce a message to the message bus.
 
@@ -39,7 +39,7 @@ class MessageBus:
             key: Key to produce message with.
             value: Value to produce message with.
         """
-        self.backend.produce(key, value, **kwargs)
+        self.backend.produce(key=key, value=value, **kwargs)
 
     def get_consumer(self):
         """
