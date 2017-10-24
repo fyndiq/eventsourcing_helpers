@@ -44,8 +44,7 @@ class KafkaAvroBackend(MessageBusBackend):
         self.producer.poll(0)
 
         # block until all messages are delivered/failed.
-        # TODO: we should probably not flush every time
-        # https://github.com/confluentinc/confluent-kafka-python/issues/137
+        # probably not required if we run poll after each produce.
         if self.flush:
             self.producer.flush()
 
