@@ -20,7 +20,7 @@ class KafkaAvroBackend(MessageBusBackend):
         if consumer_config:
             self.consumer = partial(consumer, config=consumer_config)
         if producer_config:
-            self.flush = producer_config.pop('flush', True)
+            self.flush = producer_config.pop('flush', False)
             self.producer = producer(
                 producer_config, value_serializer=value_serializer
             )
