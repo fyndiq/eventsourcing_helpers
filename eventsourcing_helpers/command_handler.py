@@ -84,12 +84,12 @@ class ESCommandHandler(CommandHandler):
     repository_config: dict = None
 
     def __init__(self, message_deserializer: Callable=from_message_to_dto,
-                 repository: Any=Repository) -> None:  # yapf: disable
+                 repository: Any=Repository, **kwargs) -> None:  # yapf: disable
         super().__init__(message_deserializer)
         assert self.aggregate_root
         assert self.repository_config
 
-        self.repository = repository(self.repository_config)
+        self.repository = repository(self.repository_config, **kwargs)
 
     def _get_events(self, guid: str) -> List[Any]:
         """

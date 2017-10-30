@@ -27,17 +27,17 @@ class Message:
 
 def message_factory(message: NamedTuple) -> type:
     """
-    Class decorator used constructing messages.
+    Class decorator used for constructing messages.
 
-    A message is basically a namedtuple "enriched" with some common features.
+    A message is basically a namedtuple extended with some additional features.
 
     Currently namedtuples doesn't support inheritance from a base class - which
-    means we can't easily add common methods/properties for a message.
+    means we can't easily add additional methods/properties.
 
     See: https://github.com/python/typing/issues/427.
 
     To work around this we can wrap the namedtuple in a "proxy class" which
-    adds all the common features and redirects all attribute lookups to the
+    adds all the additional features and redirects all attribute lookups to the
     underlying namedtuple.
 
     Example:

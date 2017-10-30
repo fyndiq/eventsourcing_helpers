@@ -25,7 +25,8 @@ class Repository:
     """
     DEFAULT_BACKEND = 'kafka_avro'
 
-    def __init__(self, config: dict, importer: Callable=import_backend) -> None:
+    def __init__(self, config: dict, importer: Callable=import_backend,
+                 **kwargs) -> None:  # yapf: disable
         backend = config.get('backend', self.DEFAULT_BACKEND)
         assert 'backend_config' in config, "You must pass a backend config"
         backend_config = config.get('backend_config')
@@ -33,7 +34,7 @@ class Repository:
         logger.debug("Using repository backend", backend=backend,
                      config=backend_config)
         backend_class = importer(BACKENDS_PACKAGE, BACKENDS[backend])
-        self.backend = backend_class(backend_config)
+        self.backend = backend_class(backend_config, **kwargs)
 
     def commit(self, aggregate_root: AggregateRoot, **kwargs) -> None:
         """
