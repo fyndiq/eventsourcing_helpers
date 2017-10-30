@@ -45,7 +45,18 @@ class MessageBus:
         """
         Get a message consumer.
 
+        Use this if you want more control of the message loop.
+
         Returns:
             Callable: Message consumer.
         """
         return self.backend.get_consumer()
+
+    def consume(self, handler_callback):
+        """
+        Consume and handle messages indefinitely.
+
+        Args:
+            handler_callback: Callback to handle the consumed messages.
+        """
+        self.backend.consume(handler_callback)

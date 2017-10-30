@@ -11,10 +11,13 @@ class KafkaBackendTests:
         self.producer = Mock()
         self.value_serializer = Mock()
         self.config = {'producer': {'foo': 'bar'}, 'loader': {'foo': 'bar'}}
+        self.get_producer_config = Mock(return_value=self.config['producer'])
+        self.get_loader_config = Mock(return_value=self.config['loader'])
         self.guid, self.events = 1, [1, 2, 3]
         self.backend = partial(
             KafkaAvroBackend, self.config, self.producer, self.loader,
-            self.value_serializer
+            self.value_serializer, self.get_producer_config,
+            self.get_loader_config
         )
 
     def test_init(self):
@@ -24,7 +27,7 @@ class KafkaBackendTests:
         """
         self.backend()
 
-        self.loader.assert_called_once_with({'foo': 'bar'})
+        self.loader.assert_called_once_with(self.config['loader'])
         self.producer.assert_called_once_with({
             'foo': 'bar'
         }, value_serializer=self.value_serializer)

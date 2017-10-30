@@ -5,6 +5,8 @@ from confluent_kafka_helpers.consumer import AvroConsumer
 from confluent_kafka_helpers.producer import AvroProducer
 
 from eventsourcing_helpers.messagebus.backends import MessageBusBackend
+from eventsourcing_helpers.messagebus.backends.kafka.config import (
+    get_consumer_config, get_producer_config)
 from eventsourcing_helpers.serializers import to_message_from_dto
 
 
@@ -12,9 +14,11 @@ class KafkaAvroBackend(MessageBusBackend):
 
     def __init__(self, config: dict, producer: AvroProducer=AvroProducer,
                  consumer: AvroConsumer=AvroConsumer,
-                 value_serializer: Callable=to_message_from_dto) -> None:  # yapf: disable
-        producer_config = config.pop('producer', None)
-        consumer_config = config.pop('consumer', None)
+                 value_serializer: Callable=to_message_from_dto,
+                 get_producer_config: Callable=get_producer_config,
+                 get_consumer_config: Callable=get_consumer_config) -> None:  # yapf: disable
+        producer_config = get_producer_config(config)
+        consumer_config = get_consumer_config(config)
 
         self.consumer, self.producer = None, None
         if consumer_config:
@@ -51,3 +55,13 @@ class KafkaAvroBackend(MessageBusBackend):
     def get_consumer(self) -> AvroConsumer:
         assert self.consumer is not None, "Consumer is not configured"
         return self.consumer
+
+    def consume(self, handler_callback: Callable) -> None:
+        Consumer = self.get_consumer()
+
+        with Consumer() as consumer:
+            for message in consumer:
+                if message:
+                    handler_callback(message.value())
+                    if consumer.is_auto_commit is False:
+                        consumer.commit()

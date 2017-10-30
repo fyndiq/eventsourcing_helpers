@@ -2,9 +2,10 @@ from typing import Callable
 
 from confluent_kafka_helpers.loader import AvroMessageLoader
 from confluent_kafka_helpers.producer import AvroProducer
-from confluent_kafka_helpers.consumer import AvroConsumer
 
 from eventsourcing_helpers.repository.backends import RepositoryBackend
+from eventsourcing_helpers.repository.backends.kafka.config import (
+    get_loader_config, get_producer_config)
 from eventsourcing_helpers.serializers import to_message_from_dto
 
 
@@ -12,9 +13,11 @@ class KafkaAvroBackend(RepositoryBackend):
 
     def __init__(self, config: dict, producer=AvroProducer,
                  loader=AvroMessageLoader,
-                 value_serializer: Callable=to_message_from_dto) -> None:  # yapf: disable
-        producer_config = config.pop('producer', None)
-        loader_config = config.pop('loader', None)
+                 value_serializer: Callable=to_message_from_dto,
+                 get_producer_config: Callable=get_producer_config,
+                 get_loader_config: Callable=get_loader_config) -> None:  # yapf: disable
+        producer_config = get_producer_config(config)
+        loader_config = get_loader_config(config)
 
         self.producer, self.loader = None, None
         if producer_config:
