@@ -10,14 +10,12 @@ from eventsourcing_helpers.serializers import to_message_from_dto
 
 class KafkaAvroBackend(RepositoryBackend):
 
-    def __init__(self, config: dict,
-                 consumer: AvroConsumer, producer=AvroProducer,
+    def __init__(self, config: dict, producer=AvroProducer,
                  loader=AvroMessageLoader,
                  value_serializer: Callable=to_message_from_dto) -> None:  # yapf: disable
         producer_config = config.pop('producer', None)
         loader_config = config.pop('loader', None)
 
-        self.consumer = consumer
         self.producer, self.loader = None, None
         if producer_config:
             self.producer = producer(
@@ -41,16 +39,6 @@ class KafkaAvroBackend(RepositoryBackend):
         # fails and leaving the aggregate in an invalid state.
         for event in events:
             self.producer.produce(key=guid, value=event, **kwargs)
-
-        # at this point the events are hopefully committed to Kafka.
-        #
-        # the last step is to also commit the consumer offset to
-        # mark the command as handled.
-        #
-        # if we don't do this the same command will be processed on
-        # the next rebalance.
-        if self.consumer.is_auto_commit is False:
-            self.consumer.commit()
 
     def load(self, guid: str, **kwargs) -> list:
         """
