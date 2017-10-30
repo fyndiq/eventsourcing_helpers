@@ -9,7 +9,7 @@ logger = structlog.get_logger(__name__)
 
 class EventHandler:
     """
-    A domain service that calls the correct handler for an event.
+    Application service that calls the correct domain handler for an event.
     """
     handlers: dict = {}
 
