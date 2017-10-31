@@ -6,9 +6,9 @@ from eventsourcing_helpers.models import AggregateRoot
 from eventsourcing_helpers.utils import import_backend
 
 BACKENDS = {
-    'kafka_avro': 'kafka.KafkaAvroBackend',
+    'kafka_avro': 'eventsourcing_helpers.repository.backends.kafka.KafkaAvroBackend',   # noqa
 }
-BACKENDS_PACKAGE = 'eventsourcing_helpers.repository.backends'
+
 
 logger = structlog.get_logger(__name__)
 
@@ -27,13 +27,13 @@ class Repository:
 
     def __init__(self, config: dict, importer: Callable=import_backend,
                  **kwargs) -> None:  # yapf: disable
-        backend = config.get('backend', self.DEFAULT_BACKEND)
+        backend_path = config.get('backend', BACKENDS[self.DEFAULT_BACKEND])
         assert 'backend_config' in config, "You must pass a backend config"
         backend_config = config.get('backend_config')
 
-        logger.debug("Using repository backend", backend=backend,
+        logger.debug("Using repository backend", backend=backend_path,
                      config=backend_config)
-        backend_class = importer(BACKENDS_PACKAGE, BACKENDS[backend])
+        backend_class = importer(backend_path)
         self.backend = backend_class(backend_config, **kwargs)
 
     def commit(self, aggregate_root: AggregateRoot, **kwargs) -> None:

@@ -5,9 +5,8 @@ import structlog
 from eventsourcing_helpers.utils import import_backend
 
 BACKENDS = {
-    'kafka_avro': 'kafka.KafkaAvroBackend',
+    'kafka_avro': 'eventsourcing_helpers.messagebus.backends.kafka.KafkaAvroBackend',   # noqa
 }
-BACKENDS_PACKAGE = 'eventsourcing_helpers.messagebus.backends'
 
 logger = structlog.get_logger(__name__)
 
@@ -22,13 +21,13 @@ class MessageBus:
     DEFAULT_BACKEND = 'kafka_avro'
 
     def __init__(self, config: dict, importer: Callable=import_backend) -> None:
-        backend = config.get('backend', self.DEFAULT_BACKEND)
+        backend_path = config.get('backend', BACKENDS[self.DEFAULT_BACKEND])
         assert 'backend_config' in config, "You must pass a backend config"
         backend_config = config.get('backend_config')
 
-        logger.debug("Using message bus backend", backend=backend,
+        logger.debug("Using message bus backend", backend=backend_path,
                      config=backend_config)
-        backend_class = importer(BACKENDS_PACKAGE, BACKENDS[backend])
+        backend_class = importer(backend_path)
         self.backend = backend_class(backend_config)
 
     def produce(self, value, key=None, **kwargs):

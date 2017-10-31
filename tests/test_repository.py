@@ -1,4 +1,4 @@
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 from eventsourcing_helpers.models import AggregateRoot
 from eventsourcing_helpers.repository import Repository, import_backend
@@ -11,7 +11,6 @@ BACKENDS = {'foo': backend_cls}
 BACKENDS_PACKAGE = 'eventsourcing_helpers.repository.backends'
 
 
-@patch('eventsourcing_helpers.repository.BACKENDS', BACKENDS)
 class RepositoryTests:
 
     def setup_method(self):
@@ -20,7 +19,7 @@ class RepositoryTests:
         backend_cls.reset_mock()
 
         self.importer = Mock(return_value=backend_cls)
-        self.backend = 'foo'
+        self.backend = f'{BACKENDS_PACKAGE}.backend_cls'
         self.config = {
             'backend_config': {'foo': 'bar'},
             'backend': self.backend
@@ -37,9 +36,8 @@ class RepositoryTests:
         the repository.
         """
         self.repository(self.config, self.importer)
-        self.importer.assert_called_once_with(
-            BACKENDS_PACKAGE, BACKENDS[self.backend]
-        )
+        self.importer.assert_called_once_with(self.backend)
+
         expected_config = self.config['backend_config']
         self.importer.return_value.assert_called_once_with(expected_config)
 
@@ -70,5 +68,5 @@ class ImporterTests:
         """
         Test that we import the correct backend class.
         """
-        backend_cls = import_backend(BACKENDS_PACKAGE, 'kafka.KafkaAvroBackend')
+        backend_cls = import_backend(f'{BACKENDS_PACKAGE}.kafka.KafkaAvroBackend')
         assert backend_cls == KafkaAvroBackend
