@@ -80,7 +80,7 @@ class ESCommandHandlerTests:
 
     def test_handle_command_by_function(self):
         """
-        Test that the correct command handler is invoked using a function.
+        Test that the correct command handler is invoked using a class function.
         """
         self.handler.handlers = {command_class: self.aggregate_root.foo_method}
         self.handler._handle_command(command, handler_inst=self.aggregate_root)
