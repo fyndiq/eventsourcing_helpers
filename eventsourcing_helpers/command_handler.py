@@ -13,8 +13,8 @@ class CommandHandler:
     """
     Command handler.
 
-    Handles a command by calling the correct function or method
-    in a handler class.
+    Handles a command by calling the correct function or method in a handler
+    class.
     """
     handlers: dict = {}
 
@@ -39,23 +39,29 @@ class CommandHandler:
 
         return True
 
-    def _handle_command(self, command: Any, handler_class: Any = None) -> None:
+    def _handle_command(self, command: Any, handler_inst: Any=None) -> None:
         """
         Get and call the correct command handler.
 
-        The handler can either be a callable or a name of a method
-        in the handler class.
+        The handler can either be a callable or a name of a method in the
+        handler instance.
 
         Args:
             command: Command to be handled.
-            handler_class: Optional class with handler methods.
+            handler_inst: Optional handler instance - probably an instance
+                of the aggregate root.
         """
         command_class = command._class
         handler = self.handlers[command_class]
+
         logger.info("Calling command handler", command_class=command_class)
         if not callable(handler):
-            handler = getattr(handler_class, handler)
-        handler(command)
+            assert handler_inst, "You must pass a handler instance"
+            handler = getattr(handler_inst, handler)
+        elif handler_inst:
+            handler(handler_inst, command)
+        else:
+            handler(command)
 
     def handle(self, message: dict) -> None:
         """
@@ -76,9 +82,11 @@ class ESCommandHandler(CommandHandler):
     """
     Event sourced command handler.
 
-    Unlike the command handler we expect an aggregate root to handle all
-    the commands. The resulting staged events are published to a message
-    bus and persisted in an event store using a repository.
+    Unlike the command handler we expect an aggregate root to handle all the
+    commands.
+
+    The resulting staged events are published to a message bus and persisted in
+    an event store using a repository.
     """
     aggregate_root: AggregateRoot = None
     repository_config: dict = None
@@ -108,8 +116,7 @@ class ESCommandHandler(CommandHandler):
 
     def _get_aggregate_root(self, guid: str) -> AggregateRoot:
         """
-        Get latest state of the aggregate root or return an
-        empty instance.
+        Get latest state of the aggregate root or return an empty instance.
 
         Args:
             guid: Guid of the aggregate root.
@@ -136,8 +143,8 @@ class ESCommandHandler(CommandHandler):
         """
         Apply correct handler for the received command.
 
-        After the command has been handled the staged
-        events are committed to the repository.
+        After the command has been handled the staged events are committed to
+        the repository.
 
         Args:
             message: Consumed message from the bus.
@@ -149,5 +156,5 @@ class ESCommandHandler(CommandHandler):
         logger.info("Handling command", command_class=command._class)
 
         aggregate_root = self._get_aggregate_root(command.guid)
-        self._handle_command(command, handler_class=aggregate_root)
+        self._handle_command(command, handler_inst=aggregate_root)
         self._commit_staged_events(aggregate_root)

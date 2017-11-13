@@ -25,6 +25,7 @@ class ESCommandHandlerTests:
 
     def setup_method(self):
         self.aggregate_root = Mock()
+        self.aggregate_root.foo_method = Mock()
 
         config = {'return_value.load.return_value': events}
         self.repository = Mock()
@@ -57,7 +58,7 @@ class ESCommandHandlerTests:
         mock_can_handle.assert_called_once_with(message)
         mock_get.assert_called_once_with(command.guid)
         mock_handle.assert_called_once_with(
-            command, handler_class=self.aggregate_root
+            command, handler_inst=self.aggregate_root
         )
         mock_commit.assert_called_once_with(self.aggregate_root)
 
@@ -70,11 +71,19 @@ class ESCommandHandlerTests:
             self.aggregate_root
         )
 
-    def test_handle_command(self):
+    def test_handle_command_by_str(self):
         """
-        Test that the correct command handler is invoked.
+        Test that the correct command handler is invoked using a str.
         """
-        self.handler._handle_command(command, handler_class=self.aggregate_root)
+        self.handler._handle_command(command, handler_inst=self.aggregate_root)
+        self.aggregate_root.foo_method.called_once_with(command)
+
+    def test_handle_command_by_function(self):
+        """
+        Test that the correct command handler is invoked using a class function.
+        """
+        self.handler.handlers = {command_class: self.aggregate_root.foo_method}
+        self.handler._handle_command(command, handler_inst=self.aggregate_root)
         self.aggregate_root.foo_method.called_once_with(command)
 
     @patch(f'{module}.ESCommandHandler._get_events')
@@ -127,7 +136,6 @@ class CommandHandlerTests:
         Test that the correct methods are invoked when handling a command.
         """
         mock_can_handle.return_value = True
-
         self.handler.handle(message)
 
         message_deserializer.assert_called_once_with(message)
