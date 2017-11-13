@@ -13,8 +13,8 @@ class CommandHandler:
     """
     Command handler.
 
-    Handles a command by calling the correct function or method
-    in a handler class.
+    Handles a command by calling the correct function or method in a handler
+    class.
     """
     handlers: dict = {}
 
@@ -39,12 +39,12 @@ class CommandHandler:
 
         return True
 
-    def _handle_command(self, command: Any, handler_class: Any = None) -> None:
+    def _handle_command(self, command: Any, handler_class: Any=None) -> None:
         """
         Get and call the correct command handler.
 
-        The handler can either be a callable or a name of a method
-        in the handler class.
+        The handler can either be a callable or a name of a method in the
+        handler class.
 
         Args:
             command: Command to be handled.
@@ -76,9 +76,11 @@ class ESCommandHandler(CommandHandler):
     """
     Event sourced command handler.
 
-    Unlike the command handler we expect an aggregate root to handle all
-    the commands. The resulting staged events are published to a message
-    bus and persisted in an event store using a repository.
+    Unlike the command handler we expect an aggregate root to handle all the
+    commands.
+
+    The resulting staged events are published to a message bus and persisted in
+    an event store using a repository.
     """
     aggregate_root: AggregateRoot = None
     repository_config: dict = None
@@ -108,8 +110,7 @@ class ESCommandHandler(CommandHandler):
 
     def _get_aggregate_root(self, guid: str) -> AggregateRoot:
         """
-        Get latest state of the aggregate root or return an
-        empty instance.
+        Get latest state of the aggregate root or return an empty instance.
 
         Args:
             guid: Guid of the aggregate root.
@@ -136,8 +137,8 @@ class ESCommandHandler(CommandHandler):
         """
         Apply correct handler for the received command.
 
-        After the command has been handled the staged
-        events are committed to the repository.
+        After the command has been handled the staged events are committed to
+        the repository.
 
         Args:
             message: Consumed message from the bus.
