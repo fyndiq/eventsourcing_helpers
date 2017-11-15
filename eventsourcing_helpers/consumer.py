@@ -4,7 +4,7 @@ from eventsourcing_helpers.handler import Handler
 
 
 class Consumer:
-    def __init__(self, messagebus: MessageBus, handler: Handler):
+    def __init__(self, messagebus: MessageBus, handler: Handler) -> None:
         self._messagebus = messagebus
         self._handler = handler
 
