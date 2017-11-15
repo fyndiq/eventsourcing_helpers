@@ -3,20 +3,15 @@ from typing import Any
 import structlog
 
 from eventsourcing_helpers.serializers import from_message_to_dto
+from .handler import Handler
 
 logger = structlog.get_logger(__name__)
 
 
-class EventHandler:
+class EventHandler(Handler):
     """
     Application service that calls the correct domain handler for an event.
     """
-    handlers: dict = {}
-
-    def __init__(self, message_deserializer=from_message_to_dto) -> None:
-        assert self.handlers
-
-        self.message_deserializer = message_deserializer
 
     def _can_handle_command(self, message: dict) -> bool:
         """
