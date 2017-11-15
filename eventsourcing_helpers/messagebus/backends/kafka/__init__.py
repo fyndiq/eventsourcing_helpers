@@ -12,15 +12,19 @@ from eventsourcing_helpers.serializers import to_message_from_dto
 
 class KafkaAvroBackend(MessageBusBackend):
 
-    def __init__(self, config: dict, producer: AvroProducer=AvroProducer,
+    def __init__(self, config: dict,
+                 handler: Callable=None,
+                 producer: AvroProducer=AvroProducer,
                  consumer: AvroConsumer=AvroConsumer,
                  value_serializer: Callable=to_message_from_dto,
                  get_producer_config: Callable=get_producer_config,
                  get_consumer_config: Callable=get_consumer_config) -> None:  # yapf: disable
+        self.handler = handler
+        self.consumer, self.producer = None, None
+
         producer_config = get_producer_config(config)
         consumer_config = get_consumer_config(config)
 
-        self.consumer, self.producer = None, None
         if consumer_config:
             self.consumer = partial(consumer, config=consumer_config)
         if producer_config:
@@ -32,7 +36,7 @@ class KafkaAvroBackend(MessageBusBackend):
     def produce(self, value: dict, key: str=None, topic: str=None,
                 **kwargs) -> None:  # yapf:disable
         assert self.producer is not None, "Producer is not configured"
-        # produce message to a topic.
+        # produce a message to a topic.
         #
         # this is an asynchronous operation, an application may use the
         # callback argument to pass a function that will be called from poll()
@@ -56,12 +60,13 @@ class KafkaAvroBackend(MessageBusBackend):
         assert self.consumer is not None, "Consumer is not configured"
         return self.consumer
 
-    def consume(self, handler_callback: Callable) -> None:
-        Consumer = self.get_consumer()
+    def consume(self) -> None:
+        assert self.handler is not None, "You must set a handler"
 
+        Consumer = self.get_consumer()
         with Consumer() as consumer:
             for message in consumer:
                 if message:
-                    handler_callback(message.value())
+                    self.handler(message.value())
                     if consumer.is_auto_commit is False:
                         consumer.commit()
