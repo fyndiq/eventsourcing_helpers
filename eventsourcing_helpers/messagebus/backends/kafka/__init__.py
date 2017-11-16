@@ -59,7 +59,7 @@ class KafkaAvroBackend(MessageBusBackend):
         return self.consumer
 
     def consume(self, handler: Callable) -> None:
-        assert handler is Callable, "You must set a handler"
+        assert isinstance(handler, Callable), "You must set a handler"
 
         Consumer = self.get_consumer()
         with Consumer() as consumer:
