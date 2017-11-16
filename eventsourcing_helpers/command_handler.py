@@ -2,10 +2,10 @@ from typing import Any, Callable, List
 
 import structlog
 
+from eventsourcing_helpers.handler import Handler
 from eventsourcing_helpers.models import AggregateRoot
 from eventsourcing_helpers.repository import Repository
 from eventsourcing_helpers.serializers import from_message_to_dto
-from .handler import Handler
 
 logger = structlog.get_logger(__name__)
 
