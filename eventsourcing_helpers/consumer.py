@@ -12,4 +12,7 @@ class Consumer:
         self._handler = handler
 
     def consume(self):
-        return self._messagebus.consume(handler=self._handler)
+        """
+        Consumes and handles messages from the bus.
+        """
+        return self._messagebus.consume(handler=self._handler.handle)
