@@ -2,6 +2,7 @@ from typing import Any, Callable, List
 
 import structlog
 
+from eventsourcing_helpers.handler import Handler
 from eventsourcing_helpers.models import AggregateRoot
 from eventsourcing_helpers.repository import Repository
 from eventsourcing_helpers.serializers import from_message_to_dto
@@ -9,19 +10,13 @@ from eventsourcing_helpers.serializers import from_message_to_dto
 logger = structlog.get_logger(__name__)
 
 
-class CommandHandler:
+class CommandHandler(Handler):
     """
     Command handler.
 
     Handles a command by calling the correct function or method in a handler
     class.
     """
-    handlers: dict = {}
-
-    def __init__(self, message_deserializer: Callable=
-                 from_message_to_dto) -> None:  # yapf: disable
-        assert self.handlers
-        self.message_deserializer = message_deserializer
 
     def _can_handle_command(self, message: dict) -> bool:
         """

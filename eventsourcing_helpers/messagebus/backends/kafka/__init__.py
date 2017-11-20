@@ -13,13 +13,11 @@ from eventsourcing_helpers.serializers import to_message_from_dto
 class KafkaAvroBackend(MessageBusBackend):
 
     def __init__(self, config: dict,
-                 handler: Callable=None,
                  producer: AvroProducer=AvroProducer,
                  consumer: AvroConsumer=AvroConsumer,
                  value_serializer: Callable=to_message_from_dto,
                  get_producer_config: Callable=get_producer_config,
                  get_consumer_config: Callable=get_consumer_config) -> None:  # yapf: disable
-        self.handler = handler
         self.consumer, self.producer = None, None
 
         producer_config = get_producer_config(config)
@@ -60,13 +58,13 @@ class KafkaAvroBackend(MessageBusBackend):
         assert self.consumer is not None, "Consumer is not configured"
         return self.consumer
 
-    def consume(self) -> None:
-        assert self.handler is not None, "You must set a handler"
+    def consume(self, handler: Callable) -> None:
+        assert callable(handler), "You must set a handler"
 
         Consumer = self.get_consumer()
         with Consumer() as consumer:
             for message in consumer:
                 if message:
-                    self.handler(message.value())
+                    handler(message.value())
                     if consumer.is_auto_commit is False:
                         consumer.commit()
