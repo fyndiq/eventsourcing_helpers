@@ -15,6 +15,9 @@ class Message:
         filtered = {k: v for k, v in items if v is not None}
         return filtered
 
+    def __eq__(self, other) -> bool:
+        return self.__dict__ == other.__dict__
+
     def __repr__(self) -> str:
         return repr(self.message)
 
