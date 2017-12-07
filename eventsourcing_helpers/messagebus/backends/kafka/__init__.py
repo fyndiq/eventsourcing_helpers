@@ -1,3 +1,4 @@
+import datetime
 from functools import partial
 from typing import Callable
 
@@ -65,6 +66,16 @@ class KafkaAvroBackend(MessageBusBackend):
         with Consumer() as consumer:
             for message in consumer:
                 if message:
-                    handler(message.value())
+                    message_data = message.value()
+                    # ignore index 0 for the timestamp
+                    message_timestamp = message.timestamp()[1]
+                    datetime_timestamp = datetime.datetime.fromtimestamp(
+                        message_timestamp / 1000.0
+                    )
+                    message_data['_meta'] = {
+                        'timestamp': message_timestamp,
+                        'datetime': datetime_timestamp
+                    }
+                    handler(message_data)
                     if consumer.is_auto_commit is False:
                         consumer.commit()
