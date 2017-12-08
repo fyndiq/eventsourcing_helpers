@@ -19,7 +19,7 @@ class Entity:
     _events: List[Any] = []
 
     def __init__(self) -> None:
-        self.guid: bool = None
+        self.id: bool = None
         self._version: int = 0
 
     def __call__(self, *args, **kwargs):
@@ -59,7 +59,7 @@ class Entity:
             is_new: Flag to indicate if the event should be staged.
         """
         log = logger.bind(
-            guid=event.guid, event_class=event._class,
+            id=event.id, event_class=event._class,
             entity_class=entity._class
         )
         try:
@@ -110,9 +110,9 @@ class Entity:
         """
         return chain([self], self._get_child_entities())
 
-    def _get_entity(self, guid: str) -> 'Entity':
+    def _get_entity(self, id: str) -> 'Entity':
         """
-        Find and return an entity instance with the given guid.
+        Find and return an entity instance with the given id.
 
         If no entity are found we return the current instance.
         This is a normal situation when an child entity has not yet
@@ -123,13 +123,13 @@ class Entity:
         parent, not aggregate root.
 
         Args:
-            guid: The guid of the entity.
+            id: The id of the entity.
 
         Returns:
             Entity: Found entity or current instance.
         """
         entities = self._get_all_entities()
-        return next((e for e in entities if e.guid == guid), self)
+        return next((e for e in entities if e.id == id), self)
 
     def _get_apply_method_name(self, event_class: str) -> str:
         """
@@ -143,7 +143,7 @@ class Entity:
             str: Name of the apply method.
 
         Example:
-            >>> event = FooEvent(guid=1)
+            >>> event = FooEvent(id=1)
             >>> Entity._get_apply_method_name(event._class)
             'apply_foo_event'
         """
@@ -153,9 +153,9 @@ class Entity:
 
         return apply_method_name
 
-    def create_guid(self) -> str:
+    def create_id(self) -> str:
         """
-        Returns an unique guid as a string.
+        Returns an unique id as a string.
         """
         return str(uuid.uuid4())
 
@@ -189,7 +189,7 @@ class Entity:
                 (haven't yet been committed).
         """
         apply_method_name = self._get_apply_method_name(event._class)
-        entity = self._get_entity(event.guid)
+        entity = self._get_entity(event.id)
 
         self._apply_event(event, entity, apply_method_name, is_new)
 

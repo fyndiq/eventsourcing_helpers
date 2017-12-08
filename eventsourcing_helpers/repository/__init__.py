@@ -45,24 +45,24 @@ class Repository:
             aggregate_root: Aggregate root to commit.
         """
         assert isinstance(aggregate_root, AggregateRoot)
-        guid, events = aggregate_root.guid, aggregate_root._events
+        id, events = aggregate_root.id, aggregate_root._events
 
         if events:
-            assert guid, "The guid must be set on the aggregate root"
+            assert id, "The id must be set on the aggregate root"
             logger.info("Committing staged events to repository")
-            self.backend.commit(guid=guid, events=events, **kwargs)
+            self.backend.commit(id=id, events=events, **kwargs)
             aggregate_root.clear_staged_events()
 
-    def load(self, guid: str, **kwargs) -> list:
+    def load(self, id: str, **kwargs) -> list:
         """
         Load events from the repository.
 
         Args:
-            guid: Aggregate root guid to load.
+            id: Aggregate root id to load.
 
         Returns:
             list: Loaded events.
         """
-        events = self.backend.load(guid, **kwargs)
+        events = self.backend.load(id, **kwargs)
 
         return events

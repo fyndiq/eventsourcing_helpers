@@ -27,12 +27,12 @@ class KafkaAvroBackend(RepositoryBackend):
         if loader_config:
             self.loader = loader(loader_config)
 
-    def commit(self, guid: str, events: list, **kwargs) -> None:
+    def commit(self, id: str, events: list, **kwargs) -> None:
         """
         Commit events to Kafka.
 
         Args:
-            guid: Aggregate root guid to be used as key in the message.
+            id: Aggregate root id to be used as key in the message.
             events: List of staged events to be committed.
         """
         assert self.producer is not None, "Producer is not configured"
@@ -41,17 +41,17 @@ class KafkaAvroBackend(RepositoryBackend):
         # right now there is a potential risk that one of the produce's
         # fails and leaving the aggregate in an invalid state.
         for event in events:
-            self.producer.produce(key=guid, value=event, **kwargs)
+            self.producer.produce(key=id, value=event, **kwargs)
 
-    def load(self, guid: str, **kwargs) -> list:
+    def load(self, id: str, **kwargs) -> list:
         """
         Load events from Kafka.
 
         Args:
-            guid: Aggregate root guid to load.
+            id: Aggregate root id to load.
 
         Returns:
             list: Loaded events.
         """
         assert self.loader is not None, "Loader is not configured"
-        return self.loader.load(guid, **kwargs)
+        return self.loader.load(id, **kwargs)
