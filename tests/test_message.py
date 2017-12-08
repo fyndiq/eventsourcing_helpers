@@ -8,7 +8,7 @@ from eventsourcing_helpers.message import message_factory, Message
 class MessageTests:
 
     def setup_method(self):
-        self.data = {'guid': 1, 'foo': 'bar', 'baz': None}
+        self.data = {'id': 1, 'foo': 'bar', 'baz': None}
         fields = [(k, None) for k in self.data.keys()]
         self.namedtuple = NamedTuple('FooEvent', fields)
         self.message = message_factory(self.namedtuple)(**self.data)
@@ -24,7 +24,7 @@ class MessageTests:
         """
         Test that attribute lookups are redirected to the namedtuple.
         """
-        assert self.message.guid == self.data['guid']
+        assert self.message.id == self.data['id']
         assert self.message.foo == self.data['foo']
 
     def test_to_dict(self):
@@ -45,4 +45,4 @@ class MessageTests:
         Test that we can't mutate the state of a message.
         """
         with pytest.raises(AttributeError):
-            self.message.guid = 2
+            self.message.id = 2

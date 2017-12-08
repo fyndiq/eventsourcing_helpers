@@ -14,7 +14,7 @@ BACKENDS_PACKAGE = 'eventsourcing_helpers.repository.backends'
 class RepositoryTests:
 
     def setup_method(self):
-        self.guid, self.events = 1, [1, 2, 3]
+        self.id, self.events = 1, [1, 2, 3]
         backend_cls.return_value.load.return_value = self.events
         backend_cls.reset_mock()
 
@@ -25,7 +25,7 @@ class RepositoryTests:
             'backend': self.backend
         }
         self.aggregate_root = Mock(spec=AggregateRoot)
-        self.aggregate_root.guid = self.guid
+        self.aggregate_root.id = self.id
         self.aggregate_root._events = self.events
 
         self.repository = Repository
@@ -48,7 +48,7 @@ class RepositoryTests:
         repository = self.repository(self.config, self.importer)
         repository.commit(self.aggregate_root)
 
-        expected_args = {'guid': self.guid, 'events': self.events}
+        expected_args = {'id': self.id, 'events': self.events}
         backend_cls.return_value.commit.assert_called_once_with(**expected_args)
 
     def test_load(self):
@@ -56,9 +56,9 @@ class RepositoryTests:
         Test that the backend's load method is invoked correctly.
         """
         repository = self.repository(self.config, self.importer)
-        events = repository.load(self.aggregate_root.guid)
+        events = repository.load(self.aggregate_root.id)
 
-        backend_cls.return_value.load.assert_called_once_with(self.guid)
+        backend_cls.return_value.load.assert_called_once_with(self.id)
         assert events == self.events
 
 
