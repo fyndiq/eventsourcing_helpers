@@ -46,13 +46,13 @@ def message_factory(message: NamedTuple) -> type:
     Example:
         >>> @Event
         ... class OrderCreated(NamedTuple):
-        ...     guid: str
+        ...     id: str
         ...     state: str
-        >>> event = OrderCreated(guid='1', state='open')
-        >>> event.guid, event.state, event._class
+        >>> event = OrderCreated(id='1', state='open')
+        >>> event.id, event.state, event._class
         ('1', 'open', 'OrderCreated')
         >>> event.to_dict()
-        {'guid': '1', 'state': 'open'}
+        {'id': '1', 'state': 'open'}
         >>> isinstance(event, Message)
         True
     """

@@ -8,12 +8,12 @@ module = 'eventsourcing_helpers.event_handler'
 class EventHandlerTests:
 
     def setup_method(self):
-        self.event_class, self.guid = 'FooEvent', 1
-        self.message = {'class': self.event_class, 'data': {'guid': self.guid}}
+        self.event_class, self.id = 'FooEvent', 1
+        self.message = {'class': self.event_class, 'data': {'id': self.id}}
 
         self.event = Mock()
         self.event._class = self.event_class
-        self.event.guid = self.guid
+        self.event.id = self.id
 
         self.message_deserializer = Mock()
         self.message_deserializer.return_value = self.event

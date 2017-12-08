@@ -24,10 +24,10 @@ class SerializerTests:
         """
         Test that we can serialize a DTO to a message.
         """
-        fields = [('guid', None)]
+        fields = [('id', None)]
         FooEvent = message_factory(NamedTuple('FooEvent', fields))
-        dto = FooEvent(guid=1)
+        dto = FooEvent(id=1)
         message = to_message_from_dto(dto)
 
         assert message['class'] == 'FooEvent'
-        assert message['data']['guid'] == 1
+        assert message['data']['id'] == 1

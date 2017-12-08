@@ -13,7 +13,7 @@ class KafkaBackendTests:
         self.config = {'producer': {'foo': 'bar'}, 'loader': {'foo': 'bar'}}
         self.get_producer_config = Mock(return_value=self.config['producer'])
         self.get_loader_config = Mock(return_value=self.config['loader'])
-        self.guid, self.events = 1, [1, 2, 3]
+        self.id, self.events = 1, [1, 2, 3]
         self.backend = partial(
             KafkaAvroBackend, self.config, self.producer, self.loader,
             self.value_serializer, self.get_producer_config,
@@ -37,9 +37,9 @@ class KafkaBackendTests:
         Test that the produce method are invoked correctly.
         """
         backend = self.backend()
-        backend.commit(self.guid, self.events)
+        backend.commit(self.id, self.events)
 
-        expected = [({'key': self.guid, 'value': e}, ) for e in self.events]
+        expected = [({'key': self.id, 'value': e}, ) for e in self.events]
         assert self.producer.return_value.produce.call_args_list == expected
         assert self.producer.return_value.produce.call_count == len(self.events)
 
@@ -48,5 +48,5 @@ class KafkaBackendTests:
         Test that the load method are invoked correctly.
         """
         backend = self.backend()
-        backend.load(self.guid)
-        self.loader.return_value.load.assert_called_once_with(self.guid)
+        backend.load(self.id)
+        self.loader.return_value.load.assert_called_once_with(self.id)

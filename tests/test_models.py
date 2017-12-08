@@ -32,7 +32,7 @@ class EntityTests:
         self.entity = Bar()
         self.event = Mock()
         self.event._class = 'FooEvent'
-        self.event.guid = 1
+        self.event.id = 1
 
     @patch('eventsourcing_helpers.models.Entity._get_apply_method_name')
     @patch('eventsourcing_helpers.models.Entity._get_entity')
@@ -47,7 +47,7 @@ class EntityTests:
         self.aggregate_root.apply_event(self.event)
 
         mock_apply.called_once_with(self.event.__class__.__name__)
-        mock_entity.called_once_with(self.event.guid)
+        mock_entity.called_once_with(self.event.id)
         mock_event.called_once_with(
             self.event, self.aggregate_root, 'apply_foo_event', is_new
         )
@@ -77,14 +77,14 @@ class EntityTests:
         assert len(self.aggregate_root._events) == 0
         assert len(self.entity._events) == 0
 
-    def test_create_guid(self):
+    def test_create_id(self):
         """
-        Test that the returned guid is a string and with correct length.
+        Test that the returned id is a string and with correct length.
         """
-        guid = self.entity.create_guid()
+        id = self.entity.create_id()
 
-        assert isinstance(guid, str)
-        assert len(guid) == 36
+        assert isinstance(id, str)
+        assert len(id) == 36
 
     def test_get_apply_method_name(self):
         """
@@ -98,17 +98,17 @@ class EntityTests:
         """
         Test that the correct entity is returned.
         """
-        self.aggregate_root.guid = 1
-        self.entity.guid = 2
+        self.aggregate_root.id = 1
+        self.entity.id = 2
 
         entities = [self.aggregate_root, self.entity]
         mock_entities.return_value = entities
-        entity = self.aggregate_root._get_entity(self.entity.guid)
+        entity = self.aggregate_root._get_entity(self.entity.id)
         assert entity == self.entity
 
         entities.pop()
         mock_entities.return_value = entities
-        entity = self.aggregate_root._get_entity(self.entity.guid)
+        entity = self.aggregate_root._get_entity(self.entity.id)
         assert entity == self.aggregate_root
 
     @patch('eventsourcing_helpers.models.Entity._get_child_entities')

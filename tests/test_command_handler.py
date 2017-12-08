@@ -6,13 +6,13 @@ from eventsourcing_helpers.command_handler import (
 
 module = 'eventsourcing_helpers.command_handler'
 
-command_class, guid = 'FooCommand', '1'
-message = {'class': command_class, 'data': {'guid': guid}}
+command_class, id = 'FooCommand', '1'
+message = {'class': command_class, 'data': {'id': id}}
 events = [1, 2, 3]
 
 command = Mock()
 command._class = command_class
-command.guid = guid
+command.id = id
 
 message_deserializer = Mock()
 message_deserializer.return_value = command
@@ -56,7 +56,7 @@ class ESCommandHandlerTests:
 
         message_deserializer.assert_called_once_with(message)
         mock_can_handle.assert_called_once_with(message)
-        mock_get.assert_called_once_with(command.guid)
+        mock_get.assert_called_once_with(command.id)
         mock_handle.assert_called_once_with(
             command, handler_inst=self.aggregate_root
         )
@@ -93,10 +93,10 @@ class ESCommandHandlerTests:
         methods are invoked.
         """
         mock_get_events.return_value = events
-        aggregate_root = self.handler._get_aggregate_root(command.guid)
+        aggregate_root = self.handler._get_aggregate_root(command.id)
 
         self.aggregate_root.return_value == aggregate_root
-        mock_get_events.assert_called_once_with(command.guid)
+        mock_get_events.assert_called_once_with(command.id)
         self.aggregate_root.apply_events.called_once_with(events)
 
     def test_get_events(self):
@@ -105,10 +105,10 @@ class ESCommandHandlerTests:
         are invoked.
         """
         message_deserializer.side_effect = lambda m: m
-        _events = self.handler._get_events(command.guid)
+        _events = self.handler._get_events(command.id)
 
         assert events == _events
-        self.repository.return_value.load.assert_called_once_with(command.guid)
+        self.repository.return_value.load.assert_called_once_with(command.id)
         assert message_deserializer.call_count == len(events)
 
         message_deserializer.side_effect = None
