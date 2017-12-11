@@ -28,6 +28,7 @@ def from_message_to_dto(message: dict) -> Message:
         OrderCompleted(order_id='UA123', date='2017-09-08')
     """
     data, class_name = message['data'], message['class']
+    data['meta_data'] = message.get('_meta', {})
     fields = [(k, None) for k in data.keys()]
 
     cls = NamedTuple(class_name, fields)  # type: ignore
