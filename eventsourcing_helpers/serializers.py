@@ -3,7 +3,7 @@ from typing import NamedTuple
 from eventsourcing_helpers.message import Message, message_factory
 
 
-def from_message_to_dto(message: dict) -> Message:
+def from_message_to_dto(message) -> Message:
     """
     Deserialize a message to a data transfer object (DTO).
 
