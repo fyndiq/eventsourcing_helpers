@@ -25,7 +25,7 @@ class MessageBus:
         backend_path = config.get('backend', BACKENDS[self.DEFAULT_BACKEND])
         assert 'backend_config' in config, "You must pass a backend config"
         backend_config = config.get('backend_config')
-        backend_config['api.version.request'] = True  # always force this True
+
         logger.debug("Using message bus backend", backend=backend_path,
                      config=backend_config)
         backend_class = importer(backend_path)
