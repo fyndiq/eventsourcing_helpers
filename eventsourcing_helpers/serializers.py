@@ -1,9 +1,10 @@
 from typing import NamedTuple
 
 from eventsourcing_helpers.message import Message, message_factory
+from confluent_kafka_helpers.message import Message as ConfluentMessage
 
 
-def from_message_to_dto(message) -> Message:
+def from_message_to_dto(message: ConfluentMessage) -> Message:
     """
     Deserialize a message to a data transfer object (DTO).
 
