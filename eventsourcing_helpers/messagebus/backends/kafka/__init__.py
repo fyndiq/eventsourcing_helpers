@@ -1,5 +1,8 @@
+import time
 from functools import partial
 from typing import Callable
+
+import structlog
 
 from confluent_kafka_helpers.consumer import AvroConsumer
 from confluent_kafka_helpers.producer import AvroProducer
@@ -8,6 +11,8 @@ from eventsourcing_helpers.messagebus.backends import MessageBusBackend
 from eventsourcing_helpers.messagebus.backends.kafka.config import (
     get_consumer_config, get_producer_config)
 from eventsourcing_helpers.serializers import to_message_from_dto
+
+logger = structlog.get_logger(__name__)
 
 
 class KafkaAvroBackend(MessageBusBackend):
@@ -60,11 +65,13 @@ class KafkaAvroBackend(MessageBusBackend):
 
     def consume(self, handler: Callable) -> None:
         assert callable(handler), "You must set a handler"
-
         Consumer = self.get_consumer()
         with Consumer() as consumer:
             for message in consumer:
                 if message:
+                    start_time = time.time()
                     handler(message.value())
                     if consumer.is_auto_commit is False:
                         consumer.commit()
+                    end_time = time.time() - start_time
+                    logger.debug(f"Message processed in {end_time:.5f}s")
