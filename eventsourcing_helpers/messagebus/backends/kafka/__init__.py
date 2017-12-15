@@ -2,17 +2,16 @@ import time
 from functools import partial
 from typing import Callable
 
-import structlog
-
 from confluent_kafka_helpers.consumer import AvroConsumer
 from confluent_kafka_helpers.producer import AvroProducer
 
+from eventsourcing_helpers.log import get_logger
 from eventsourcing_helpers.messagebus.backends import MessageBusBackend
 from eventsourcing_helpers.messagebus.backends.kafka.config import (
     get_consumer_config, get_producer_config)
 from eventsourcing_helpers.serializers import to_message_from_dto
 
-logger = structlog.get_logger(__name__)
+logger = get_logger(__name__)
 
 
 class KafkaAvroBackend(MessageBusBackend):

@@ -1,10 +1,9 @@
 from typing import Any
 
-import structlog
-
 from eventsourcing_helpers.handler import Handler
+from eventsourcing_helpers.log import get_logger
 
-logger = structlog.get_logger(__name__)
+logger = get_logger(__name__)
 
 
 class EventHandler(Handler):

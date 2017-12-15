@@ -1,7 +1,6 @@
 from typing import Callable
 
-import structlog
-
+from eventsourcing_helpers.log import get_logger
 from eventsourcing_helpers.models import AggregateRoot
 from eventsourcing_helpers.utils import import_backend
 
@@ -10,7 +9,7 @@ BACKENDS = {
 }
 
 
-logger = structlog.get_logger(__name__)
+logger = get_logger(__name__)
 
 
 class Repository:
