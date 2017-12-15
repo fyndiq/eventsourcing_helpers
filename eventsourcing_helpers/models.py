@@ -3,10 +3,10 @@ import uuid
 from itertools import chain
 from typing import Any, Callable, Iterator, List
 
-import structlog
+from eventsourcing_helpers.log import get_logger
 
 word_regexp = re.compile('[A-Z][^A-Z]*')
-logger = structlog.get_logger(__name__)
+logger = get_logger(__name__)
 
 
 class Entity:
@@ -47,8 +47,9 @@ class Entity:
         """
         return getattr(entity, method_name)
 
+    @profile
     def _apply_event(self, event: Any, entity: 'Entity', method_name,
-                     is_new) -> None:
+                     is_new) -> None:  # yapf: disable
         """
         Apply an event on one entity.
 
@@ -58,17 +59,20 @@ class Entity:
             method_name: Apply method on the entity.
             is_new: Flag to indicate if the event should be staged.
         """
-        log = logger.bind(
-            id=event.id, event_class=event._class,
-            entity_class=entity._class
-        )
         try:
             apply_method = self._get_apply_method(entity, method_name)
             # TODO: apply the event in the aggregate root if it's defined.
         except AttributeError:
-            log.error("Missing event apply method", method=method_name)
+            logger.error(
+                "Missing event apply method", method=method_name, id=event.id,
+                event_class=event._class, entity_class=entity._class
+            )
         else:
-            log.info("Applying event", is_new=is_new)
+            logger.debug(
+                "Applying event", is_new=is_new, method=method_name,
+                id=event.id, event_class=event._class,
+                entity_class=entity._class
+            )
             apply_method(event)
             self._stage_event(event, is_new)
 
@@ -110,6 +114,7 @@ class Entity:
         """
         return chain([self], self._get_child_entities())
 
+    @profile
     def _get_entity(self, id: str) -> 'Entity':
         """
         Find and return an entity instance with the given id.
@@ -131,6 +136,7 @@ class Entity:
         entities = self._get_all_entities()
         return next((e for e in entities if e.id == id), self)
 
+    @profile
     def _get_apply_method_name(self, event_class: str) -> str:
         """
         Gets the apply method name for a given event.
@@ -166,6 +172,7 @@ class Entity:
         logger.info("Clearing staged events")
         Entity._events = []
 
+    @profile
     def apply_events(self, events: List[Any]) -> None:
         """
         Apply multiple events.
@@ -177,7 +184,8 @@ class Entity:
         for event in events:
             self.apply_event(event, is_new=False)
 
-    def apply_event(self, event: Any, is_new: bool=True) -> None:
+    @profile
+    def apply_event(self, event: Any, is_new: bool = True) -> None:
         """
         Applies an event by calling the correct entity apply method.
 
@@ -199,6 +207,7 @@ class EntityDict(dict):
     A collection of domain entities implemented as a dict to allow
     fast lookup by a key.
     """
+
     def __repr__(self) -> str:
         return f"{self._class}({self.values()})"
 
