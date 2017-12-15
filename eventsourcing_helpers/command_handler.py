@@ -94,6 +94,7 @@ class ESCommandHandler(CommandHandler):
 
         self.repository = repository(self.repository_config, **kwargs)
 
+    @profile
     def _get_events(self, id: str) -> List[Any]:
         """
         Get all events for an aggregate root from the repository.
@@ -109,6 +110,7 @@ class ESCommandHandler(CommandHandler):
 
         return events
 
+    @profile
     def _get_aggregate_root(self, id: str) -> AggregateRoot:
         """
         Get latest state of the aggregate root or return an empty instance.
@@ -134,6 +136,7 @@ class ESCommandHandler(CommandHandler):
         """
         self.repository.commit(aggregate_root)
 
+    @profile
     def handle(self, message: dict) -> None:
         """
         Apply correct handler for the received command.
