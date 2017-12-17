@@ -60,7 +60,7 @@ class EntityTests:
         num_events = 4
         events = [None] * num_events
 
-        self.aggregate_root.apply_events(events)
+        self.aggregate_root._apply_events(events)
         assert mock_apply.call_count == num_events
 
     def test_clear_events(self):
@@ -72,7 +72,7 @@ class EntityTests:
         self.entity._events.append(self.event)
 
         assert len(self.aggregate_root._events) == 2
-        self.aggregate_root.clear_staged_events()
+        self.aggregate_root._clear_staged_events()
 
         assert len(self.aggregate_root._events) == 0
         assert len(self.entity._events) == 0
