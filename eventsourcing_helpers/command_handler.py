@@ -1,4 +1,4 @@
-from typing import Any, Callable, List
+from typing import Any, Callable, Generator
 
 import structlog
 
@@ -34,7 +34,7 @@ class CommandHandler(Handler):
 
         return True
 
-    def _handle_command(self, command: Any, handler_inst: Any=None) -> None:
+    def _handle_command(self, command: Any, handler_inst: Any = None) -> None:
         """
         Get and call the correct command handler.
 
@@ -94,8 +94,7 @@ class ESCommandHandler(CommandHandler):
 
         self.repository = repository(self.repository_config, **kwargs)
 
-    @profile
-    def _get_events(self, id: str) -> List[Any]:
+    def _get_events(self, id: str) -> Generator[Any, None, None]:
         """
         Get all events for an aggregate root from the repository.
 
@@ -105,15 +104,14 @@ class ESCommandHandler(CommandHandler):
         Returns:
             list: List with all events.
         """
-        events = self.repository.load(id)
-        events = list(map(self.message_deserializer, events))
+        with self.repository.load(id) as events:
+            for event in events:
+                if event:
+                    yield self.message_deserializer(event)
 
-        return events
-
-    @profile
     def _get_aggregate_root(self, id: str) -> AggregateRoot:
         """
-        Get latest state of the aggregate root or return an empty instance.
+        Get latest state of the aggregate root an empty instance.
 
         Args:
             id: ID of the aggregate root.
@@ -121,9 +119,8 @@ class ESCommandHandler(CommandHandler):
         Returns:
             AggregateRoot: An aggregate root with the latest state.
         """
-        events = self._get_events(id)
         aggregate_root = self.aggregate_root()
-        aggregate_root.apply_events(events)
+        aggregate_root._apply_events(self._get_events(id))
 
         return aggregate_root
 
@@ -136,7 +133,6 @@ class ESCommandHandler(CommandHandler):
         """
         self.repository.commit(aggregate_root)
 
-    @profile
     def handle(self, message: dict) -> None:
         """
         Apply correct handler for the received command.
