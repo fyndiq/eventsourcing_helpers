@@ -12,7 +12,7 @@ logger = structlog.get_logger(__name__)
 class Entity:
     """
     A rich domain model that exposes attributes and behaviour
-    with an identity and a lifecycle.
+    with an identity and a life cycle.
     """
     # a shared list between all entities with staged events
     # that later will be committed to the repository.
@@ -48,7 +48,7 @@ class Entity:
         return getattr(entity, method_name)
 
     def _apply_event(self, event: Any, entity: 'Entity', method_name,
-                     is_new) -> None:
+                     is_new) -> None:  # yapf: disable
         """
         Apply an event on one entity.
 
@@ -56,19 +56,22 @@ class Entity:
             event: Event to be applied.
             entity: Entity to apply the event on.
             method_name: Apply method on the entity.
-            is_new: Flag to indicate if the event should be staged.
+            is_new: Flag to indicate if the event should be staged for commit.
         """
-        log = logger.bind(
-            id=event.id, event_class=event._class,
-            entity_class=entity._class
-        )
         try:
             apply_method = self._get_apply_method(entity, method_name)
             # TODO: apply the event in the aggregate root if it's defined.
         except AttributeError:
-            log.error("Missing event apply method", method=method_name)
+            logger.error(
+                "Missing event apply method", method=method_name, id=event.id,
+                event_class=event._class, entity_class=entity._class
+            )
         else:
-            log.info("Applying event", is_new=is_new)
+            if is_new:
+                logger.debug(
+                    "Applying event", method=method_name, id=event.id,
+                    event_class=event._class, entity_class=entity._class
+                )
             apply_method(event)
             self._stage_event(event, is_new)
 
@@ -153,20 +156,14 @@ class Entity:
 
         return apply_method_name
 
-    def create_id(self) -> str:
-        """
-        Returns an unique id as a string.
-        """
-        return str(uuid.uuid4())
-
-    def clear_staged_events(self) -> None:
+    def _clear_staged_events(self) -> None:
         """
         Clear staged events from ALL Entity instances.
         """
         logger.info("Clearing staged events")
         Entity._events = []
 
-    def apply_events(self, events: List[Any]) -> None:
+    def _apply_events(self, events: List[Any]) -> None:
         """
         Apply multiple events.
 
@@ -177,7 +174,13 @@ class Entity:
         for event in events:
             self.apply_event(event, is_new=False)
 
-    def apply_event(self, event: Any, is_new: bool=True) -> None:
+    def create_id(self) -> str:
+        """
+        Returns an unique id as a string.
+        """
+        return str(uuid.uuid4())
+
+    def apply_event(self, event: Any, is_new: bool = True) -> None:
         """
         Applies an event by calling the correct entity apply method.
 
@@ -186,7 +189,7 @@ class Entity:
         Args:
             event: Event to be applied.
             is_new: Flag that indicates if the event should be staged
-                (haven't yet been committed).
+                for commit.
         """
         apply_method_name = self._get_apply_method_name(event._class)
         entity = self._get_entity(event.id)
@@ -199,6 +202,7 @@ class EntityDict(dict):
     A collection of domain entities implemented as a dict to allow
     fast lookup by a key.
     """
+
     def __repr__(self) -> str:
         return f"{self._class}({self.values()})"
 

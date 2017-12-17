@@ -50,7 +50,7 @@ class Repository:
             assert id, "The id must be set on the aggregate root"
             logger.info("Committing staged events to repository")
             self.backend.commit(id=id, events=events, **kwargs)
-            aggregate_root.clear_staged_events()
+            aggregate_root._clear_staged_events()
 
     def load(self, id: str, **kwargs) -> list:
         """

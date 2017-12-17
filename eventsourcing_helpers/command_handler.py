@@ -96,10 +96,10 @@ class ESCommandHandler(CommandHandler):
 
     def _get_events(self, id: str) -> Generator[Any, None, None]:
         """
-        Get all events for an aggregate root from the repository.
+        Get all aggregate events from the repository.
 
         Args:
-            id: Get all events for this id.
+            id: Aggregate root id.
 
         Returns:
             list: List with all events.
@@ -111,13 +111,13 @@ class ESCommandHandler(CommandHandler):
 
     def _get_aggregate_root(self, id: str) -> AggregateRoot:
         """
-        Get latest state of the aggregate root an empty instance.
+        Get latest state of the aggregate root.
 
         Args:
             id: ID of the aggregate root.
 
         Returns:
-            AggregateRoot: An aggregate root with the latest state.
+            AggregateRoot: Aggregate root with the latest state.
         """
         aggregate_root = self.aggregate_root()
         aggregate_root._apply_events(self._get_events(id))
