@@ -1,4 +1,4 @@
-from typing import NamedTuple
+from cnamedtuple import namedtuple
 
 from eventsourcing_helpers.message import Message, message_factory
 
@@ -18,20 +18,18 @@ def from_message_to_dto(message: dict) -> Message:
 
     Example:
         >>> message = {
-            'class': 'OrderCompleted',
-            'data': {
-                'order_id': 'UA123',
-                'date': '2017-09-08'
-            }
-        }
+        ...    'class': 'OrderCompleted',
+        ...    'data': {
+        ...        'order_id': 'UA123',
+        ...        'date': '2017-09-08'
+        ...    }
+        ... }
         >>> from_message_to_dto(message)
         OrderCompleted(order_id='UA123', date='2017-09-08')
     """
     data, class_name = message['data'], message['class']
-    fields = [(k, None) for k in data.keys()]
-
-    cls = NamedTuple(class_name, fields)  # type: ignore
-    dto = message_factory(cls)(**data)  # type: ignore
+    cls = namedtuple(class_name, data.keys())
+    dto = message_factory(cls)(**data)
 
     return dto
 
