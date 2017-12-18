@@ -2,6 +2,8 @@ from typing import Any, Callable, List
 
 import structlog
 
+from confluent_kafka_helpers.message import Message
+
 from eventsourcing_helpers.handler import Handler
 from eventsourcing_helpers.models import AggregateRoot
 from eventsourcing_helpers.repository import Repository
@@ -18,7 +20,7 @@ class CommandHandler(Handler):
     class.
     """
 
-    def _can_handle_command(self, message: dict) -> bool:
+    def _can_handle_command(self, message: Message) -> bool:
         """
         Checks if the command is something we can handle.
 
@@ -28,8 +30,9 @@ class CommandHandler(Handler):
         Returns:
             bool: Flag to indicate if we can handle the command.
         """
-        if not message['class'] in self.handlers:
-            logger.debug("Unhandled command", command_class=message['class'])
+        command_class = message.value['class']
+        if command_class not in self.handlers:
+            logger.debug("Unhandled command", command_class=command_class)
             return False
 
         return True
