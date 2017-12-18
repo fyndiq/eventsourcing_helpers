@@ -6,11 +6,16 @@ module = 'eventsourcing_helpers.event_handler'
 
 
 class EventHandlerTests:
-
     def setup_method(self):
         self.event_class, self.id = 'FooEvent', 1
-        self.message = {'class': self.event_class, 'data': {'id': self.id}}
-
+        self.message = Mock(
+            value={
+                'class': self.event_class,
+                'data': {
+                    'id': self.id
+                }
+            }
+        )
         self.event = Mock()
         self.event._class = self.event_class
         self.event.id = self.id
@@ -48,6 +53,6 @@ class EventHandlerTests:
         can_handle = self.handler._can_handle_command(self.message)
         assert can_handle is True
 
-        self.message['class'] = 'BarEvent'
+        self.message.value['class'] = 'BarEvent'
         can_handle = self.handler._can_handle_command(self.message)
         assert can_handle is False
