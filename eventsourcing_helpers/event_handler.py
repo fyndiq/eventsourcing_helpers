@@ -2,6 +2,8 @@ from typing import Any
 
 import structlog
 
+from confluent_kafka_helpers.message import Message
+
 from eventsourcing_helpers.handler import Handler
 
 logger = structlog.get_logger(__name__)
@@ -12,7 +14,7 @@ class EventHandler(Handler):
     Application service that calls the correct domain handler for an event.
     """
 
-    def _can_handle_command(self, message: dict) -> bool:
+    def _can_handle_command(self, message: Message) -> bool:
         """
         Checks if the event is something we can handle.
 
@@ -22,8 +24,9 @@ class EventHandler(Handler):
         Returns:
             bool: Flag to indicate if we can handle the event.
         """
-        if not message['class'] in self.handlers:
-            logger.debug("Unhandled event", event_class=message['class'])
+        event_class = message.value['class']
+        if event_class not in self.handlers:
+            logger.debug("Unhandled event", event_class=event_class)
             return False
 
         return True
