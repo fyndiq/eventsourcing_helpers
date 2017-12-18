@@ -65,6 +65,6 @@ class KafkaAvroBackend(MessageBusBackend):
         with Consumer() as consumer:
             for message in consumer:
                 if message:
-                    handler(message.value())
+                    handler(message.value)
                     if consumer.is_auto_commit is False:
                         consumer.commit()
