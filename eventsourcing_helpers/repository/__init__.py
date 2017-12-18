@@ -31,8 +31,8 @@ class Repository:
         assert 'backend_config' in config, "You must pass a backend config"
         backend_config = config.get('backend_config')
 
-        logger.debug("Using repository backend", backend=backend_path,
-                     config=backend_config)
+        logger.info("Using repository backend", backend=backend_path,
+                    config=backend_config)
         backend_class = importer(backend_path)
         self.backend = backend_class(backend_config, **kwargs)
 

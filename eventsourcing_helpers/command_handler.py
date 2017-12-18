@@ -109,8 +109,7 @@ class ESCommandHandler(CommandHandler):
         """
         with self.repository.load(id) as events:
             for event in events:
-                if event:
-                    yield self.message_deserializer(event)
+                yield self.message_deserializer(event)
 
     def _get_aggregate_root(self, id: str) -> AggregateRoot:
         """
