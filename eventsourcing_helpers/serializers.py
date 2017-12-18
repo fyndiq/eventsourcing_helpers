@@ -1,9 +1,10 @@
 from cnamedtuple import namedtuple
 
 from eventsourcing_helpers.message import Message, message_factory
+from confluent_kafka_helpers.message import Message as ConfluentMessage
 
 
-def from_message_to_dto(message: dict) -> Message:
+def from_message_to_dto(message: ConfluentMessage) -> Message:
     """
     Deserialize a message to a data transfer object (DTO).
 
@@ -27,7 +28,9 @@ def from_message_to_dto(message: dict) -> Message:
         >>> from_message_to_dto(message)
         OrderCompleted(order_id='UA123', date='2017-09-08')
     """
-    data, class_name = message['data'], message['class']
+    data, class_name = message.value['data'], message.value['class']
+    data['meta_data'] = message._meta
+
     cls = namedtuple(class_name, data.keys())
     dto = message_factory(cls)(**data)
 

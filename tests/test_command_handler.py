@@ -7,7 +7,7 @@ from eventsourcing_helpers.command_handler import (
 module = 'eventsourcing_helpers.command_handler'
 
 command_class, id = 'FooCommand', '1'
-message = {'class': command_class, 'data': {'id': id}}
+message = Mock(value={'class': command_class, 'data': {'id': id}})
 events = [1, 2, 3]
 
 command = Mock()
@@ -150,7 +150,7 @@ class CommandHandlerTests:
         assert can_handle is True
 
         _message = deepcopy(message)
-        _message['class'] = 'BarCommand'
+        _message.value['class'] = 'BarCommand'
         can_handle = self.handler._can_handle_command(_message)
         assert can_handle is False
 
