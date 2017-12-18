@@ -29,7 +29,7 @@ def from_message_to_dto(message: ConfluentMessage) -> Message:
         OrderCompleted(order_id='UA123', date='2017-09-08')
     """
     data, class_name = message.value['data'], message.value['class']
-    data['meta_data'] = message._meta
+    data['meta'] = message._meta
     fields = [(k, None) for k in data.keys()]
 
     cls = NamedTuple(class_name, fields)  # type: ignore
