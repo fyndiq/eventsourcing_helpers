@@ -28,8 +28,9 @@ class CommandHandler(Handler):
         Returns:
             bool: Flag to indicate if we can handle the command.
         """
-        if not message['class'] in self.handlers:
-            logger.debug("Unhandled command", command_class=message['class'])
+        command_class = message.value['class']
+        if command_class not in self.handlers:
+            logger.debug("Unhandled command", command_class=command_class)
             return False
 
         return True
