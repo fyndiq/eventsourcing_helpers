@@ -1,16 +1,16 @@
 import time
 from functools import partial
-from typing import Callable, Any
+from typing import Any, Callable
 
 import structlog
 
 from confluent_kafka_helpers.consumer import AvroConsumer
+from confluent_kafka_helpers.message import Message
 from confluent_kafka_helpers.producer import AvroProducer
 
 from eventsourcing_helpers.messagebus.backends import MessageBusBackend
 from eventsourcing_helpers.messagebus.backends.kafka.config import (
-    get_consumer_config, get_producer_config
-)
+    get_consumer_config, get_producer_config)
 from eventsourcing_helpers.serializers import to_message_from_dto
 
 logger = structlog.get_logger(__name__)
@@ -37,10 +37,10 @@ class KafkaAvroBackend(MessageBusBackend):
                 producer_config, value_serializer=value_serializer
             )
 
-    def _consume(self, handler: Callable, message: Any,
+    def _consume(self, handler: Callable, message: Message,
                  consumer: AvroConsumer) -> None:  # yapf: disable
         start_time = time.time()
-        handler(message.value())
+        handler(message)
         if consumer.is_auto_commit is False:
             consumer.commit()
         end_time = time.time() - start_time
