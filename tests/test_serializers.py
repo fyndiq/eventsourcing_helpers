@@ -24,7 +24,7 @@ class SerializerTests:
         from_message_to_dto(message)
 
         assert mock_factory.call_args[0][0].__name__ == 'FooClass'
-        assert mock_factory.call_args[0][0]._fields == ('foo', 'meta_data')
+        assert mock_factory.call_args[0][0]._fields == ('foo', 'meta')
 
     def test_to_message_from_dto(self):
         """
