@@ -1,13 +1,19 @@
+import time
 from functools import partial
-from typing import Callable
+from typing import Any, Callable
+
+import structlog
 
 from confluent_kafka_helpers.consumer import AvroConsumer
+from confluent_kafka_helpers.message import Message
 from confluent_kafka_helpers.producer import AvroProducer
 
 from eventsourcing_helpers.messagebus.backends import MessageBusBackend
 from eventsourcing_helpers.messagebus.backends.kafka.config import (
     get_consumer_config, get_producer_config)
 from eventsourcing_helpers.serializers import to_message_from_dto
+
+logger = structlog.get_logger(__name__)
 
 
 class KafkaAvroBackend(MessageBusBackend):
@@ -31,26 +37,21 @@ class KafkaAvroBackend(MessageBusBackend):
                 producer_config, value_serializer=value_serializer
             )
 
+    def _consume(self, handler: Callable, message: Message,
+                 consumer: AvroConsumer) -> None:  # yapf: disable
+        start_time = time.time()
+        handler(message)
+        if consumer.is_auto_commit is False:
+            consumer.commit()
+        end_time = time.time() - start_time
+        logger.debug(f"Message processed in {end_time:.5f}s")
+
     def produce(self, value: dict, key: str=None, topic: str=None,
                 **kwargs) -> None:  # yapf:disable
         assert self.producer is not None, "Producer is not configured"
-        # produce a message to a topic.
-        #
-        # this is an asynchronous operation, an application may use the
-        # callback argument to pass a function that will be called from poll()
-        # when the message has been successfully delivered or permanently fails
-        # delivery.
+
         self.producer.produce(key=key, value=value, topic=topic, **kwargs)
-
-        # polls the producer for events and calls the corresponding callbacks.
-        #
-        # NOTE: since produce() is an asynchronous API this call
-        #       will most likely not serve the delivery callback for the
-        #       last produced message.
         self.producer.poll(0)
-
-        # block until all messages are delivered/failed.
-        # probably not required if we run poll after each produce.
         if self.flush:
             self.producer.flush()
 
@@ -59,12 +60,8 @@ class KafkaAvroBackend(MessageBusBackend):
         return self.consumer
 
     def consume(self, handler: Callable) -> None:
-        assert callable(handler), "You must set a handler"
-
+        assert callable(handler), "You must pass a message handler"
         Consumer = self.get_consumer()
         with Consumer() as consumer:
             for message in consumer:
-                if message:
-                    handler(message)
-                    if consumer.is_auto_commit is False:
-                        consumer.commit()
+                self._consume(handler, message, consumer)

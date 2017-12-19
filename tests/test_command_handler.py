@@ -1,5 +1,5 @@
 from copy import deepcopy
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 from eventsourcing_helpers.command_handler import (
     CommandHandler, ESCommandHandler)
@@ -19,7 +19,6 @@ message_deserializer.return_value = command
 
 
 class ESCommandHandlerTests:
-
     def teardown_method(self):
         message_deserializer.reset_mock()
 
@@ -27,8 +26,10 @@ class ESCommandHandlerTests:
         self.aggregate_root = Mock()
         self.aggregate_root.foo_method = Mock()
 
-        config = {'return_value.load.return_value': events}
-        self.repository = Mock()
+        config = {
+            'return_value.load.return_value.__enter__.return_value': events
+        }
+        self.repository = MagicMock()
         self.repository.configure_mock(**config)
 
         command_handler = ESCommandHandler
@@ -97,7 +98,7 @@ class ESCommandHandlerTests:
 
         self.aggregate_root.return_value == aggregate_root
         mock_get_events.assert_called_once_with(command.id)
-        self.aggregate_root.apply_events.called_once_with(events)
+        self.aggregate_root._apply_events.called_once_with(events)
 
     def test_get_events(self):
         """
@@ -107,7 +108,7 @@ class ESCommandHandlerTests:
         message_deserializer.side_effect = lambda m: m
         _events = self.handler._get_events(command.id)
 
-        assert events == _events
+        assert events == list(_events)
         self.repository.return_value.load.assert_called_once_with(command.id)
         assert message_deserializer.call_count == len(events)
 
@@ -115,7 +116,6 @@ class ESCommandHandlerTests:
 
 
 class CommandHandlerTests:
-
     def teardown_method(self):
         message_deserializer.reset_mock()
 

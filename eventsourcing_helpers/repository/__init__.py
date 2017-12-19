@@ -31,8 +31,8 @@ class Repository:
         assert 'backend_config' in config, "You must pass a backend config"
         backend_config = config.get('backend_config')
 
-        logger.debug("Using repository backend", backend=backend_path,
-                     config=backend_config)
+        logger.info("Using repository backend", backend=backend_path,
+                    config=backend_config)
         backend_class = importer(backend_path)
         self.backend = backend_class(backend_config, **kwargs)
 
@@ -50,7 +50,7 @@ class Repository:
             assert id, "The id must be set on the aggregate root"
             logger.info("Committing staged events to repository")
             self.backend.commit(id=id, events=events, **kwargs)
-            aggregate_root.clear_staged_events()
+            aggregate_root._clear_staged_events()
 
     def load(self, id: str, **kwargs) -> list:
         """
