@@ -16,4 +16,7 @@ setup(name="eventsourcing-helpers",
       dependency_links=[
           'git+https://github.com/fyndiq/confluent_kafka_helpers@v0.4.3#egg=confluent-kafka-helpers-0.4.3'
       ],
+      extras_require={
+          'datadog': ['datadog==0.17.0']
+      },
       zip_safe=False)
