@@ -21,7 +21,7 @@ class KafkaAvroBackend(MessageBusBackend):
     def __init__(self, config: dict,
                  producer: AvroProducer=AvroProducer,
                  consumer: AvroConsumer=AvroConsumer,
-                 value_serializer: Callable=to_message_from_dto,
+                 value_serializer=None,
                  get_producer_config: Callable=get_producer_config,
                  get_consumer_config: Callable=get_consumer_config) -> None:  # yapf: disable
         self.consumer, self.producer = None, None
