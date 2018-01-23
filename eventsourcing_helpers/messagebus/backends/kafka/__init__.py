@@ -8,10 +8,10 @@ from confluent_kafka_helpers.consumer import AvroConsumer
 from confluent_kafka_helpers.message import Message
 from confluent_kafka_helpers.producer import AvroProducer
 
+from eventsourcing_helpers import metrics
 from eventsourcing_helpers.messagebus.backends import MessageBusBackend
 from eventsourcing_helpers.messagebus.backends.kafka.config import (
     get_consumer_config, get_producer_config)
-from eventsourcing_helpers.metrics import statsd
 from eventsourcing_helpers.serializers import to_message_from_dto
 
 logger = structlog.get_logger(__name__)
@@ -38,9 +38,10 @@ class KafkaAvroBackend(MessageBusBackend):
                 producer_config, value_serializer=value_serializer
             )
 
-    @statsd.timed('eventsourcing_helpers.messagebus.process.time')
-    def _consume(self, handler: Callable, message: Message,
-                 consumer: AvroConsumer) -> None:  # yapf: disable
+    @metrics.call_counter('eventsourcing_helpers.messagebus.kafka.handle.count')
+    @metrics.statsd.timed('eventsourcing_helpers.messagebus.kafka.handle.time')
+    def _handle(self, handler: Callable, message: Message,
+                consumer: AvroConsumer) -> None:  # yapf: disable
         start_time = time.time()
         handler(message)
         if consumer.is_auto_commit is False:
@@ -66,4 +67,4 @@ class KafkaAvroBackend(MessageBusBackend):
         Consumer = self.get_consumer()
         with Consumer() as consumer:
             for message in consumer:
-                self._consume(handler, message, consumer)
+                self._handle(handler, message, consumer)
