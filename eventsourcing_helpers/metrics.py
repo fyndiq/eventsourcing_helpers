@@ -1,7 +1,9 @@
+from functools import wraps
+
+
 class StatsdNullClient:
     """
-    Dumb client implementing the null object pattern so we can keep the same
-    interface without having superfluous conditional statements.
+    No-op datadog statsd client implementing the null object pattern.
     """
     __call__ = __getattr__ = lambda self, *_, **__: self
 
@@ -23,16 +25,17 @@ except ModuleNotFoundError:
 
 
 def call_counter(base_metric):
-    def wrapper(f):
-        def _decorator(*args, **kwargs):
+    def wrapped(f):
+        @wraps(f)
+        def decorator(*args, **kwargs):
             statsd.increment(f"{base_metric}.total")
             try:
                 return f(*args, **kwargs)
             except Exception:
                 statsd.increment(f"{base_metric}.error")
                 raise
-        return _decorator
-    return wrapper
+        return decorator
+    return wrapped
 
 
 if __name__ == "__main__":
