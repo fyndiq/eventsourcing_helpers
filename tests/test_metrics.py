@@ -1,4 +1,8 @@
-from eventsourcing_helpers.metrics import StatsdNullClient
+from unittest.mock import call, patch
+
+import pytest
+
+from eventsourcing_helpers.metrics import StatsdNullClient, call_counter
 
 
 class StatsdNullClientTests:
@@ -16,3 +20,25 @@ class StatsdNullClientTests:
 
         value = foo('bar')
         assert value == 'bar'
+
+
+class CallCounterTests:
+    @patch('eventsourcing_helpers.metrics.statsd')
+    def test_increments_total_count(self, mock_statsd):
+        @call_counter('foo.count')
+        def foo(a):
+            pass
+
+        foo('a')
+        mock_statsd.increment.assert_called_once_with('foo.count.total')
+
+    @patch('eventsourcing_helpers.metrics.statsd')
+    def test_increments_counts_and_reraises_exception(self, mock_statsd):
+        @call_counter('foo.count')
+        def foo(a):
+            1 / 0
+
+        with pytest.raises(ZeroDivisionError):
+            foo('a')
+        expected_calls = [call('foo.count.total'), call('foo.count.error')]
+        mock_statsd.increment.assert_has_calls(expected_calls)
