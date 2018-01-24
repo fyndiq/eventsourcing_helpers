@@ -36,14 +36,3 @@ def call_counter(base_metric):
                 raise
         return decorator
     return wrapped
-
-
-if __name__ == "__main__":
-    class Foo:
-        @call_counter('metric')
-        def foo(self, a, b):
-            1 / 0
-            print(a, b)
-
-    f = Foo()
-    f.foo(1, 2)
