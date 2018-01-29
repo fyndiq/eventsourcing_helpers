@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock
 
-from eventsourcing_helpers.factories import ESEntityFactory
+from eventsourcing_helpers.builders import ESEntityBuilder
 from eventsourcing_helpers.models import Entity
 
 
@@ -20,7 +20,7 @@ class TestEntity(Entity):
         self.state = "third_event"
 
 
-class ESEntityFactoryTests:
+class ESEntityBuilderTests:
 
     def setup_method(self):
         events = [
@@ -35,7 +35,7 @@ class ESEntityFactoryTests:
         repository = MagicMock()
         repository.configure_mock(**config)
 
-        self.factory = ESEntityFactory(
+        self.factory = ESEntityBuilder(
             repository_config={},
             message_deserializer=lambda e: e,
             repository=repository,

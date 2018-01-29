@@ -5,14 +5,14 @@ from eventsourcing_helpers.repository import Repository
 from eventsourcing_helpers.serializers import from_message_to_dto
 
 
-class ESEntityFactory:
+class ESEntityBuilder:
     """
-        This class is responsible for loading the messages and
-        return the aggregate in the requested state.
+    This class is responsible for loading the messages and
+    return the aggregate in the requested state.
 
-        >> factory = ESEntityFactory(repository_config=config)
-        >> factory.rebuild(entity_class=Order, id="123131323132")
-        Order(id="123131323132", state="completed", ...)
+    >> builder = ESEntityBuilder(repository_config=config)
+    >> builder.rebuild(entity_class=Order, id="123131323132")
+    Order(id="123131323132", state="completed", ...)
     """
     def __init__(self, repository_config: dict,
                  message_deserializer: Callable=from_message_to_dto,
@@ -28,6 +28,7 @@ class ESEntityFactory:
         Args:
             entity_class: Class used to apply the events
             id: entity id used to load the events
+            max_offset: stop to read at this offset
 
         Returns:
             entity: rebuilt entity
@@ -39,6 +40,10 @@ class ESEntityFactory:
     def _get_events(self, id: str, max_offset: int=None) -> Generator[Any, None, None]:  # noqa
         """
         Get events for the given id and stop in the max offset.
+
+        Args:
+            id: id used to load events from repository
+            max_offset: when given is used to stop the reading of the messages
         """
         with self.repository.load(id) as events:
             for event in events:
