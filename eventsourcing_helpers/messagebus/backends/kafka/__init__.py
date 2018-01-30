@@ -45,7 +45,7 @@ class KafkaAvroBackend(MessageBusBackend):
         start_time = time.time()
         handler(message)
         if consumer.is_auto_commit is False:
-            consumer.commit()
+            consumer.commit(async=False)
         end_time = time.time() - start_time
         logger.debug(f"Message processed in {end_time:.5f}s")
 
