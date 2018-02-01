@@ -7,14 +7,21 @@ class StatsdNullClient:
     """
     __call__ = __getattr__ = lambda self, *_, **__: self
 
-    @staticmethod
-    def decorator(f):
-        def _decorator(*args, **kwargs):
-            return f(*args, **kwargs)
-        return _decorator
-
     def timed(self, *args, **kwargs):
-        return StatsdNullClient.decorator
+        return TimedNullDecorator()
+
+
+class TimedNullDecorator:
+    __enter__ = __getattr__ = lambda self, *_, **__: self
+
+    def __call__(self, f):
+        def wrapped(*args, **kwargs):
+            return f(*args, **kwargs)
+
+        return wrapped
+
+    def __exit__(self, *args):
+        pass
 
 
 try:
