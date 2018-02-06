@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(name="eventsourcing-helpers",
-      version="0.6.0",
+      version="0.6.1",
       description="Helpers for practicing the Event sourcing pattern",
       url="https://github.com/fyndiq/eventsourcing_helpers",
       author="Fyndiq AB",
@@ -11,9 +11,9 @@ setup(name="eventsourcing-helpers",
       install_requires=[
           'structlog>=17.2.0',
           'cnamedtuple>=0.1.6',
-          'confluent-kafka-helpers==0.5.0',
+          'confluent-kafka-helpers==0.5.1',
       ],
       dependency_links=[
-          'git+https://github.com/fyndiq/confluent_kafka_helpers@v0.5.0#egg=confluent-kafka-helpers-0.5.0'
+          'git+https://github.com/fyndiq/confluent_kafka_helpers@v0.5.1#egg=confluent-kafka-helpers-0.5.1'
       ],
       zip_safe=False)
