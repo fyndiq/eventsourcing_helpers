@@ -66,9 +66,7 @@ class Entity:
             apply_method = self._get_apply_method(entity, method_name)
             # TODO: apply the event in the aggregate root if it's defined.
         except AttributeError:
-            raise MissingEntityApplyMethod(
-                f"For event={event._class}, id={event.id}, method={method_name}"
-            )
+            raise MissingEntityApplyMethod(f"{entity._class}.{method_name}")
         else:
             if is_new:
                 logger.debug(
