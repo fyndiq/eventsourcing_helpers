@@ -5,8 +5,12 @@ from typing import Any, Callable, Iterator, List
 
 import structlog
 
-word_regexp = re.compile('[A-Z][^A-Z]*')
+word_regexp = re.compile('[A-Z][a-z]+|[A-Z]+(?![a-z])')
 logger = structlog.get_logger(__name__)
+
+
+class MissingEntityApplyMethod(Exception):
+    pass
 
 
 class Entity:
@@ -62,10 +66,7 @@ class Entity:
             apply_method = self._get_apply_method(entity, method_name)
             # TODO: apply the event in the aggregate root if it's defined.
         except AttributeError:
-            logger.error(
-                "Missing event apply method", method=method_name, id=event.id,
-                event_class=event._class, entity_class=entity._class
-            )
+            raise MissingEntityApplyMethod(f"{entity._class}.{method_name}")
         else:
             if is_new:
                 logger.debug(
@@ -99,7 +100,8 @@ class Entity:
             iterable: A list with all child entities.
         """
         entities = [
-            e._get_all_entities() for e in self.__dict__.values()
+            e._get_all_entities()
+            for e in self.__dict__.values()
             if isinstance(e, (Entity, EntityDict))
         ]
         return chain.from_iterable(entities)
@@ -222,7 +224,8 @@ class EntityDict(dict):
             iterable: A list of all child entities.
         """
         entities = [
-            e._get_all_entities() for e in self.values()
+            e._get_all_entities()
+            for e in self.values()
             if isinstance(e, (Entity, EntityDict))
         ]
         return chain.from_iterable(entities)
