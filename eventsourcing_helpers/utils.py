@@ -17,7 +17,7 @@ def import_backend(location: str) -> Any:
         >>> import_backend(
             'eventsourcing_helpers.repository.backends.kafka.KafkaAvroBackend'
         )
-        <class 'eventsourcing_helpers.repository.backends.kafka.KafkaAvroBackend'>
+        <class 'eventsourcing_helpers.repository.backends.kafka.KafkaAvroBackend'>  # noqa
     """
     module_name, class_name = location.rsplit('.', 1)
     module = import_module(f'{module_name}')
