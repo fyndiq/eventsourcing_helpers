@@ -1,5 +1,6 @@
-codecov
 cnamedtuple
+codecov
+flake8
 ipdb
 mypy
 pytest
