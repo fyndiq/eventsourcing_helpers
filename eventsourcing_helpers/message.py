@@ -11,11 +11,11 @@ class Message:
     message class.
     """
     def __init__(self, **kwargs) -> None:
-        self.__dict__['_wrapped'] = self._wrapped(**kwargs)
+        self.__dict__['_wrapped'] = self._wrapped(**kwargs)  # type: ignore
 
     @property
     def _class(self) -> str:
-        return self._wrapped.__class__.__name__
+        return self._wrapped.__class__.__name__  # type: ignore
 
     def to_dict(self) -> dict:
         items = self._wrapped._asdict().items()  # type: ignore
@@ -26,7 +26,7 @@ class Message:
         return self.__dict__ == other.__dict__
 
     def __repr__(self) -> str:
-        return repr(self._wrapped)
+        return repr(self._wrapped)  # type: ignore
 
     def __setattr__(self, *args) -> None:
         raise AttributeError("Messages are read only")
