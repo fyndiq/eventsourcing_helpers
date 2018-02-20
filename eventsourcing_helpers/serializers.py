@@ -4,15 +4,18 @@ from eventsourcing_helpers.message import Message, message_factory
 from confluent_kafka_helpers.message import Message as ConfluentMessage
 
 
-def from_message_to_dto(message: ConfluentMessage) -> Message:
+def from_message_to_dto(message: ConfluentMessage, is_new=True) -> Message:
     """
     Deserialize a message to a data transfer object (DTO).
 
-    The message is just a dict expected to include a 'class' and 'data'
-    attribute. The class defines the type of the DTO and data the attributes.
+    The message is just a dict expected to include the keys 'class' and 'data'.
+
+    The class defines the type of the DTO and data the attributes.
 
     Args:
         message: Message to deserialize.
+        is_new: Flag that indicates if the message is new or loaded
+            from the repository.
 
     Returns:
         Message: DTO instance of type 'class' hydrated with 'data'.
@@ -31,8 +34,8 @@ def from_message_to_dto(message: ConfluentMessage) -> Message:
     data, class_name = message.value['data'], message.value['class']
     data['meta'] = message._meta
 
-    cls = namedtuple(class_name, data.keys())
-    dto = message_factory(cls)(**data)
+    message_cls = namedtuple(class_name, data.keys())
+    dto = message_factory(message_cls, is_new=is_new)(**data)
 
     return dto
 
