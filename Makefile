@@ -1,8 +1,8 @@
 setup:
 	./scripts/setup.sh
 
-check:
-	./scripts/check.sh
+lint:
+	./scripts/lint.sh
 
 test:
 	./scripts/test.sh
