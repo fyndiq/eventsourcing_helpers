@@ -60,7 +60,7 @@ class KafkaAvroBackend(MessageBusBackend):
         start_time = time.time()
         if self._shall_handle(message):
             handler(message)
-        self._set_handled(message)
+            self._set_handled(message)
         if consumer.is_auto_commit is False:
             consumer.commit(async=False)
         end_time = time.time() - start_time
