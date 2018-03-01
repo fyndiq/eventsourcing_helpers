@@ -55,4 +55,4 @@ class KafkaBackendTests:
         backend = self.backend()
         handler = Mock()
         backend.consume(handler=handler)
-        assert handler.call_count == 2
+        assert handler.call_count == 1
