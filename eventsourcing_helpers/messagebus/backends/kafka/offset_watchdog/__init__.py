@@ -1,8 +1,8 @@
-from eventsourcing_helpers.message import Message
+from confluent_kafka_helpers.message import Message
 
 
 class OffsetWatchdog:
-    def __init__(self, consumer_id: str):
+    def __init__(self, consumer_id: str) -> None:
         self._consumer_id = consumer_id
 
     def _key(self, message: Message):
@@ -16,9 +16,9 @@ class OffsetWatchdog:
 
 
 class InMemoryOffsetWatchdog(OffsetWatchdog):
-    def __init__(self, consumer_id: str):
+    def __init__(self, consumer_id: str) -> None:
         super().__init__(consumer_id=consumer_id)
-        self._offset_map = {}
+        self._offset_map: dict = {}
 
     def seen(self, message: Message) -> bool:
         last_offset = self._offset_map.get(self._key(message), -1)

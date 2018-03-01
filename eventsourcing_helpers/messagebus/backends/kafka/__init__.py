@@ -1,4 +1,5 @@
 import time
+import typing
 from functools import partial
 from typing import Callable
 
@@ -26,7 +27,7 @@ class KafkaAvroBackend(MessageBusBackend):
                  value_serializer: Callable = to_message_from_dto,
                  get_producer_config: Callable = get_producer_config,
                  get_consumer_config: Callable = get_consumer_config,
-                 offset_watchdog: OffsetWatchdog = InMemoryOffsetWatchdog) -> None:  # yapf: disable
+                 offset_watchdog: typing.Type[OffsetWatchdog] = InMemoryOffsetWatchdog) -> None:  # yapf: disable
         self.consumer, self.producer = None, None
 
         producer_config = get_producer_config(config)
