@@ -25,7 +25,8 @@ class KafkaAvroBackend(MessageBusBackend):
                  consumer: AvroConsumer = AvroConsumer,
                  value_serializer: Callable = to_message_from_dto,
                  get_producer_config: Callable = get_producer_config,
-                 get_consumer_config: Callable = get_consumer_config) -> None:  # yapf: disable
+                 get_consumer_config: Callable = get_consumer_config,
+                 offset_watchdog: OffsetWatchdog = InMemoryOffsetWatchdog) -> None:  # yapf: disable
         self.consumer, self.producer = None, None
 
         producer_config = get_producer_config(config)
@@ -39,10 +40,7 @@ class KafkaAvroBackend(MessageBusBackend):
                 producer_config, value_serializer=value_serializer
             )
 
-        self.offset_watchdog = self._create_offset_watchdog(config)
-
-    def _create_offset_watchdog(self, config: dict) -> OffsetWatchdog:
-        return InMemoryOffsetWatchdog(config['consumer']['group.id'])
+        self.offset_watchdog = offset_watchdog(config['consumer']['group.id'])
 
     def _shall_handle(self, message: Message) -> bool:
         if not self.offset_watchdog:
