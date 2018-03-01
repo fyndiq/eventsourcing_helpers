@@ -1,3 +1,4 @@
+import copy
 from typing import Callable
 
 from cnamedtuple import namedtuple
@@ -13,15 +14,6 @@ class Message:
     def __init__(self, **kwargs) -> None:
         self.__dict__['_wrapped'] = self._wrapped(**kwargs)  # type: ignore
 
-    @property
-    def _class(self) -> str:
-        return self._wrapped.__class__.__name__  # type: ignore
-
-    def to_dict(self) -> dict:
-        items = self._wrapped._asdict().items()  # type: ignore
-        filtered = {k: v for k, v in items if v is not None}
-        return filtered
-
     def __eq__(self, other) -> bool:
         return self.__dict__ == other.__dict__
 
@@ -30,6 +22,15 @@ class Message:
 
     def __setattr__(self, *args) -> None:
         raise AttributeError("Messages are read only")
+
+    @property
+    def _class(self) -> str:
+        return self._wrapped.__class__.__name__  # type: ignore
+
+    def to_dict(self) -> dict:
+        items = self._wrapped._asdict().items()  # type: ignore
+        filtered = {k: v for k, v in items if v is not None}
+        return filtered
 
 
 class NewMessage(Message):
@@ -40,7 +41,8 @@ class NewMessage(Message):
     AttributeError.
     """
     def __getattr__(self, name: str) -> Callable:
-        return getattr(self._wrapped, name)
+        attr = getattr(self._wrapped, name)
+        return copy.deepcopy(attr)
 
 
 class OldMessage(Message):
@@ -54,7 +56,8 @@ class OldMessage(Message):
     when we add new fields to our Avro schemas.
     """
     def __getattr__(self, name: str) -> Callable:
-        return getattr(self._wrapped, name, None)
+        attr = getattr(self._wrapped, name, None)
+        return copy.deepcopy(attr)
 
 
 def message_factory(message_cls: namedtuple, is_new=True) -> type:
