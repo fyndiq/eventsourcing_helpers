@@ -22,7 +22,7 @@ class InMemoryOffsetWatchdog(OffsetWatchdog):
 
     def seen(self, message: Message) -> bool:
         last_offset = self._offset_map.get(self._key(message), -1)
-        return message._meta.offset < last_offset
+        return message._meta.offset <= last_offset
 
     def set_seen(self, message: Message):
         self._offset_map[self._key(message)] = message._meta.offset
