@@ -12,6 +12,7 @@ from eventsourcing_helpers import metrics
 from eventsourcing_helpers.messagebus.backends import MessageBusBackend
 from eventsourcing_helpers.messagebus.backends.kafka.config import (
     get_consumer_config, get_producer_config)
+from eventsourcing_helpers.messagebus.backends.kafka.offset_watchdog import OffsetWatchdog, InMemoryOffsetWatchdog
 from eventsourcing_helpers.serializers import to_message_from_dto
 
 logger = structlog.get_logger(__name__)
@@ -20,11 +21,11 @@ logger = structlog.get_logger(__name__)
 class KafkaAvroBackend(MessageBusBackend):
 
     def __init__(self, config: dict,
-                 producer: AvroProducer=AvroProducer,
-                 consumer: AvroConsumer=AvroConsumer,
-                 value_serializer: Callable=to_message_from_dto,
-                 get_producer_config: Callable=get_producer_config,
-                 get_consumer_config: Callable=get_consumer_config) -> None:  # yapf: disable
+                 producer: AvroProducer = AvroProducer,
+                 consumer: AvroConsumer = AvroConsumer,
+                 value_serializer: Callable = to_message_from_dto,
+                 get_producer_config: Callable = get_producer_config,
+                 get_consumer_config: Callable = get_consumer_config) -> None:  # yapf: disable
         self.consumer, self.producer = None, None
 
         producer_config = get_producer_config(config)
@@ -38,18 +39,34 @@ class KafkaAvroBackend(MessageBusBackend):
                 producer_config, value_serializer=value_serializer
             )
 
+        self.offset_watchdog = self._create_offset_watchdog(config)
+
+    def _create_offset_watchdog(self, config: dict) -> OffsetWatchdog:
+        return InMemoryOffsetWatchdog(config['consumer']['group.id'])
+
+    def _shall_handle(self, message: Message) -> bool:
+        if not self.offset_watchdog:
+            return True
+        return not self.offset_watchdog.seen(message)
+
+    def _set_handled(self, message: Message):
+        if self.offset_watchdog:
+            self.offset_watchdog.set_seen(message)
+
     @metrics.call_counter('eventsourcing_helpers.messagebus.kafka.handle.count')
     @metrics.statsd.timed('eventsourcing_helpers.messagebus.kafka.handle.time')
     def _handle(self, handler: Callable, message: Message,
                 consumer: AvroConsumer) -> None:  # yapf: disable
         start_time = time.time()
-        handler(message)
+        if self._shall_handle(message):
+            handler(message)
+        self._set_handled(message)
         if consumer.is_auto_commit is False:
             consumer.commit(async=False)
         end_time = time.time() - start_time
         logger.debug(f"Message processed in {end_time:.5f}s")
 
-    def produce(self, value: dict, key: str=None, topic: str=None,
+    def produce(self, value: dict, key: str = None, topic: str = None,
                 **kwargs) -> None:  # yapf:disable
         assert self.producer is not None, "Producer is not configured"
 
