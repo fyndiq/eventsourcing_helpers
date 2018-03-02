@@ -1,5 +1,4 @@
 import time
-import typing
 from functools import partial
 from typing import Callable
 
@@ -8,12 +7,11 @@ import structlog
 from confluent_kafka_helpers.consumer import AvroConsumer
 from confluent_kafka_helpers.message import Message
 from confluent_kafka_helpers.producer import AvroProducer
-
 from eventsourcing_helpers import metrics
 from eventsourcing_helpers.messagebus.backends import MessageBusBackend
 from eventsourcing_helpers.messagebus.backends.kafka.config import (
     get_consumer_config, get_producer_config)
-from eventsourcing_helpers.messagebus.backends.kafka.offset_watchdog import OffsetWatchdog, InMemoryOffsetWatchdog
+from eventsourcing_helpers.messagebus.backends.kafka.offset_watchdog import OffsetWatchdog
 from eventsourcing_helpers.serializers import to_message_from_dto
 
 logger = structlog.get_logger(__name__)
@@ -26,8 +24,7 @@ class KafkaAvroBackend(MessageBusBackend):
                  consumer: AvroConsumer = AvroConsumer,
                  value_serializer: Callable = to_message_from_dto,
                  get_producer_config: Callable = get_producer_config,
-                 get_consumer_config: Callable = get_consumer_config,
-                 offset_watchdog: typing.Type[OffsetWatchdog] = InMemoryOffsetWatchdog) -> None:  # yapf: disable
+                 get_consumer_config: Callable = get_consumer_config) -> None:  # yapf: disable
         self.consumer, self.producer = None, None
 
         producer_config = get_producer_config(config)
@@ -41,7 +38,7 @@ class KafkaAvroBackend(MessageBusBackend):
                 producer_config, value_serializer=value_serializer
             )
 
-        self.offset_watchdog = offset_watchdog(config['consumer']['group.id'])
+        self.offset_watchdog = OffsetWatchdog(config['consumer']['group.id'], config.get('offset_watchdog', {}))
 
     def _shall_handle(self, message: Message) -> bool:
         if not self.offset_watchdog:
