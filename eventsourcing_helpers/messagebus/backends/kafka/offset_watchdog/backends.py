@@ -6,20 +6,29 @@ logger = structlog.get_logger(__name__)
 
 
 class OffsetWatchdogBackend:
+    """
+    Abstract base class for the offset watchdog backends
+    """
     def __init__(self, consumer_id: str, config: dict) -> None:
         self._consumer_id = consumer_id
 
     def _key(self, message: Message):
+        """Returns the key for storing offset in the backend"""
         return f'{message._meta.partition}-{message._meta.topic}-{self._consumer_id}'
 
     def seen(self, message: Message) -> bool:
+        """Checks if the `message` has been seen before"""
         raise NotImplementedError
 
     def set_seen(self, message: Message):
+        """Marks the message as already seen"""
         raise NotImplementedError
 
 
 class NullOffsetWatchdogBackend(OffsetWatchdogBackend):
+    """
+    Null (bypass) backend. Does nothing and treats all messages as never seen.
+    """
     def seen(self, message: Message) -> bool:
         return False
 
@@ -28,6 +37,10 @@ class NullOffsetWatchdogBackend(OffsetWatchdogBackend):
 
 
 class InMemoryOffsetWatchdogBackend(OffsetWatchdogBackend):
+    """
+    In-memory offset watchdog backend.
+    Stores the last offsets in a instance's dictionary
+    """
     def __init__(self, consumer_id: str, config: dict) -> None:
         super().__init__(consumer_id=consumer_id, config=config)
         self._offset_map: dict = {}

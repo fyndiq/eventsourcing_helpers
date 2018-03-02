@@ -1,3 +1,18 @@
+"""
+In certain cases, messages from Kafka are consumed more than once.
+To get as possible to "exaclty once" semantics, we implement our
+own Offset Watchdog that provides the best effort of controlling
+"double reads" by storing the last offset for the particular
+(topic, partition, consumer group) tuple and skipping messages
+with offset lower than the stored one.
+
+Certain backend implementations are available:
+ * memory (default) - stores offsets in a map, thus works only
+   for the current process and not restart-safe;
+ * redis - stores offsets in a Redis instance specified via REDIS_URL;
+ * null - bypasses all the checks (for using in tests, debugging, etc.)
+"""
+
 from typing import Callable
 
 import structlog
@@ -16,6 +31,10 @@ logger = structlog.get_logger(__name__)
 
 
 class OffsetWatchdog:
+    """
+    Offset watchdog facade.
+    Loads and configures the real storage backend on initialization.
+    """
     DEFAULT_BACKEND = 'memory'
 
     def __init__(self,
@@ -31,7 +50,9 @@ class OffsetWatchdog:
         self.backend: OffsetWatchdogBackend = backend_class(consumer_id=consumer_id, config=backend_config)
 
     def seen(self, message: Message) -> bool:
+        """Checks if the `message` has been seen before"""
         return self.backend.seen(message)
 
     def set_seen(self, message: Message):
+        """Marks the message as already seen"""
         self.backend.set_seen(message)

@@ -12,6 +12,11 @@ SOCKET_CONNECT_TIMEOUT = 0.5
 
 
 class RedisOffsetWatchdogBackend(OffsetWatchdogBackend):
+    """
+    Redis offset watchdog backend.
+    Stores the last offsets in a Redis database.
+    """
+
     def __init__(self, consumer_id: str, config: dict) -> None:
         super().__init__(consumer_id=consumer_id, config=config)
         self.redis = redis.StrictRedis.from_url(url=config['REDIS_URI'], decode_responses=True,
