@@ -35,7 +35,6 @@ class KafkaAvroBackend(MessageBusBackend):
         producer_config = get_producer_config(config)
         consumer_config = get_consumer_config(config)
         offset_wd_config = get_offset_watchdog_config(config)
-        import ipdb; ipdb.set_trace()
 
         if producer_config:
             self.flush = producer_config.pop('flush', False)
