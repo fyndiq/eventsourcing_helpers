@@ -18,13 +18,16 @@ from typing import Callable
 import structlog
 
 from confluent_kafka_helpers.message import Message
-from eventsourcing_helpers.messagebus.backends.kafka.offset_watchdog.backends import OffsetWatchdogBackend
+
+from eventsourcing_helpers.messagebus.backends.kafka.offset_watchdog.backends import (  # noqa
+    OffsetWatchdogBackend)
 from eventsourcing_helpers.utils import import_backend
 
+BACKENDS_PATH = 'eventsourcing_helpers.messagebus.backends.kafka.offset_watchdog.backends'  # noqa
 BACKENDS = {
-    'null': 'eventsourcing_helpers.messagebus.backends.kafka.offset_watchdog.backends.NullOffsetWatchdogBackend',  # noqa
-    'memory': 'eventsourcing_helpers.messagebus.backends.kafka.offset_watchdog.backends.InMemoryOffsetWatchdogBackend',  # noqa
-    'redis': 'eventsourcing_helpers.messagebus.backends.kafka.offset_watchdog.redis_backend.RedisOffsetWatchdogBackend'  # noqa
+    'null': f'{BACKENDS_PATH}.null.NullOffsetWatchdogBackend',
+    'memory': f'{BACKENDS_PATH}.memory.InMemoryOffsetWatchdogBackend',
+    'redis': f'{BACKENDS_PATH}.redis.RedisOffsetWatchdogBackend'
 }
 
 logger = structlog.get_logger(__name__)
@@ -33,21 +36,25 @@ logger = structlog.get_logger(__name__)
 class OffsetWatchdog:
     """
     Offset watchdog facade.
+
     Loads and configures the real storage backend on initialization.
     """
     DEFAULT_BACKEND = 'memory'
 
-    def __init__(self,
-                 consumer_id: str,
-                 config: dict,
-                 importer: Callable = import_backend) -> None:  # yapf: disable
+    def __init__(
+        self, config: dict, importer: Callable = import_backend
+    ) -> None:
         backend_path = config.get('backend', BACKENDS[self.DEFAULT_BACKEND])
-        # Backend config is optional for some backends
-        backend_config = config.get('backend_config', {})
+        backend_config = config.get('backend_config')
 
-        logger.debug("Using message bus backend", backend=backend_path, config=backend_config)
+        logger.debug(
+            "Using offset watchdog backend", backend=backend_path,
+            config=backend_config
+        )
         backend_class = importer(backend_path)
-        self.backend: OffsetWatchdogBackend = backend_class(consumer_id=consumer_id, config=backend_config)
+        self.backend: OffsetWatchdogBackend = backend_class(
+            config=backend_config
+        )
 
     def seen(self, message: Message) -> bool:
         """Checks if the `message` has been seen before"""

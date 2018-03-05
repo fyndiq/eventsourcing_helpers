@@ -7,38 +7,44 @@ import structlog
 from confluent_kafka_helpers.consumer import AvroConsumer
 from confluent_kafka_helpers.message import Message
 from confluent_kafka_helpers.producer import AvroProducer
+
 from eventsourcing_helpers import metrics
 from eventsourcing_helpers.messagebus.backends import MessageBusBackend
 from eventsourcing_helpers.messagebus.backends.kafka.config import (
-    get_consumer_config, get_producer_config)
-from eventsourcing_helpers.messagebus.backends.kafka.offset_watchdog import OffsetWatchdog
+    get_consumer_config, get_offset_watchdog_config, get_producer_config)
+from eventsourcing_helpers.messagebus.backends.kafka.offset_watchdog import (  # noqa
+    OffsetWatchdog)
 from eventsourcing_helpers.serializers import to_message_from_dto
 
 logger = structlog.get_logger(__name__)
 
 
 class KafkaAvroBackend(MessageBusBackend):
-
-    def __init__(self, config: dict,
-                 producer: AvroProducer = AvroProducer,
-                 consumer: AvroConsumer = AvroConsumer,
-                 value_serializer: Callable = to_message_from_dto,
-                 get_producer_config: Callable = get_producer_config,
-                 get_consumer_config: Callable = get_consumer_config) -> None:  # yapf: disable
-        self.consumer, self.producer = None, None
+    def __init__(
+        self, config: dict, producer: AvroProducer = AvroProducer,
+        consumer: AvroConsumer = AvroConsumer,
+        value_serializer: Callable = to_message_from_dto,
+        get_producer_config: Callable = get_producer_config,
+        get_consumer_config: Callable = get_consumer_config,
+        get_offset_watchdog_config: Callable = get_offset_watchdog_config
+    ) -> None:
+        self.consumer = None
+        self.producer = None
+        self.offset_watchdog = None
 
         producer_config = get_producer_config(config)
         consumer_config = get_consumer_config(config)
+        offset_wd_config = get_offset_watchdog_config(config)
 
-        if consumer_config:
-            self.consumer = partial(consumer, config=consumer_config)
         if producer_config:
             self.flush = producer_config.pop('flush', False)
             self.producer = producer(
                 producer_config, value_serializer=value_serializer
             )
-
-        self.offset_watchdog = OffsetWatchdog(config['consumer']['group.id'], config.get('offset_watchdog', {}))
+        if consumer_config:
+            self.consumer = partial(consumer, config=consumer_config)
+        if offset_wd_config:
+            self.offset_watchdog = OffsetWatchdog(offset_wd_config)
 
     def _shall_handle(self, message: Message) -> bool:
         if not self.offset_watchdog:

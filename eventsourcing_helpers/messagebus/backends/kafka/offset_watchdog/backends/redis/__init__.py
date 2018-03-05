@@ -1,11 +1,9 @@
-import structlog
-
 import redis
 
 from confluent_kafka_helpers.message import Message
-from eventsourcing_helpers.messagebus.backends.kafka.offset_watchdog import OffsetWatchdogBackend
 
-logger = structlog.get_logger(__name__)
+from eventsourcing_helpers.messagebus.backends.kafka.offset_watchdog.backends import (  # noqa
+    OffsetWatchdogBackend)
 
 SOCKET_TIMEOUT = 1
 SOCKET_CONNECT_TIMEOUT = 0.5
@@ -17,8 +15,8 @@ class RedisOffsetWatchdogBackend(OffsetWatchdogBackend):
     Stores the last offsets in a Redis database.
     """
 
-    def __init__(self, consumer_id: str, config: dict) -> None:
-        super().__init__(consumer_id=consumer_id, config=config)
+    def __init__(self, config: dict) -> None:
+        super().__init__(config=config)
         self.redis = redis.StrictRedis.from_url(url=config['REDIS_URI'], decode_responses=True,
                                                 socket_connect_timeout=SOCKET_CONNECT_TIMEOUT,
                                                 socket_timeout=SOCKET_TIMEOUT)
