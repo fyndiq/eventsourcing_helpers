@@ -58,7 +58,10 @@ class OffsetWatchdog:
 
     def seen(self, message: Message) -> bool:
         """Checks if the `message` has been seen before"""
-        return self.backend.seen(message)
+        seen = self.backend.seen(message)
+        if seen:
+            logger.warning("Message already seen previously", message=message)
+        return seen
 
     def set_seen(self, message: Message):
         """Marks the message as already seen"""
