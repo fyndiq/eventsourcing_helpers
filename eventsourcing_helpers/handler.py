@@ -18,4 +18,6 @@ class Handler:
         Args:
             message: Consumed message from the bus.
         """
-        raise NotImplementedError("You need to implement handle method in your subclass")
+        raise NotImplementedError(
+            "You need to implement handle method in your subclass"
+        )

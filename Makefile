@@ -1,10 +1,10 @@
 setup:
 	./scripts/setup.sh
 
-check:
-	./scripts/check.sh
+lint:
+	./scripts/lint.sh
 
-test:
+test: lint
 	./scripts/test.sh
 
 test-ci:

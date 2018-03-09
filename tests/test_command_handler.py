@@ -14,14 +14,8 @@ command = Mock()
 command._class = command_class
 command.id = id
 
-message_deserializer = Mock()
-message_deserializer.return_value = command
-
 
 class ESCommandHandlerTests:
-    def teardown_method(self):
-        message_deserializer.reset_mock()
-
     def setup_method(self):
         self.aggregate_root = Mock()
         self.aggregate_root.foo_method = Mock()
@@ -37,8 +31,11 @@ class ESCommandHandlerTests:
         command_handler.handlers = {command_class: 'foo_method'}
         command_handler.repository_config = {'empty_config': None}
 
+        self.message_deserializer = Mock()
+        self.message_deserializer.return_value = command
+
         self.handler = command_handler(
-            message_deserializer=message_deserializer,
+            message_deserializer=self.message_deserializer,
             repository=self.repository
         )
 
@@ -55,7 +52,7 @@ class ESCommandHandlerTests:
 
         self.handler.handle(message)
 
-        message_deserializer.assert_called_once_with(message)
+        self.message_deserializer.assert_called_once_with(message)
         mock_can_handle.assert_called_once_with(message)
         mock_get.assert_called_once_with(command.id)
         mock_handle.assert_called_once_with(
@@ -105,28 +102,28 @@ class ESCommandHandlerTests:
         Test that we get the correct events and that the correct methods
         are invoked.
         """
-        message_deserializer.side_effect = lambda m: m
+        self.message_deserializer.side_effect = lambda m, **kwargs: m
         _events = self.handler._get_events(command.id)
 
         assert events == list(_events)
         self.repository.return_value.load.assert_called_once_with(command.id)
-        assert message_deserializer.call_count == len(events)
+        assert self.message_deserializer.call_count == len(events)
 
-        message_deserializer.side_effect = None
+        self.message_deserializer.side_effect = None
 
 
 class CommandHandlerTests:
-    def teardown_method(self):
-        message_deserializer.reset_mock()
-
     def setup_method(self):
         self.mock_handler = Mock()
 
         command_handler = CommandHandler
         command_handler.handlers = {command_class: self.mock_handler}
 
+        self.message_deserializer = Mock()
+        self.message_deserializer.return_value = command
+
         self.handler = command_handler(
-            message_deserializer=message_deserializer
+            message_deserializer=self.message_deserializer
         )
 
     @patch(f'{module}.CommandHandler._handle_command')
@@ -138,7 +135,7 @@ class CommandHandlerTests:
         mock_can_handle.return_value = True
         self.handler.handle(message)
 
-        message_deserializer.assert_called_once_with(message)
+        self.message_deserializer.assert_called_once_with(message)
         mock_can_handle.assert_called_once_with(message)
         mock_handle.assert_called_once_with(command)
 
