@@ -32,7 +32,8 @@ class RedisOffsetWatchdogBackend(OffsetWatchdogBackend):
             self._redis_sentinel = Sentinel(config['REDIS_SENTINELS'],
                                             socket_connect_timeout=SOCKET_CONNECT_TIMEOUT,
                                             socket_timeout=SOCKET_TIMEOUT,
-                                            retry_on_timeout=True)
+                                            retry_on_timeout=True,
+                                            db=config['REDIS_DATABASE'])
             self._redis_sentinel_service_name = config['REDIS_SENTINEL_SERVICE_NAME']
 
     @property
