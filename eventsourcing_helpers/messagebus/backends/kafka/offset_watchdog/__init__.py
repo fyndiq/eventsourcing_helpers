@@ -20,7 +20,8 @@ import structlog
 from confluent_kafka_helpers.message import Message
 
 from eventsourcing_helpers.messagebus.backends.kafka.offset_watchdog.backends import (  # noqa
-    OffsetWatchdogBackend)
+    OffsetWatchdogBackend
+)
 from eventsourcing_helpers.utils import import_backend
 
 BACKENDS_PATH = 'eventsourcing_helpers.messagebus.backends.kafka.offset_watchdog.backends'  # noqa

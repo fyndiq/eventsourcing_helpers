@@ -11,9 +11,11 @@ from confluent_kafka_helpers.producer import AvroProducer
 from eventsourcing_helpers import metrics
 from eventsourcing_helpers.messagebus.backends import MessageBusBackend
 from eventsourcing_helpers.messagebus.backends.kafka.config import (
-    get_consumer_config, get_offset_watchdog_config, get_producer_config)
+    get_consumer_config, get_offset_watchdog_config, get_producer_config
+)
 from eventsourcing_helpers.messagebus.backends.kafka.offset_watchdog import (  # noqa
-    OffsetWatchdog)
+    OffsetWatchdog
+)
 from eventsourcing_helpers.serializers import to_message_from_dto
 
 logger = structlog.get_logger(__name__)
