@@ -21,7 +21,8 @@ class MessageBus:
     DEFAULT_BACKEND = 'kafka_avro'
 
     def __init__(self, config: dict,
-                 importer: Callable=import_backend) -> None:  # yapf: disable
+                 importer: Callable=import_backend,
+                 **kwargs) -> None:  # yapf: disable
         backend_path = config.get('backend', BACKENDS[self.DEFAULT_BACKEND])
         assert 'backend_config' in config, "You must pass a backend config"
         backend_config = config.get('backend_config')
@@ -29,7 +30,7 @@ class MessageBus:
         logger.debug("Using message bus backend", backend=backend_path,
                      config=backend_config)
         backend_class = importer(backend_path)
-        self.backend = backend_class(backend_config)
+        self.backend = backend_class(backend_config, **kwargs)
 
     def produce(self, value, key=None, **kwargs):
         """

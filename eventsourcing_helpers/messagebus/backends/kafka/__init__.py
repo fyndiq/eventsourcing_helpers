@@ -57,8 +57,9 @@ class KafkaAvroBackend(MessageBusBackend):
 
     @metrics.call_counter('eventsourcing_helpers.messagebus.kafka.handle.count')
     @metrics.statsd.timed('eventsourcing_helpers.messagebus.kafka.handle.time')
-    def _handle(self, handler: Callable, message: Message,
-                consumer: AvroConsumer) -> None:  # yapf: disable
+    def _handle(
+        self, handler: Callable, message: Message, consumer: AvroConsumer
+    ) -> None:
         start_time = time.time()
         if self._shall_handle(message):
             handler(message)
@@ -68,8 +69,9 @@ class KafkaAvroBackend(MessageBusBackend):
         end_time = time.time() - start_time
         logger.debug(f"Message processed in {end_time:.5f}s")
 
-    def produce(self, value: dict, key: str = None, topic: str = None,
-                **kwargs) -> None:  # yapf:disable
+    def produce(
+        self, value: dict, key: str = None, topic: str = None, **kwargs
+    ) -> None:
         assert self.producer is not None, "Producer is not configured"
 
         self.producer.produce(key=key, value=value, topic=topic, **kwargs)

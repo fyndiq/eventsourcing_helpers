@@ -4,55 +4,98 @@ from cnamedtuple import namedtuple
 
 
 class Message:
-    def __init__(self, _message: namedtuple, **kwargs) -> None:
-        self.__dict__['_message'] = _message(**kwargs)
+    """
+    Message proxy class.
+
+    Wraps a message class to provide some extra features.
+
+    All attribute lookups are redirected to the wrapped message class.
+    """
+
+    def __init__(self, **kwargs) -> None:
+        # At this point the instance variable `self._wrapped` is already set.
+        #
+        # The reason we are saving it in `self.__dict__` is to skip hitting the
+        # `__setattr__`dunder method - and thus getting the "Messages are read
+        # only" error.
+        self.__dict__['_wrapped'] = self._wrapped(**kwargs)  # type: ignore
 
     @property
     def _class(self) -> str:
-        return self._message.__class__.__name__
+        return self._wrapped.__class__.__name__  # type: ignore
 
     def to_dict(self) -> dict:
-        items = self._message._asdict().items()  # type: ignore
-        filtered = {k: v for k, v in items if v is not None}
-        return filtered
+        items = self._wrapped._asdict().items()  # type: ignore
+        items = {k: v for k, v in items if v is not None}
+        return items
 
     def __eq__(self, other) -> bool:
         return self.__dict__ == other.__dict__
 
     def __repr__(self) -> str:
-        return repr(self._message)
-
-    def __getattr__(self, name: str) -> Callable:
-        return getattr(self._message, name)
+        return repr(self._wrapped)  # type: ignore
 
     def __setattr__(self, *args) -> None:
         raise AttributeError("Messages are read only")
 
+    def __getattr__(self, name: str) -> Callable:
+        # redirects all attribute lookups to the real message class.
+        raise NotImplementedError
 
-class MessageProxy(Message):
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(self._message, **kwargs)
 
-
-def message_factory(message: namedtuple) -> type:
+class NewMessage(Message):
     """
-    Class decorator used for constructing a message.
+    Newly consumed message.
 
-    A message is basically a namedtuple extended with some extra features.
+    If we try to access an attribute that doesn't exist we should raise an
+    AttributeError.
+    """
 
-    Currently namedtuples doesn't support inheritance from a base class - which
-    means we can't easily add extra methods/properties.
+    def __getattr__(self, name: str) -> Callable:
+        return getattr(self._wrapped, name)
+
+
+class OldMessage(Message):
+    """
+    Message loaded from the repository.
+
+    Accessing attributes that doesn't exist should NOT raise an AtrributeError,
+    instead we return None.
+
+    Otherwise we would have to implement try/catch logic in our apply methods
+    when we add new fields to our Avro schemas.
+    """
+
+    def __getattr__(self, name: str) -> Callable:
+        return getattr(self._wrapped, name, None)
+
+
+def message_factory(message_cls: namedtuple, is_new=True) -> type:
+    """
+    Class decorator used for creating a message proxy class.
+
+    A message proxy is just a message "wrapped" with some extra features and
+    where all attribute lookups are passed through to the wrapped message
+    class.
+
+    The reason we are doing this is because currently namedtuples doesn't
+    support inheritance from a base class - which means we can't easily add
+    extra features.
 
     See: https://github.com/python/typing/issues/427.
 
-    To work around this we can wrap the namedtuple in a "proxy class" which
-    adds all the extra features and redirects all attribute lookups to the
-    underlying namedtuple.
+    TODO: look into data classes in Python 3.7.
 
-    TODO: use data classes in Python 3.7
+    Args:
+        message_cls: Message class to be wrapped.
+        is_new: Flag to indicate if the message is new or loaded from the
+            repository.
+
+    Returns:
+        Message: Message proxy.
 
     Example:
-        >>> @Event
+        >>> @message_factory
         ... class OrderCreated(NamedTuple):
         ...     id: str
         ...     state: str
@@ -64,14 +107,19 @@ def message_factory(message: namedtuple) -> type:
         >>> isinstance(event, Message)
         True
     """
-    # create a new proxy class that inherits from MessageProxy
+    # Dynamically create a new class with the same name as the message
+    # (event/command) we are wrapping.
+    #
+    # The new class will inherit from `proxy_cls` and `object` with one
+    # instance variable set `_wrapped` which is the actual message
+    # (event/command) being wrapped.
+    proxy_cls = NewMessage if is_new else OldMessage
     proxy = type(
-        message.__name__, (MessageProxy, object), {
-            '_message': message
-        }
+        message_cls.__name__, (proxy_cls, object), {'_wrapped': message_cls}
     )
     return proxy
 
 
+# Make the names more explicit for which type of message we are dealing with.
 Event = lambda message: message_factory(message)
 Command = lambda message: message_factory(message)
