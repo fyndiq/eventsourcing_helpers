@@ -22,7 +22,8 @@ class RedisOffsetWatchdogBackend(OffsetWatchdogBackend):
         self._redis = self._redis_sentinel = None
         if 'REDIS_URI' in config:
             assert 'REDIS_SENTINELS' not in config
-            self._redis = StrictRedis.from_url(url=config['REDIS_URI'], decode_responses=True,
+            self._redis = StrictRedis.from_url(url=config['REDIS_URI'],
+                                               decode_responses=True,
                                                socket_connect_timeout=SOCKET_CONNECT_TIMEOUT,
                                                socket_timeout=SOCKET_TIMEOUT)
 
@@ -33,6 +34,7 @@ class RedisOffsetWatchdogBackend(OffsetWatchdogBackend):
                                             socket_connect_timeout=SOCKET_CONNECT_TIMEOUT,
                                             socket_timeout=SOCKET_TIMEOUT,
                                             retry_on_timeout=True,
+                                            decode_responses=True,
                                             db=config['REDIS_DATABASE'])
             self._redis_sentinel_service_name = config['REDIS_SENTINEL_SERVICE_NAME']
 
@@ -46,7 +48,7 @@ class RedisOffsetWatchdogBackend(OffsetWatchdogBackend):
         last_offset = self.redis.get(self._key(message))
         if last_offset is None:
             return False
-        return message._meta.offset <= last_offset
+        return message._meta.offset <= int(last_offset)
 
     def set_seen(self, message: Message):
         self.redis.set(self._key(message), message._meta.offset)
