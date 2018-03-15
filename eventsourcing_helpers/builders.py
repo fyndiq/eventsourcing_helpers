@@ -34,7 +34,8 @@ class ESEntityBuilder:
             entity: rebuilt entity
         """
         entity = entity_class()
-        entity._apply_events(self._get_events(id, max_offset=max_offset))
+        entity._apply_events(self._get_events(id, max_offset=max_offset),
+                             ignore_missing_apply_methods=True)
         return entity
 
     def _get_events(self, id: str, max_offset: int=None) -> Generator[Any, None, None]:  # noqa
