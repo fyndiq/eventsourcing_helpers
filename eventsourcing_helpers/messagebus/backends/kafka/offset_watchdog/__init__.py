@@ -61,7 +61,8 @@ class OffsetWatchdog:
         """Checks if the `message` has been seen before"""
         seen = self.backend.seen(message)
         if seen:
-            logger.warning("Message already seen previously", message=message)
+            logger.warning("Message already seen previously",
+                           message_meta=message._meta)
         return seen
 
     def set_seen(self, message: Message):
