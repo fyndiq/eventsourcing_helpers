@@ -25,8 +25,7 @@ class RedisOffsetWatchdogBackend(OffsetWatchdogBackend):
         if 'redis_uri' in config:
             assert 'redis_sentinels' not in config
             self._redis = StrictRedis.from_url(
-                url=config['redis_uri'],
-                decode_responses=True,
+                url=config['redis_uri'], decode_responses=True,
                 socket_connect_timeout=SOCKET_CONNECT_TIMEOUT,
                 socket_timeout=SOCKET_TIMEOUT
             )
@@ -35,26 +34,27 @@ class RedisOffsetWatchdogBackend(OffsetWatchdogBackend):
             assert 'redis_sentinels' in config
             assert 'redis_sentinel_service_name' in config
 
-            sentinels = [tuple(h.split(':')) for h in
-                         config['redis_sentinels'].split(',')]
+            sentinels = [
+                tuple(h.split(':'))
+                for h in config['redis_sentinels'].split(',')
+            ]
 
             self._redis_sentinel = Sentinel(
-                sentinels,
-                socket_connect_timeout=SOCKET_CONNECT_TIMEOUT,
-                socket_timeout=SOCKET_TIMEOUT,
-                retry_on_timeout=True,
-                decode_responses=True,
-                db=config['redis_database']
+                sentinels, socket_connect_timeout=SOCKET_CONNECT_TIMEOUT,
+                socket_timeout=SOCKET_TIMEOUT, retry_on_timeout=True,
+                decode_responses=True, db=config['redis_database']
             )
             self._redis_sentinel_service_name = config[
-                'redis_sentinel_service_name']
+                'redis_sentinel_service_name'
+            ]
 
     @property
     def redis(self) -> StrictRedis:
         if self._redis:
             return self._redis
         return self._redis_sentinel.master_for(
-            self._redis_sentinel_service_name)
+            self._redis_sentinel_service_name
+        )
 
     def seen(self, message: Message) -> bool:
         last_offset = self.redis.get(self._key(message))
