@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Generator, Any
 
 import structlog
 
@@ -6,9 +6,8 @@ from eventsourcing_helpers.models import AggregateRoot
 from eventsourcing_helpers.utils import import_backend
 
 BACKENDS = {
-    'kafka_avro': 'eventsourcing_helpers.repository.backends.kafka.KafkaAvroBackend',   # noqa
+    'kafka_avro': 'eventsourcing_helpers.repository.backends.kafka.KafkaAvroBackend',  # noqa
 }
-
 
 logger = structlog.get_logger(__name__)
 
@@ -31,8 +30,10 @@ class Repository:
         assert 'backend_config' in config, "You must pass a backend config"
         backend_config = config.get('backend_config')
 
-        logger.info("Using repository backend", backend=backend_path,
-                    config=backend_config)
+        logger.info(
+            "Using repository backend", backend=backend_path,
+            config=backend_config
+        )
         backend_class = importer(backend_path)
         self.backend = backend_class(backend_config, **kwargs)
 
@@ -66,15 +67,19 @@ class Repository:
 
         return events
 
-    def get_aggregate_root(self, id: str, aggregate_root_class: AggregateRoot,
-                           message_deserializer: Callable) -> AggregateRoot:
+    def get_aggregate_root(
+        self, id: str, aggregate_root_class: AggregateRoot,
+        message_deserializer: Callable
+    ) -> AggregateRoot:
         """
         Get latest state of the aggregate root.
 
         Args:
             id (str): ID of the aggregate root.
-            aggregate_root_class (AggregateRoot): The class of the aggregate root
-            message_deserializer (Callable): the deserializer to use for the events
+            aggregate_root_class (AggregateRoot): The class of the aggregate
+                                                  root
+            message_deserializer (Callable): the deserializer to use for the
+                                             events
 
         Returns:
             AggregateRoot: Aggregate root with the latest state.
@@ -85,13 +90,15 @@ class Repository:
 
         return aggregate_root
 
-    def _get_events(self, id: str, message_deserializer: Callable) -> Generator[Any, None, None]:
+    def _get_events(self, id: str, message_deserializer: Callable
+                    ) -> Generator[Any, None, None]:
         """
         Get all aggregate events from the repository.
 
         Args:
             id: Aggregate root id.
-            message_deserializer (Callable): the deserializer to use for the events
+            message_deserializer (Callable): the deserializer to use for the
+                                             events
 
         Returns:
             list: List with all events.
