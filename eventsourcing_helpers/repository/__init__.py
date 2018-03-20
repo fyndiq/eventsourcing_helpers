@@ -10,9 +10,8 @@ from eventsourcing_helpers.repository.snapshots.config import get_snapshot_confi
 BACKENDS = {
     'kafka_avro': 'eventsourcing_helpers.repository.backends.kafka.KafkaAvroBackend',  # noqa
 }
-
 SNAPSHOT_BACKENDS = {
-    'mongo': 'eventsourcing_helpers.repository.snapshots.backends.mongo.MongoSnapshotBackend',   # noqa
+    'null': 'eventsourcing_helpers.repository.snapshots.backends.null.NullSnapshotBackend',   # noqa
 }
 
 logger = structlog.get_logger(__name__)
@@ -29,7 +28,7 @@ class Repository:
     belongs to an aggregate root - from/to some kind of storage.
     """
     DEFAULT_BACKEND = 'kafka_avro'
-    DEFAULT_SNAPSHOT_BACKEND = 'mongo'
+    DEFAULT_SNAPSHOT_BACKEND = 'null'
 
     def __init__(self, config: dict, importer: Callable=import_backend,
                  **kwargs) -> None:  # yapf: disable
@@ -48,8 +47,7 @@ class Repository:
         snapshot_config = get_snapshot_config(config)
         snapshot_backend_path = snapshot_config.get(
             'backend', SNAPSHOT_BACKENDS[self.DEFAULT_SNAPSHOT_BACKEND])
-        assert 'backend_config' in snapshot_config, "You must pass a (snapshot) backend config"  # noqa
-        snapshot_backend_config = snapshot_config.get('backend_config')
+        snapshot_backend_config = snapshot_config.get('backend_config', '')
 
         logger.info("Using snapshot backend", backend=snapshot_backend_path,
                     config=snapshot_backend_config)
