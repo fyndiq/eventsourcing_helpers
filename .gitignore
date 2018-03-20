@@ -7,3 +7,4 @@ eventsourcing_helpers.egg-info/*
 .coverage
 *.lprof
 coverage.xml
+.pytest_cache/
