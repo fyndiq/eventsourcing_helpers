@@ -97,20 +97,6 @@ class ESCommandHandlerTests:
         mock_get_events.assert_called_once_with(command.id)
         self.aggregate_root._apply_events.called_once_with(events)
 
-    def test_get_events(self):
-        """
-        Test that we get the correct events and that the correct methods
-        are invoked.
-        """
-        self.message_deserializer.side_effect = lambda m, **kwargs: m
-        _events = self.handler._get_events(command.id)
-
-        assert events == list(_events)
-        self.repository.return_value.load.assert_called_once_with(command.id)
-        assert self.message_deserializer.call_count == len(events)
-
-        self.message_deserializer.side_effect = None
-
 
 class CommandHandlerTests:
     def setup_method(self):

@@ -1,4 +1,4 @@
-from unittest.mock import Mock
+from unittest.mock import Mock, patch, MagicMock
 
 from eventsourcing_helpers.models import AggregateRoot
 from eventsourcing_helpers.repository import Repository, import_backend
@@ -9,6 +9,10 @@ backend_cls = Mock(spec=RepositoryBackend)
 
 BACKENDS = {'foo': backend_cls}
 BACKENDS_PACKAGE = 'eventsourcing_helpers.repository.backends'
+
+command_class, id = 'FooCommand', '1'
+message = Mock(value={'class': command_class, 'data': {'id': id}})
+events = [1, 2, 3]
 
 
 class RepositoryTests:
@@ -60,6 +64,23 @@ class RepositoryTests:
 
         backend_cls.return_value.load.assert_called_once_with(self.id)
         assert events == self.events
+
+    def test_get_events(self):
+        message_deserializer = Mock()
+        message_deserializer.side_effect = lambda m, **kwargs: m
+
+        config = {
+            'return_value.__enter__.return_value': events
+        }
+        load_mock = MagicMock()
+        load_mock.configure_mock(**config)
+        repository = self.repository(self.config, self.importer)
+
+        with patch('eventsourcing_helpers.repository.Repository.load', load_mock):  # noqa
+            _events = repository._get_events(id, message_deserializer)
+            assert events == list(_events)
+            load_mock.assert_called_once_with(id)
+            assert message_deserializer.call_count == len(events)
 
 
 class ImporterTests:
