@@ -101,7 +101,6 @@ class RepositoryTests:
 
 
 class ImporterTests:
-
     def test_import_backend(self):
         """
         Test that we import the correct backend class.

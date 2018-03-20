@@ -4,9 +4,15 @@ import structlog
 
 from eventsourcing_helpers.models import AggregateRoot
 from eventsourcing_helpers.utils import import_backend
+from eventsourcing_helpers.repository.snapshots.config import get_snapshot_config  # noqa
+
 
 BACKENDS = {
     'kafka_avro': 'eventsourcing_helpers.repository.backends.kafka.KafkaAvroBackend',  # noqa
+}
+
+SNAPSHOT_BACKENDS = {
+    'mongo': 'eventsourcing_helpers.repository.snapshots.backends.mongo.MongoSnapshotBackend',   # noqa
 }
 
 logger = structlog.get_logger(__name__)
@@ -23,9 +29,11 @@ class Repository:
     belongs to an aggregate root - from/to some kind of storage.
     """
     DEFAULT_BACKEND = 'kafka_avro'
+    DEFAULT_SNAPSHOT_BACKEND = 'mongo'
 
     def __init__(self, config: dict, importer: Callable=import_backend,
                  **kwargs) -> None:  # yapf: disable
+
         backend_path = config.get('backend', BACKENDS[self.DEFAULT_BACKEND])
         assert 'backend_config' in config, "You must pass a backend config"
         backend_config = config.get('backend_config')
@@ -36,6 +44,18 @@ class Repository:
         )
         backend_class = importer(backend_path)
         self.backend = backend_class(backend_config, **kwargs)
+
+        snapshot_config = get_snapshot_config(config)
+        snapshot_backend_path = snapshot_config.get(
+            'backend', SNAPSHOT_BACKENDS[self.DEFAULT_SNAPSHOT_BACKEND])
+        assert 'backend_config' in snapshot_config, "You must pass a (snapshot) backend config"  # noqa
+        snapshot_backend_config = snapshot_config.get('backend_config')
+
+        logger.info("Using snapshot backend", backend=snapshot_backend_path,
+                    config=snapshot_backend_config)
+        snapshot_backend_class = importer(snapshot_backend_path)
+        self.snapshot_backend = snapshot_backend_class(
+            snapshot_backend_config, **kwargs)
 
     def commit(self, aggregate_root: AggregateRoot, **kwargs) -> None:
         """
