@@ -84,19 +84,6 @@ class ESCommandHandlerTests:
         self.handler._handle_command(command, handler_inst=self.aggregate_root)
         self.aggregate_root.foo_method.called_once_with(command)
 
-    @patch(f'{module}.ESCommandHandler._get_events')
-    def test_get_aggregate_root(self, mock_get_events):
-        """
-        Test that we get the correct aggregate root and that the correct
-        methods are invoked.
-        """
-        mock_get_events.return_value = events
-        aggregate_root = self.handler._get_aggregate_root(command.id)
-
-        self.aggregate_root.return_value == aggregate_root
-        mock_get_events.assert_called_once_with(command.id)
-        self.aggregate_root._apply_events.called_once_with(events)
-
 
 class CommandHandlerTests:
     def setup_method(self):

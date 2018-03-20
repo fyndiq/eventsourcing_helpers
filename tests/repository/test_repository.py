@@ -82,6 +82,23 @@ class RepositoryTests:
             load_mock.assert_called_once_with(id)
             assert message_deserializer.call_count == len(events)
 
+    @patch('eventsourcing_helpers.repository.Repository._get_events')
+    def test_get_aggregate_root(self, mock_get_events):
+        """
+        Test that we get the correct aggregate root and that the correct
+        methods are invoked.
+        """
+        repository = self.repository(self.config, self.importer)
+        mock_get_events.return_value = events
+        aggregate_root_class = Mock
+        message_deserializer = Mock()
+
+        aggregate_root = repository.get_aggregate_root(
+            id, aggregate_root_class, message_deserializer)
+
+        mock_get_events.assert_called_once_with(id, message_deserializer)
+        aggregate_root._apply_events.called_once_with(events)
+
 
 class ImporterTests:
 
