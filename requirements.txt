@@ -11,5 +11,6 @@ pytest-mock
 pytest-sugar
 structlog
 yapf
+jsonpickle
 
 git+https://github.com/fyndiq/confluent_kafka_helpers@v0.5.2#egg=confluent-kafka-helpers
