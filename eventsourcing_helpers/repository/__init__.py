@@ -65,3 +65,37 @@ class Repository:
         events = self.backend.load(id, **kwargs)
 
         return events
+
+    def get_aggregate_root(self, id: str, aggregate_root_class: AggregateRoot,
+                           message_deserializer: Callable) -> AggregateRoot:
+        """
+        Get latest state of the aggregate root.
+
+        Args:
+            id (str): ID of the aggregate root.
+            aggregate_root_class (AggregateRoot): The class of the aggregate root
+            message_deserializer (Callable): the deserializer to use for the events
+
+        Returns:
+            AggregateRoot: Aggregate root with the latest state.
+        """
+        aggregate_root = aggregate_root_class()
+        events = self._get_events(id, message_deserializer)
+        aggregate_root._apply_events(events)
+
+        return aggregate_root
+
+    def _get_events(self, id: str, message_deserializer: Callable) -> Generator[Any, None, None]:
+        """
+        Get all aggregate events from the repository.
+
+        Args:
+            id: Aggregate root id.
+            message_deserializer (Callable): the deserializer to use for the events
+
+        Returns:
+            list: List with all events.
+        """
+        with self.load(id) as events:
+            for event in events:
+                yield message_deserializer(event, is_new=False)

@@ -97,20 +97,6 @@ class ESCommandHandler(CommandHandler):
 
         self.repository = repository(self.repository_config, **kwargs)
 
-    def _get_events(self, id: str) -> Generator[Any, None, None]:
-        """
-        Get all aggregate events from the repository.
-
-        Args:
-            id: Aggregate root id.
-
-        Returns:
-            list: List with all events.
-        """
-        with self.repository.load(id) as events:
-            for event in events:
-                yield self.message_deserializer(event, is_new=False)
-
     def _get_aggregate_root(self, id: str) -> AggregateRoot:
         """
         Get latest state of the aggregate root.
@@ -121,10 +107,8 @@ class ESCommandHandler(CommandHandler):
         Returns:
             AggregateRoot: Aggregate root with the latest state.
         """
-        aggregate_root = self.aggregate_root()
-        aggregate_root._apply_events(self._get_events(id))
-
-        return aggregate_root
+        return self.repository.get_aggregate_root(
+            id, self.aggregate_root, self.message_deserializer)
 
     def _commit_staged_events(self, aggregate_root: AggregateRoot) -> None:
         """
