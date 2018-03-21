@@ -44,7 +44,7 @@ class Entity:
         hash will also be different
         """
         seed = self._get_model_representation()
-        return hash(seed)
+        return f'{hash(seed)}'
 
     @property
     def _class(self):
