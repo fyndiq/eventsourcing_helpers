@@ -12,7 +12,9 @@ setup(
     install_requires=[
         'structlog>=17.2.0',
         'cnamedtuple>=0.1.6',
-        'confluent-kafka-helpers==0.5.2'
+        'confluent-kafka-helpers==0.5.2',
+        'pymongo==3.6.1',
+        'jsonpickle==0.9.6',
     ],
     dependency_links=[
         'git+https://github.com/fyndiq/confluent_kafka_helpers@v0.5.2#egg=confluent-kafka-helpers-0.5.2'  # noqa
