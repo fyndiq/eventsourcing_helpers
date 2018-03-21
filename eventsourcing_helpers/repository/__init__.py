@@ -4,7 +4,7 @@ import structlog
 
 from eventsourcing_helpers.models import AggregateRoot
 from eventsourcing_helpers.utils import import_backend
-from eventsourcing_helpers.repository.snapshots.config import get_snapshot_config  # noqa
+from eventsourcing_helpers.repository.snapshot_backends.config import get_snapshot_config  # noqa
 
 
 BACKENDS = {
@@ -85,12 +85,31 @@ class Repository:
 
         return events
 
-    def get_aggregate_root(
+    def _read_aggregate_from_snapshot(self, id: str,
+                                      aggregate_root_class: AggregateRoot
+                                      ) -> AggregateRoot:
+        """
+        Get latest state of the aggregate root by the state from the snapshot
+        storage.
+
+        Args:
+            id (str): ID of the aggregate root.
+            aggregate_root_class (AggregateRoot): The class of the aggregate
+                                                  root
+
+        Returns:
+            AggregateRoot: Aggregate root with the latest state.
+        """
+        return self.snapshot_backend._get_from_snapshot(
+            id, aggregate_root_class)
+
+    def _read_aggregate_from_event_history(
         self, id: str, aggregate_root_class: AggregateRoot,
         message_deserializer: Callable
     ) -> AggregateRoot:
         """
-        Get latest state of the aggregate root.
+        Get latest state of the aggregate root by reading all events and
+        applying them.
 
         Args:
             id (str): ID of the aggregate root.
@@ -102,11 +121,44 @@ class Repository:
         Returns:
             AggregateRoot: Aggregate root with the latest state.
         """
+
         aggregate_root = aggregate_root_class()
         events = self._get_events(id, message_deserializer)
         aggregate_root._apply_events(events)
 
         return aggregate_root
+
+    def get_aggregate_root(
+        self, id: str, aggregate_root_class: AggregateRoot,
+        message_deserializer: Callable
+    ) -> AggregateRoot:
+        """
+        Get latest state of the aggregate root.
+
+        1. First try to get it from the snapshot.
+        2. If there was nothing in the snapshot, go to 4
+        3. Else use the aggregate received from the snapshot
+        4. Otherwise read the Aggregate root from the event history
+
+        Args:
+            id (str): ID of the aggregate root.
+            aggregate_root_class (AggregateRoot): The class of the aggregate
+                                                  root
+            message_deserializer (Callable): the deserializer to use for the
+                                             events
+
+        Returns:
+            AggregateRoot: Aggregate root with the latest state.
+        """
+
+        aggregate = self._read_aggregate_from_snapshot(
+            id, aggregate_root_class)
+
+        if aggregate is None:
+            aggregate = self._read_aggregate_from_event_history(
+                id, aggregate_root_class, message_deserializer)
+
+        return aggregate
 
     def _get_events(self, id: str, message_deserializer: Callable
                     ) -> Generator[Any, None, None]:

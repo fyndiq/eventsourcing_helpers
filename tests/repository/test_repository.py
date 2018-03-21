@@ -26,7 +26,10 @@ class RepositoryTests:
         self.backend = f'{BACKENDS_PACKAGE}.backend_cls'
         self.config = {
             'backend_config': {'foo': 'bar'},
-            'backend': self.backend
+            'backend': self.backend,
+            'snapshot': {
+                'backend': 'null'
+            }
         }
         self.aggregate_root = Mock(spec=AggregateRoot)
         self.aggregate_root.id = self.id
@@ -82,22 +85,48 @@ class RepositoryTests:
             load_mock.assert_called_once_with(id)
             assert message_deserializer.call_count == len(events)
 
-    @patch('eventsourcing_helpers.repository.Repository._get_events')
-    def test_get_aggregate_root(self, mock_get_events):
+    @patch('eventsourcing_helpers.repository.Repository._read_aggregate_from_event_history')  # noqa
+    @patch('eventsourcing_helpers.repository.Repository._read_aggregate_from_snapshot')  # noqa
+    def test_get_aggregate_root_reads_from_snapshot(
+            self, mock_get_from_snapshot, mock_get_from_event_history):
         """
-        Test that we get the correct aggregate root and that the correct
-        methods are invoked.
+        Test that the aggregate is read from the snapshot if one is found
         """
+        mock_get_from_snapshot.return_value = Mock()
         repository = self.repository(self.config, self.importer)
-        mock_get_events.return_value = events
+
         aggregate_root_class = Mock
         message_deserializer = Mock()
-
         aggregate_root = repository.get_aggregate_root(
             id, aggregate_root_class, message_deserializer)
 
-        mock_get_events.assert_called_once_with(id, message_deserializer)
-        aggregate_root._apply_events.called_once_with(events)
+        assert aggregate_root == mock_get_from_snapshot.return_value
+        mock_get_from_snapshot.assert_called_once_with(
+            id, aggregate_root_class)
+        assert mock_get_from_event_history.call_count == 0
+
+    @patch('eventsourcing_helpers.repository.Repository._read_aggregate_from_event_history')  # noqa
+    @patch('eventsourcing_helpers.repository.Repository._read_aggregate_from_snapshot')  # noqa
+    def test_get_aggregate_root_reads_from_event_history(
+            self, mock_get_from_snapshot, mock_get_from_event_history):
+        """
+        Test that the aggregate is read from the event history if it could not
+        be found in the snapshots
+        """
+        mock_get_from_snapshot.return_value = None
+        mock_get_from_event_history.return_value = Mock()
+        repository = self.repository(self.config, self.importer)
+
+        aggregate_root_class = Mock
+        message_deserializer = Mock()
+        aggregate_root = repository.get_aggregate_root(
+            id, aggregate_root_class, message_deserializer)
+
+        assert aggregate_root == mock_get_from_event_history.return_value
+        mock_get_from_snapshot.assert_called_once_with(
+            id, aggregate_root_class)
+        mock_get_from_event_history.assert_called_once_with(
+            id, aggregate_root_class, message_deserializer)
 
 
 class ImporterTests:
