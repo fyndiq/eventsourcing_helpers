@@ -12,19 +12,19 @@ from eventsourcing_helpers.repository.snapshot_backends.mongo.serializer import 
 class MongoSnapshotBackend(SnapshotBackend):
     def __init__(
         self, config: dict,
-        encoder: Callable = jsonpickle.encode,
-        decoder: Callable = jsonpickle.decode,
+        encode_method: Callable = jsonpickle.encode,
+        decode_method: Callable = jsonpickle.decode,
     ) -> None:
 
-        self.encoder = encoder
-        self.decoder = decoder
+        self.encode_method = encode_method
+        self.decode_method = decode_method
 
         assert 'MONGO_URI' in config, 'You must specify MONGO_URI!'
 
         # Get Mongo URI etc
 
     def _save_snapshot(self, aggregate: AggregateRoot) -> None:
-        encoded_aggregate = self.encoder.encode(aggregate)
+        encoded_aggregate = self.decode_method(aggregate)
         data_to_save = snapshot_serializer(
             encoded_aggregate, aggregate.version, aggregate._hash)
         pass
