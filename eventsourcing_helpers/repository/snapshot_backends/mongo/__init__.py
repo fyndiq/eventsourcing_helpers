@@ -3,7 +3,7 @@ from typing import Callable
 import jsonpickle
 
 from eventsourcing_helpers.models import AggregateRoot
-from eventsourcing_helpers.repository.snapshots.backends import SnapshotBackend
+from eventsourcing_helpers.repository.snapshot_backends import SnapshotBackend
 
 
 class MongoSnapshotBackend(SnapshotBackend):

@@ -9,7 +9,7 @@ from eventsourcing_helpers.models import AggregateRoot
 logger = structlog.get_logger(__name__)
 
 
-class Snapshot:
+class SnapshotBackend:
 
     def __init__(self, config: dict, importer: Callable=import_backend,
                  **kwargs) -> None:
