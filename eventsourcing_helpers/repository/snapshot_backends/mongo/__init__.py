@@ -24,9 +24,9 @@ class MongoSnapshotBackend(SnapshotBackend):
         # Get Mongo URI etc
 
     def _save_snapshot(self, aggregate: AggregateRoot) -> None:
-        encoded_aggregate = self.decode_method(aggregate)
+        encoded_aggregate = self.encode_method(aggregate)
         data_to_save = snapshot_serializer(
-            encoded_aggregate, aggregate.version, aggregate._hash)
+            encoded_aggregate, aggregate._version, hash(aggregate))
         pass
 
     def _get_from_snapshot(self, aggregate_id: str, aggregate: AggregateRoot) -> AggregateRoot:  # noqa
