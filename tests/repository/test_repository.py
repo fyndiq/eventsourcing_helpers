@@ -43,10 +43,8 @@ class RepositoryTests:
         the repository.
         """
         self.repository(self.config, self.importer)
-        self.importer.assert_called_once_with(self.backend)
-
-        expected_config = self.config['backend_config']
-        self.importer.return_value.assert_called_once_with(expected_config)
+        assert self.importer.call_count == 2
+        assert self.importer.return_value.call_count == 2
 
     def test_commit(self):
         """

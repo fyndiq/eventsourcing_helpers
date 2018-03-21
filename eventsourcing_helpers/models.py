@@ -45,13 +45,13 @@ class Entity:
         attrs = [k for k, v in dict_representation.items()]
         return f"{self._class}({attrs})"
 
-    def __hash__(self) -> str:
+    def __hash__(self) -> int:
         """
         Returns a hash which is taken on the model. If the model changes the
         hash will also be different
         """
         seed = self._get_model_representation()
-        return f'{hash(seed)}'
+        return hash(seed)
 
     @property
     def _class(self):

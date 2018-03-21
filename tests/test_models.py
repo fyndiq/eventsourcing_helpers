@@ -191,7 +191,7 @@ class EntityTests:
     @patch('eventsourcing_helpers.models.Entity._get_model_representation')
     def test_hash_gets_model_representation(self, get_model_representation_mock):  # noqa
         get_model_representation_mock.return_value = 'a'
-        self.aggregate_root._hash()
+        hash(self.aggregate_root)
 
         get_model_representation_mock.assert_called_once_with()
 
