@@ -3,6 +3,10 @@ import uuid
 from itertools import chain
 from typing import Any, Callable, Iterator, List
 
+import jsonpickle
+
+import json
+
 import structlog
 
 word_regexp = re.compile('[A-Z][a-z]+|[A-Z]+(?![a-z])')
@@ -35,10 +39,13 @@ class Entity:
         return f"{self._class}({attrs})"
 
     def _get_model_representation(self) -> str:
-        attrs = [k for k, v in self.__dict__.items()]
+        json_representation = jsonpickle.encode(self)
+        dict_representation = json.loads(json_representation)
+
+        attrs = [k for k, v in dict_representation.items()]
         return f"{self._class}({attrs})"
 
-    def _hash(self) -> str:
+    def __hash__(self) -> str:
         """
         Returns a hash which is taken on the model. If the model changes the
         hash will also be different
