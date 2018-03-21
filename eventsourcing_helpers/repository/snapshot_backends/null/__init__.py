@@ -15,5 +15,5 @@ class NullSnapshotBackend(SnapshotBackend):
     def _save_snapshot(self, aggregate: AggregateRoot) -> None:
         pass
 
-    def _get_from_snapshot(self, aggregate_id: str) -> AggregateRoot:
+    def _get_from_snapshot(self, aggregate_id: str, aggregate: AggregateRoot) -> AggregateRoot:  # noqa
         return None
