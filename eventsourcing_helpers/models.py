@@ -34,6 +34,18 @@ class Entity:
         attrs = {k: v for k, v in self.__dict__.items() if v is not None}
         return f"{self._class}({attrs})"
 
+    def _get_model_representation(self) -> str:
+        attrs = [k for k, v in self.__dict__.items()]
+        return f"{self._class}({attrs})"
+
+    def _hash(self) -> str:
+        """
+        Returns a hash which is taken on the model. If the model changes the
+        hash will also be different
+        """
+        seed = self._get_model_representation()
+        return hash(seed)
+
     @property
     def _class(self):
         return self.__class__.__name__

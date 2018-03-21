@@ -13,6 +13,16 @@ class Bar(Entity):
     pass
 
 
+class Article(AggregateRoot):
+    def __init__(self):
+        super().__init__()
+        self.title = None
+        self.description = None
+        self.status = None
+        self.tags = None
+        self.properties = None
+
+
 class AggregateRootTests:
 
     def test_subclass(self):
@@ -167,6 +177,23 @@ class EntityTests:
         )
         mock_apply.assert_called_once_with(self.aggregate_root, method_name)
         mock_stage.assert_called_once_with(self.event, is_new)
+
+    @pytest.mark.parametrize('entity, data', [
+        (Foo(), ['Foo', 'id', '_version']),
+        (Article(), ['Article', 'id', '_version', 'title', 'description',
+                     'status', 'tags', 'properties'])
+    ])
+    def test_get_model_representation_includes_name_and_fields(self, entity, data):  # noqa
+        representation = entity._get_model_representation()
+        for field in data:
+            assert field in representation
+
+    @patch('eventsourcing_helpers.models.Entity._get_model_representation')
+    def test_hash_gets_model_representation(self, get_model_representation_mock):  # noqa
+        get_model_representation_mock.return_value = 'a'
+        self.aggregate_root._hash()
+
+        get_model_representation_mock.assert_called_once_with()
 
 
 class EntityDictTests:
