@@ -74,12 +74,9 @@ class Snapshot:
         (pickled_data, _, snapshot_aggregate_hash) = (
             self.snapshot_backend.get_from_snapshot(aggregate_id))
 
-        if pickled_data is None:
-            aggregate = None
+        if pickled_data and current_aggregate_hash == snapshot_aggregate_hash:
+            aggregate = self.decode_method(pickled_data)
         else:
-            if current_aggregate_hash == snapshot_aggregate_hash:
-                aggregate = self.decode_method(pickled_data)
-            else:
-                aggregate = None
+            aggregate = None
 
         return aggregate
