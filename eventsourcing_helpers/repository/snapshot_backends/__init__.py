@@ -3,7 +3,6 @@ from typing import Callable
 import structlog
 
 from eventsourcing_helpers.utils import import_backend
-from eventsourcing_helpers.models import AggregateRoot
 
 
 logger = structlog.get_logger(__name__)
@@ -15,8 +14,9 @@ class SnapshotBackend:
                  **kwargs) -> None:
         raise NotImplementedError()
 
-    def _save_snapshot(self, aggregate: AggregateRoot) -> None:
+    def _save_snapshot(self, aggregate_id: str, pickled_data: str,
+                       aggregate_version: str, aggregate_hash: int) -> None:
         raise NotImplementedError()
 
-    def _get_from_snapshot(self, aggregate_id: str) -> AggregateRoot:
+    def _get_from_snapshot(self, aggregate_id: str) -> (str, str, int):
         raise NotImplementedError()

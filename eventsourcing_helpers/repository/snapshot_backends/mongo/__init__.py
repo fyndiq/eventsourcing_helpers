@@ -1,38 +1,38 @@
-from typing import Callable
-
-import jsonpickle
-
 from pymongo import MongoClient
 
 from eventsourcing_helpers.models import AggregateRoot
 from eventsourcing_helpers.repository.snapshot_backends import SnapshotBackend
-from eventsourcing_helpers.repository.snapshot_backends.mongo.serializer import snapshot_serializer  # noqa
+from eventsourcing_helpers.repository.snapshot_backends.mongo.serializer import (  # noqa
+    serialize_data, deserialize_data)
 
 
 class MongoSnapshotBackend(SnapshotBackend):
     def __init__(
-        self, config: dict,
-        encode_method: Callable = jsonpickle.encode,
-        decode_method: Callable = jsonpickle.decode,
+        self, config: dict
     ) -> None:
-
-        self.encode_method = encode_method
-        self.decode_method = decode_method
-
         assert 'MONGO_URI' in config, 'You must specify MONGO_URI!'
+        mongo_uri = config.get('MONGO_URI')
+        self.client = MongoClient(mongo_uri)
+        self.db = self.client.snapshots
 
-        # Get Mongo URI etc
+    def _save_snapshot(self, aggregate_id: str, pickled_data: str,
+                       aggregate_version: str, aggregate_hash: int) -> None:
+        data_to_save = serialize_data(
+            pickled_data, aggregate_version, aggregate_hash)
 
-    def _save_snapshot(self, aggregate: AggregateRoot) -> None:
-        encoded_aggregate = self.encode_method(aggregate)
-        data_to_save = snapshot_serializer(
-            encoded_aggregate, aggregate._version, hash(aggregate))
-        pass
+        query = {'_id': aggregate_id}
+        #self.client.snapshots.find_one_and_replace(
+        #    query, data_to_save, upsert=True)
 
-    def _get_from_snapshot(self, aggregate_id: str, aggregate: AggregateRoot) -> AggregateRoot:  # noqa
+    def _get_from_snapshot(self, aggregate_id: str) -> (str, str, int):
         """
         Get the aggregate with the specific aggregate_id from the snapshot
-        storage. Return it if it has the same saved hash as the current hash
-        of the aggregate. Otherwise return None
+        storage.
+        Return a tuple with (aggregate_root, aggregate_version, aggregate_hash)
         """
-        return None
+        query = {'_id': aggregate_id}
+
+        #snapshot_data = self.client.snapshots.find_one(query)
+
+        #return deserialize_data(snapshot_data)
+        return (None, None, 0)
