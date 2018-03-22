@@ -40,7 +40,6 @@ class RepositoryTests:
         Test that we import the correct backend when initializing
         the repository.
         """
-        import ipdb; ipdb.set_trace()
         self.repository(self.config, self.importer)
 
         self.importer.assert_called_once_with(self.backend)
