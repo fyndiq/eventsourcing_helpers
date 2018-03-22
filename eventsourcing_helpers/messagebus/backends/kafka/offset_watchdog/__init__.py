@@ -22,6 +22,7 @@ from confluent_kafka_helpers.message import Message
 from eventsourcing_helpers.messagebus.backends.kafka.offset_watchdog.backends import (  # noqa
     OffsetWatchdogBackend
 )
+from eventsourcing_helpers.metrics import base_metric, statsd
 from eventsourcing_helpers.utils import import_backend
 
 BACKENDS_PATH = 'eventsourcing_helpers.messagebus.backends.kafka.offset_watchdog.backends'  # noqa
@@ -56,6 +57,7 @@ class OffsetWatchdog:
         self.backend: OffsetWatchdogBackend = backend_class(
             config=backend_config
         )
+        self._consumer_id = backend_config['group.id']
 
     def seen(self, message: Message) -> bool:
         """Checks if the `message` has been seen before"""
@@ -63,6 +65,14 @@ class OffsetWatchdog:
         if seen:
             logger.warning("Message already seen previously",
                            message_meta=message._meta)
+            statsd.increment(
+                f'{base_metric}.messagebus.kafka.offset_watchdog.seen.count',
+                tags=[
+                    f'partition:{message._meta.partition}',
+                    f'topic:{message._meta.topic}',
+                    f'consumer_group:{self._consumer_id}'
+                ]
+            )
         return seen
 
     def set_seen(self, message: Message):
