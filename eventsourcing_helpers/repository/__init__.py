@@ -146,6 +146,9 @@ class Repository:
         if aggregate is None:
             aggregate = self._read_aggregate_from_event_history(
                 id, aggregate_root_class, message_deserializer)
+            logger.debug('Aggregate was read from event history')
+        else:
+            logger.debug('Aggregate was read from snapshot')
 
         return aggregate
 
