@@ -14,7 +14,7 @@ class MongoSnapshotBackend(SnapshotBackend):
         self.client = MongoClient(mongo_uri)
         self.db = self.client.snapshots
 
-    def _save_snapshot(self, aggregate_id: str, pickled_data: str,
+    def save_snapshot(self, aggregate_id: str, pickled_data: str,
                        aggregate_version: str, aggregate_hash: int) -> None:
         data_to_save = serialize_data(
             pickled_data, aggregate_version, aggregate_hash)
@@ -23,7 +23,7 @@ class MongoSnapshotBackend(SnapshotBackend):
         #self.client.snapshots.find_one_and_replace(
         #    query, data_to_save, upsert=True)
 
-    def _get_from_snapshot(self, aggregate_id: str) -> (str, str, int):
+    def get_from_snapshot(self, aggregate_id: str) -> (str, str, int):
         """
         Get the aggregate with the specific aggregate_id from the snapshot
         storage.
