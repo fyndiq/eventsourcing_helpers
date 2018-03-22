@@ -27,9 +27,6 @@ class RepositoryTests:
         self.config = {
             'backend_config': {'foo': 'bar'},
             'backend': self.backend,
-            'snapshot': {
-                'backend': 'null'
-            }
         }
         self.aggregate_root = Mock(spec=AggregateRoot)
         self.aggregate_root.id = self.id
@@ -37,14 +34,18 @@ class RepositoryTests:
 
         self.repository = Repository
 
-    def test_init(self):
+    @patch('eventsourcing_helpers.repository.snapshot.Snapshot')
+    def test_init(self, mock):
         """
         Test that we import the correct backend when initializing
         the repository.
         """
+        import ipdb; ipdb.set_trace()
         self.repository(self.config, self.importer)
-        assert self.importer.call_count == 2
-        assert self.importer.return_value.call_count == 2
+
+        self.importer.assert_called_once_with(self.backend)
+        expected_config = self.config['backend_config']
+        self.importer.return_value.assert_called_once_with(expected_config)
 
     def test_commit(self):
         """
