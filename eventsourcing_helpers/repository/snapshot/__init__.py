@@ -74,14 +74,13 @@ class Snapshot:
         """
 
         import ipdb; ipdb.set_trace()
-        # TODO: What if nothing was in db?
-        (pickled_data, _, aggregate_hash) = (
+        (pickled_data, _, snapshot_aggregate_hash) = (
             self.snapshot_backend.get_from_snapshot(aggregate_id))
 
         if pickled_data is None:
             aggregate = None
         else:
-            if current_aggregate_hash == aggregate_hash:
+            if current_aggregate_hash == snapshot_aggregate_hash:
                 aggregate = self.decode_method(pickled_data)
             else:
                 aggregate = None
