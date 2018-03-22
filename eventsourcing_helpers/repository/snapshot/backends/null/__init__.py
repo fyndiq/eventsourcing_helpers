@@ -16,4 +16,4 @@ class NullSnapshotBackend(SnapshotBackend):
         pass
 
     def get_from_snapshot(self, aggregate_id: str) -> (str, str, int):  # noqa
-        return None
+        return (None, None, 0)
