@@ -4,15 +4,13 @@ import structlog
 
 from eventsourcing_helpers.models import AggregateRoot
 from eventsourcing_helpers.utils import import_backend
-from eventsourcing_helpers.repository.snapshot_backends.config import get_snapshot_config  # noqa
+from eventsourcing_helpers.repository.snapshot import Snapshot
 
 
 BACKENDS = {
     'kafka_avro': 'eventsourcing_helpers.repository.backends.kafka.KafkaAvroBackend',  # noqa
 }
-SNAPSHOT_BACKENDS = {
-    'null': 'eventsourcing_helpers.repository.snapshots.backends.null.NullSnapshotBackend',   # noqa
-}
+
 
 logger = structlog.get_logger(__name__)
 
@@ -28,7 +26,6 @@ class Repository:
     belongs to an aggregate root - from/to some kind of storage.
     """
     DEFAULT_BACKEND = 'kafka_avro'
-    DEFAULT_SNAPSHOT_BACKEND = 'null'
 
     def __init__(self, config: dict, importer: Callable=import_backend,
                  **kwargs) -> None:  # yapf: disable
@@ -44,16 +41,7 @@ class Repository:
         backend_class = importer(backend_path)
         self.backend = backend_class(backend_config, **kwargs)
 
-        snapshot_config = get_snapshot_config(config)
-        snapshot_backend_path = snapshot_config.get(
-            'backend', SNAPSHOT_BACKENDS[self.DEFAULT_SNAPSHOT_BACKEND])
-        snapshot_backend_config = snapshot_config.get('backend_config', '')
-
-        logger.info("Using snapshot backend", backend=snapshot_backend_path,
-                    config=snapshot_backend_config)
-        snapshot_backend_class = importer(snapshot_backend_path)
-        self.snapshot_backend = snapshot_backend_class(
-            snapshot_backend_config, **kwargs)
+        self.snapshot = Snapshot(config, **kwargs)
 
     def commit(self, aggregate_root: AggregateRoot, **kwargs) -> None:
         """
@@ -70,7 +58,7 @@ class Repository:
             logger.info("Committing staged events to repository")
             self.backend.commit(id=id, events=events, **kwargs)
             aggregate_root._clear_staged_events()
-            self.snapshot_backend._save_snapshot(aggregate_root)
+            #self.snapshot_backend._save_snapshot(aggregate_root)
 
     def load(self, id: str, **kwargs) -> list:
         """
@@ -101,8 +89,10 @@ class Repository:
         Returns:
             AggregateRoot: Aggregate root with the latest state.
         """
-        return self.snapshot_backend._get_from_snapshot(
-            id, aggregate_root_class)
+
+        #aggregate, _, _ = self.snapshot_backend._get_from_snapshot(
+        #    id, aggregate_root_class)
+        return None
 
     def _read_aggregate_from_event_history(
         self, id: str, aggregate_root_class: AggregateRoot,
