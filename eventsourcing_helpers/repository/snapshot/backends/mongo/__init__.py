@@ -20,8 +20,8 @@ class MongoSnapshotBackend(SnapshotBackend):
             pickled_data, aggregate_version, aggregate_hash)
 
         query = {'_id': aggregate_id}
-        #self.client.snapshots.find_one_and_replace(
-        #    query, data_to_save, upsert=True)
+        self.db.snapshots.find_one_and_replace(
+            query, data_to_save, upsert=True)
 
     def get_from_snapshot(self, aggregate_id: str) -> (str, str, int):
         """
@@ -31,7 +31,8 @@ class MongoSnapshotBackend(SnapshotBackend):
         """
         query = {'_id': aggregate_id}
 
-        #snapshot_data = self.client.snapshots.find_one(query)
-
-        #return deserialize_data(snapshot_data)
-        return (None, None, 0)
+        snapshot_data = self.db.snapshots.find_one(query)
+        if snapshot_data is None:
+            return (None, None, 0)
+        else:
+            return deserialize_data(snapshot_data)
