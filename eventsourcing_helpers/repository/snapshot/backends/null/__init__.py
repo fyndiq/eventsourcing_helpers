@@ -1,4 +1,3 @@
-from eventsourcing_helpers.models import AggregateRoot
 from eventsourcing_helpers.repository.snapshot.backends import SnapshotBackend
 
 

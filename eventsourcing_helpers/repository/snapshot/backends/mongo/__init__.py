@@ -15,7 +15,7 @@ class MongoSnapshotBackend(SnapshotBackend):
         self.db = self.client.snapshots
 
     def save_snapshot(self, aggregate_id: str, pickled_data: str,
-                       aggregate_version: str, aggregate_hash: int) -> None:
+                      aggregate_version: str, aggregate_hash: int) -> None:
         data_to_save = serialize_data(
             pickled_data, aggregate_version, aggregate_hash)
 
