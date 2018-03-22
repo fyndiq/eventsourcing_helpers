@@ -43,8 +43,6 @@ class Snapshot:
         self.encode_method = encode_method
 
     def save_aggregate_as_snapshot(self, aggregate: AggregateRoot) -> None:
-        import ipdb
-        ipdb.set_trace()
         pickled_data = self.encode_method(aggregate)
 
         self.snapshot_backend.save_snapshot(
@@ -73,7 +71,6 @@ class Snapshot:
             AggregateRoot: The aggregate that was loaded (or None)
         """
 
-        import ipdb; ipdb.set_trace()
         (pickled_data, _, snapshot_aggregate_hash) = (
             self.snapshot_backend.get_from_snapshot(aggregate_id))
 
