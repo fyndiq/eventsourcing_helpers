@@ -1,8 +1,7 @@
 from pymongo import MongoClient
 
-from eventsourcing_helpers.models import AggregateRoot
-from eventsourcing_helpers.repository.snapshot_backends import SnapshotBackend
-from eventsourcing_helpers.repository.snapshot_backends.mongo.serializer import (  # noqa
+from eventsourcing_helpers.repository.snapshot.backends import SnapshotBackend
+from eventsourcing_helpers.repository.snapshot.backends.mongo.serializer import (  # noqa
     serialize_data, deserialize_data)
 
 
