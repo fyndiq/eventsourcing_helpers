@@ -47,7 +47,7 @@ class Snapshot:
     def save_aggregate_as_snapshot(self, aggregate: AggregateRoot) -> None:
         pickled_data = self.encode_method(aggregate)
         data_to_save = serialize_data(
-            pickled_data, aggregate._version, hash(aggregate))
+            pickled_data, aggregate._version, aggregate.get_schema_hash())
 
         self.snapshot_backend.save_snapshot(aggregate.id, data_to_save)
 

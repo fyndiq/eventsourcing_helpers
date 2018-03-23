@@ -46,7 +46,7 @@ class Entity:
         attrs = [k for k, v in dict_representation.items()]
         return f"{self._class}({attrs})"
 
-    def __hash__(self) -> int:
+    def get_schema_hash(self) -> int:
         """
         Returns a hash which is taken on the model. If the model changes the
         hash will also be different

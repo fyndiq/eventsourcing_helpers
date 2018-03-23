@@ -90,7 +90,7 @@ class Repository:
             AggregateRoot: Aggregate root with the latest state.
         """
         aggregate = self.snapshot.load_aggregate_from_snapshot(
-            id, hash(aggregate_root_class()))
+            id, aggregate_root_class().get_schema_hash())
         return aggregate
 
     def _read_aggregate_from_event_history(
