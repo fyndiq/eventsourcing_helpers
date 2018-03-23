@@ -1,5 +1,6 @@
 import re
 import uuid
+import hashlib
 from itertools import chain
 from typing import Any, Callable, Iterator, List
 
@@ -51,7 +52,9 @@ class Entity:
         hash will also be different
         """
         seed = self._get_model_representation()
-        return hash(seed)
+        md5_hash = hashlib.md5(seed.encode())
+        string_hash = md5_hash.hexdigest()
+        return int(string_hash, 16)
 
     @property
     def _class(self):
