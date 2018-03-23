@@ -34,7 +34,7 @@ class RepositoryTests:
 
         self.repository = Repository
 
-    @patch('eventsourcing_helpers.repository.snapshot.Snapshot')
+    @patch('eventsourcing_helpers.repository.Snapshot')
     def test_init(self, snapshot_mock):
         """
         Test that we import the correct backend when initializing
@@ -45,9 +45,10 @@ class RepositoryTests:
         self.importer.assert_called_once_with(self.backend)
         expected_config = self.config['backend_config']
         self.importer.return_value.assert_called_once_with(expected_config)
+        snapshot_mock.assert_called_once_with(self.config)
 
-    @patch('eventsourcing_helpers.repository.Snapshot')
-    def test_commit(self, snapshot_mock):
+    @patch('eventsourcing_helpers.repository.Snapshot.save_aggregate_as_snapshot')
+    def test_commit(self, save_aggregate_as_snapshot_mock):
         """
         Test that the backend's commit method is invoked correctly.
         """
@@ -56,6 +57,9 @@ class RepositoryTests:
 
         expected_args = {'id': self.id, 'events': self.events}
         backend_cls.return_value.commit.assert_called_once_with(**expected_args)
+        save_aggregate_as_snapshot_mock.assert_called_once_with(
+            self.aggregate_root
+        )
 
     def test_load(self):
         """
