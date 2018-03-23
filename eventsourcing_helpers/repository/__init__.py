@@ -1,11 +1,10 @@
-from typing import Callable, Generator, Any
+from typing import Any, Callable, Generator
 
 import structlog
 
 from eventsourcing_helpers.models import AggregateRoot
-from eventsourcing_helpers.utils import import_backend
 from eventsourcing_helpers.repository.snapshot import Snapshot
-
+from eventsourcing_helpers.utils import import_backend
 
 BACKENDS = {
     'kafka_avro': 'eventsourcing_helpers.repository.backends.kafka.KafkaAvroBackend',  # noqa

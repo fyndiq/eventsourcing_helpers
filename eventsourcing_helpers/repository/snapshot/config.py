@@ -1,6 +1,5 @@
-from copy import deepcopy
-
 from collections import defaultdict
+from copy import deepcopy
 
 
 def get_snapshot_config(config) -> dict:

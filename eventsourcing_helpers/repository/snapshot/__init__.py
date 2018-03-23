@@ -1,14 +1,16 @@
 from typing import Callable
 
+import jsonpickle
 import structlog
 
-import jsonpickle
-
-from eventsourcing_helpers.utils import import_backend
 from eventsourcing_helpers.models import AggregateRoot
-from eventsourcing_helpers.repository.snapshot.config import get_snapshot_config  # noqa
+from eventsourcing_helpers.repository.snapshot.config import (
+    get_snapshot_config  # noqa
+)
 from eventsourcing_helpers.repository.snapshot.serializer import (
-    serialize_data, deserialize_data)
+    deserialize_data, serialize_data
+)
+from eventsourcing_helpers.utils import import_backend
 
 BACKENDS = {
     'null': 'eventsourcing_helpers.repository.snapshot.backends.null.NullSnapshotBackend',   # noqa

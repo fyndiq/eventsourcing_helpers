@@ -1,13 +1,11 @@
+import hashlib
+import json
 import re
 import uuid
-import hashlib
 from itertools import chain
 from typing import Any, Callable, Iterator, List
 
 import jsonpickle
-
-import json
-
 import structlog
 
 word_regexp = re.compile('[A-Z][a-z]+|[A-Z]+(?![a-z])')

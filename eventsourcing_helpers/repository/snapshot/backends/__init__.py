@@ -4,7 +4,6 @@ import structlog
 
 from eventsourcing_helpers.utils import import_backend
 
-
 logger = structlog.get_logger(__name__)
 
 
