@@ -26,8 +26,17 @@ class LargerTestAggregate(AggregateRoot):
 class NestedAggregate(AggregateRoot):
     def __init__(self):
         super().__init__()
-        self.cart_items = EntityDict()
-        self.cart_items.cart_id = 'a'
+        self.nested_entity_id = EntityDict()
+        self.nested_entity_id.nested_entity_id = 'a'
+
+
+class DoubleNestedAggregate(AggregateRoot):
+    def __init__(self):
+        super().__init__()
+        self.nested_entity = EntityDict()
+        self.nested_entity.nested_entity_id = 'a'
+        self.nested_entity.second_nested_entity = EntityDict()
+        self.nested_entity.second_nested_entity.second_nested_entity_id = 'b'
 
 
 class AggregateRootTests:
@@ -187,11 +196,27 @@ class EntityTests:
 
     @pytest.mark.parametrize('entity, data', [
         (Foo(), ['Foo', 'id', '_version']),
-        (LargerTestAggregate(), ['LargerTestAggregate', 'id', '_version', 'title', 'description',
-                     'status', 'tags', 'properties']),
-        (NestedAggregate(), ['NestedAggregate', 'id', '_version', 'cart_items', 'cart_id']),
+        (LargerTestAggregate(), [
+            'LargerTestAggregate', 'id', '_version', 'title', 'description',
+            'status', 'tags', 'properties'
+        ]),
     ])
     def test_get_model_representation_includes_name_and_fields(self, entity, data):  # noqa
+        representation = entity._get_model_representation()
+        for field in data:
+            assert field in representation
+
+    @pytest.mark.parametrize('entity, data', [
+        (NestedAggregate(), ['NestedAggregate',
+                             'id', '_version',
+                             'nested_entity', 'nested_entity_id']),
+        (DoubleNestedAggregate(), [
+            'DoubleNestedAggregate', 'id', '_version',
+            'nested_entity', 'nested_entity_id',
+            'second_nested_entity', 'second_nested_entity_id']),
+    ])
+    def test_get_model_representation_handles_nested_entities(self, entity, data):  # noqa
+        import ipdb; ipdb.set_trace()
         representation = entity._get_model_representation()
         for field in data:
             assert field in representation
