@@ -1,7 +1,7 @@
 from eventsourcing_helpers.models import AggregateRoot
 
 
-def serialize_data(data, version: str, aggregate_hash: int) -> dict:
+def serialize_data(data, version: int, aggregate_hash: int) -> dict:
     snapshot_data = {}
 
     snapshot_data['data'] = data
@@ -10,5 +10,5 @@ def serialize_data(data, version: str, aggregate_hash: int) -> dict:
     return snapshot_data
 
 
-def deserialize_data(data: dict) -> (AggregateRoot, str, int):
+def deserialize_data(data: dict) -> (AggregateRoot, int, int):  # type: ignore
     return (data['data'], data['version'], data['hash'])

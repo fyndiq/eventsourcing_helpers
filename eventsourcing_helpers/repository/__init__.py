@@ -165,6 +165,6 @@ class Repository:
         Returns:
             list: List with all events.
         """
-        with self.load(id) as events:
+        with self.load(id) as events:  # type:ignore
             for event in events:
                 yield message_deserializer(event, is_new=False)

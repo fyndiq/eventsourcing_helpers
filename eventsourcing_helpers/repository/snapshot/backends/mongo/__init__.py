@@ -17,7 +17,7 @@ class MongoSnapshotBackend(SnapshotBackend):
         self.db.snapshots.find_one_and_replace(
             query, data, upsert=True)
 
-    def get_from_snapshot(self, aggregate_id: str) -> (str, str, int):
+    def get_from_snapshot(self, aggregate_id: str) -> dict:
         """
         Get the aggregate with the specific aggregate_id from the snapshot
         storage.
