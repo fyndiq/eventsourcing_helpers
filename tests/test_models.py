@@ -13,7 +13,7 @@ class Bar(Entity):
     pass
 
 
-class Article(AggregateRoot):
+class LargerTestAggregate(AggregateRoot):
     def __init__(self):
         super().__init__()
         self.title = None
@@ -21,6 +21,13 @@ class Article(AggregateRoot):
         self.status = None
         self.tags = None
         self.properties = None
+
+
+class NestedAggregate(AggregateRoot):
+    def __init__(self):
+        super().__init__()
+        self.cart_items = EntityDict()
+        self.cart_items.cart_id = 'a'
 
 
 class AggregateRootTests:
@@ -180,8 +187,9 @@ class EntityTests:
 
     @pytest.mark.parametrize('entity, data', [
         (Foo(), ['Foo', 'id', '_version']),
-        (Article(), ['Article', 'id', '_version', 'title', 'description',
-                     'status', 'tags', 'properties'])
+        (LargerTestAggregate(), ['LargerTestAggregate', 'id', '_version', 'title', 'description',
+                     'status', 'tags', 'properties']),
+        (NestedAggregate(), ['NestedAggregate', 'id', '_version', 'cart_items', 'cart_id']),
     ])
     def test_get_model_representation_includes_name_and_fields(self, entity, data):  # noqa
         representation = entity._get_model_representation()
