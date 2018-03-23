@@ -14,9 +14,8 @@ class SnapshotBackend:
                  **kwargs) -> None:
         raise NotImplementedError()
 
-    def save_snapshot(self, aggregate_id: str, pickled_data: str,
-                      aggregate_version: str, aggregate_hash: int) -> None:
+    def save_snapshot(self, aggregate_id: str, data: dict) -> None:
         raise NotImplementedError()
 
-    def get_from_snapshot(self, aggregate_id: str) -> (str, str, int):
+    def get_from_snapshot(self, aggregate_id: str) -> dict:
         raise NotImplementedError()

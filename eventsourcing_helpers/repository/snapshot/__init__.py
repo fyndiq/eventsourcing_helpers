@@ -7,6 +7,8 @@ import jsonpickle
 from eventsourcing_helpers.utils import import_backend
 from eventsourcing_helpers.models import AggregateRoot
 from eventsourcing_helpers.repository.snapshot.config import get_snapshot_config  # noqa
+from eventsourcing_helpers.repository.snapshot.serializer import (
+    serialize_data, deserialize_data)
 
 BACKENDS = {
     'null': 'eventsourcing_helpers.repository.snapshot.backends.null.NullSnapshotBackend',   # noqa
@@ -44,11 +46,11 @@ class Snapshot:
 
     def save_aggregate_as_snapshot(self, aggregate: AggregateRoot) -> None:
         pickled_data = self.encode_method(aggregate)
+        data_to_save = serialize_data(
+            pickled_data, aggregate._version, hash(aggregate))
 
         self.snapshot_backend.save_snapshot(
-            aggregate.id,
-            pickled_data,
-            aggregate._version,
+            data_to_save,
             hash(aggregate)
         )
 
@@ -71,8 +73,9 @@ class Snapshot:
             AggregateRoot: The aggregate that was loaded (or None)
         """
 
-        (pickled_data, _, snapshot_aggregate_hash) = (
-            self.snapshot_backend.get_from_snapshot(aggregate_id))
+        snapshot_data = self.snapshot_backend.get_from_snapshot(aggregate_id)
+        (pickled_data, _, snapshot_aggregate_hash) = deserialize_data(
+            snapshot_data)
 
         if pickled_data and current_aggregate_hash == snapshot_aggregate_hash:
             aggregate = self.decode_method(pickled_data)

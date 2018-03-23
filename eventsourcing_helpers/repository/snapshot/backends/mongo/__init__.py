@@ -1,8 +1,6 @@
 from pymongo import MongoClient
 
 from eventsourcing_helpers.repository.snapshot.backends import SnapshotBackend
-from eventsourcing_helpers.repository.snapshot.backends.mongo.serializer import (  # noqa
-    serialize_data, deserialize_data)
 
 
 class MongoSnapshotBackend(SnapshotBackend):
@@ -14,14 +12,10 @@ class MongoSnapshotBackend(SnapshotBackend):
         self.client = MongoClient(mongo_uri)
         self.db = self.client.snapshots
 
-    def save_snapshot(self, aggregate_id: str, pickled_data: str,
-                      aggregate_version: str, aggregate_hash: int) -> None:
-        data_to_save = serialize_data(
-            pickled_data, aggregate_version, aggregate_hash)
-
+    def save_snapshot(self, aggregate_id: str, data: dict) -> None:
         query = {'_id': aggregate_id}
         self.db.snapshots.find_one_and_replace(
-            query, data_to_save, upsert=True)
+            query, data, upsert=True)
 
     def get_from_snapshot(self, aggregate_id: str) -> (str, str, int):
         """
@@ -32,7 +26,4 @@ class MongoSnapshotBackend(SnapshotBackend):
         query = {'_id': aggregate_id}
 
         snapshot_data = self.db.snapshots.find_one(query)
-        if snapshot_data is None:
-            return (None, None, 0)
-        else:
-            return deserialize_data(snapshot_data)
+        return snapshot_data
