@@ -49,10 +49,7 @@ class Snapshot:
         data_to_save = serialize_data(
             pickled_data, aggregate._version, hash(aggregate))
 
-        self.snapshot_backend.save_snapshot(
-            data_to_save,
-            hash(aggregate)
-        )
+        self.snapshot_backend.save_snapshot(aggregate.id, data_to_save)
 
     def load_aggregate_from_snapshot(self, aggregate_id: str,
                                      current_aggregate_hash: int,
