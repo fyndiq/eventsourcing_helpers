@@ -26,8 +26,8 @@ class LargerTestAggregate(AggregateRoot):
 class NestedAggregate(AggregateRoot):
     def __init__(self):
         super().__init__()
-        self.nested_entity_id = EntityDict()
-        self.nested_entity_id.nested_entity_id = 'a'
+        self.nested_entity = EntityDict()
+        self.nested_entity.nested_entity_id = 'a'
 
 
 class DoubleNestedAggregate(AggregateRoot):
@@ -216,7 +216,6 @@ class EntityTests:
             'second_nested_entity', 'second_nested_entity_id']),
     ])
     def test_get_model_representation_handles_nested_entities(self, entity, data):  # noqa
-        import ipdb; ipdb.set_trace()
         representation = entity._get_model_representation()
         for field in data:
             assert field in representation
