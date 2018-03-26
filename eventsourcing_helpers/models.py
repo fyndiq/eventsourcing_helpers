@@ -40,9 +40,17 @@ class Entity:
     def _get_model_representation(self) -> str:
         json_representation = jsonpickle.encode(self)
         dict_representation = json.loads(json_representation)
+        own_attrs = [k for k, v in dict_representation.items()]
 
-        attrs = [k for k, v in dict_representation.items()]
-        return f"{self._class}({attrs})"
+        child_entities = list(self._get_child_entities())
+        if len(child_entities) == 0:
+            representation = f"{self._class}({own_attrs})"
+        else:
+            representation = f"{self._class}({own_attrs})"
+            for entity in child_entities:
+                representation += entity._get_model_representation()
+
+        return representation
 
     def get_schema_hash(self) -> int:
         """
