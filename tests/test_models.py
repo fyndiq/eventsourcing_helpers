@@ -36,7 +36,7 @@ class DoubleNestedAggregate(AggregateRoot):
         self.nested_entity = EntityDict()
         self.nested_entity.nested_entity_id = 'a'
         self.nested_entity.second_nested_entity = EntityDict()
-        self.nested_entity.second_nested_entity.second_nested_entity_id = 'b'
+        self.nested_entity.second_nested_entity.second_nested_entity_id = 'a'
 
 
 class AggregateRootTests:
@@ -153,6 +153,17 @@ class EntityTests:
         Test that we get all child entities for the current instance.
         """
         self.aggregate_root.__dict__.update({'Bar': self.entity})
+        mock_entities.return_value = [self.entity]
+        entities = self.aggregate_root._get_child_entities()
+
+        assert list(entities) == [self.entity]
+
+    @patch('eventsourcing_helpers.models.Entity._get_all_entities')
+    def test_get_child_entities_handles_entity_dict_children(self, mock_entities):
+        """
+        Test that we get all child entities for the current instance.
+        """
+        self.aggregate_root.__dict__.update({'Bar': EntityDict()})
         mock_entities.return_value = [self.entity]
         entities = self.aggregate_root._get_child_entities()
 
