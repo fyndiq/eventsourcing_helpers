@@ -55,7 +55,10 @@ class KafkaAvroBackend(MessageBusBackend):
 
     def _set_handled(self, message: Message):
         if self.offset_watchdog:
-            self.offset_watchdog.set_seen(message)
+            try:
+                self.offset_watchdog.set_seen(message)
+            except Exception:
+                logger.exception("Failed to set offset, but will continue")
 
     @metrics.call_counter('eventsourcing_helpers.messagebus.kafka.handle.count')
     @metrics.statsd.timed('eventsourcing_helpers.messagebus.kafka.handle.time')
