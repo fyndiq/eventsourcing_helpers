@@ -63,7 +63,7 @@ class Repository:
             logger.info("Committing staged events to repository")
             self.backend.commit(id=id, events=events, **kwargs)
             aggregate_root._clear_staged_events()
-            self.snapshot.save_aggregate_as_snapshot(aggregate_root)
+            self.snapshot.save(aggregate_root)
 
     def load(self, id: str) -> AggregateRoot:
         """
@@ -99,9 +99,9 @@ class Repository:
         Returns:
             AggregateRoot: Aggregate root instance with the latest state.
         """
-        schema_hash = self.aggregate_root_cls().get_schema_hash()
-        aggregate_root = self.snapshot.load_aggregate_from_snapshot(
-            id, schema_hash
+        current_hash = self.aggregate_root_cls().get_schema_hash()
+        aggregate_root = self.snapshot.load(
+            id, current_hash
         )
         return aggregate_root
 
