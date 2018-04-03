@@ -109,9 +109,7 @@ class ESCommandHandler(CommandHandler):
         Returns:
             AggregateRoot: Aggregate root with the latest state.
         """
-        return self.repository.get_aggregate_root(
-            id, self.aggregate_root, self.message_deserializer
-        )
+        return self.repository.get_aggregate_root(id, self.aggregate_root)
 
     def _commit_staged_events(self, aggregate_root: AggregateRoot) -> None:
         """

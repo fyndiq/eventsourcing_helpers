@@ -88,8 +88,8 @@ class RepositoryTests:
             load_mock.assert_called_once_with(id)
             assert message_deserializer.call_count == len(events)
 
-    @patch('eventsourcing_helpers.repository.Repository._read_aggregate_from_event_history')  # noqa
-    @patch('eventsourcing_helpers.repository.Repository._read_aggregate_from_snapshot')  # noqa
+    @patch('eventsourcing_helpers.repository.Repository._load_from_event_storage')  # noqa
+    @patch('eventsourcing_helpers.repository.Repository._load_from_snapshot_storage')  # noqa
     def test_get_aggregate_root_reads_from_snapshot(
             self, mock_get_from_snapshot, mock_get_from_event_history):
         """
@@ -108,8 +108,8 @@ class RepositoryTests:
             id, aggregate_root)
         assert mock_get_from_event_history.call_count == 0
 
-    @patch('eventsourcing_helpers.repository.Repository._read_aggregate_from_event_history')  # noqa
-    @patch('eventsourcing_helpers.repository.Repository._read_aggregate_from_snapshot')  # noqa
+    @patch('eventsourcing_helpers.repository.Repository._load_from_event_storage')  # noqa
+    @patch('eventsourcing_helpers.repository.Repository._load_from_snapshot_storage')  # noqa
     def test_get_aggregate_root_reads_from_event_history(
             self, mock_get_from_snapshot, mock_get_from_event_history):
         """

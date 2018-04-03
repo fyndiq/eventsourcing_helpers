@@ -75,12 +75,11 @@ class Repository:
 
         return events
 
-    def _read_aggregate_from_snapshot(
+    def _load_from_snapshot_storage(
         self, id: str, aggregate_root: AggregateRoot
     ) -> AggregateRoot:
         """
-        Get latest state of the aggregate root by the state from the snapshot
-        storage.
+        Load the aggregate from a snapshot.
 
         Args:
             id: ID of the aggregate root.
@@ -94,12 +93,11 @@ class Repository:
 
         return aggregate
 
-    def _read_aggregate_from_event_history(
+    def _load_from_event_storage(
         self, id: str, aggregate_root: AggregateRoot
     ) -> AggregateRoot:
         """
-        Get latest state of the aggregate root by reading all events and
-        applying them.
+        Load the aggregate from the event storage.
 
         Args:
             id: ID of the aggregate root.
@@ -132,12 +130,10 @@ class Repository:
         Returns:
             AggregateRoot: Aggregate root with the latest state.
         """
-        aggregate = self._read_aggregate_from_snapshot(id, aggregate_root)
+        aggregate = self._load_from_snapshot_storage(id, aggregate_root)
 
         if aggregate is None:
-            aggregate = self._read_aggregate_from_event_history(
-                id, aggregate_root
-            )
+            aggregate = self._load_from_event_storage(id, aggregate_root)
             logger.debug('Aggregate was read from event history')
         else:
             logger.debug('Aggregate was read from snapshot')
