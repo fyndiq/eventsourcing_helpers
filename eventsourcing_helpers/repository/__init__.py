@@ -73,7 +73,7 @@ class Repository:
         return events
 
     def _read_aggregate_from_snapshot(
-        self, id: str, aggregate_root_class: AggregateRoot
+        self, id: str, aggregate_root: AggregateRoot
     ) -> AggregateRoot:
         """
         Get latest state of the aggregate root by the state from the snapshot
@@ -81,18 +81,18 @@ class Repository:
 
         Args:
             id: ID of the aggregate root.
-            aggregate_root_class: The class of the aggregate root.
+            aggregate_root: The class of the aggregate root.
 
         Returns:
             AggregateRoot: Aggregate root with the latest state.
         """
-        schema_hash = aggregate_root_class().get_schema_hash()
+        schema_hash = aggregate_root().get_schema_hash()
         aggregate = self.snapshot.load_aggregate_from_snapshot(id, schema_hash)
 
         return aggregate
 
     def _read_aggregate_from_event_history(
-        self, id: str, aggregate_root_class: AggregateRoot,
+        self, id: str, aggregate_root: AggregateRoot,
         message_deserializer: Callable
     ) -> AggregateRoot:
         """
@@ -101,20 +101,20 @@ class Repository:
 
         Args:
             id: ID of the aggregate root.
-            aggregate_root_class: The class of the aggregate root.
+            aggregate_root: The class of the aggregate root.
             message_deserializer: The deserializer to use for the events.
 
         Returns:
             AggregateRoot: Aggregate root with the latest state.
         """
-        aggregate_root = aggregate_root_class()
+        aggregate_root = aggregate_root()
         events = self._get_events(id, message_deserializer)
         aggregate_root._apply_events(events)
 
         return aggregate_root
 
     def get_aggregate_root(
-        self, id: str, aggregate_root_class: AggregateRoot,
+        self, id: str, aggregate_root: AggregateRoot,
         message_deserializer: Callable
     ) -> AggregateRoot:
         """
@@ -127,17 +127,17 @@ class Repository:
 
         Args:
             id: ID of the aggregate root.
-            aggregate_root_class: The class of the aggregate root.
+            aggregate_root: The class of the aggregate root.
             message_deserializer: The deserializer to use for the events.
 
         Returns:
             AggregateRoot: Aggregate root with the latest state.
         """
-        aggregate = self._read_aggregate_from_snapshot(id, aggregate_root_class)
+        aggregate = self._read_aggregate_from_snapshot(id, aggregate_root)
 
         if aggregate is None:
             aggregate = self._read_aggregate_from_event_history(
-                id, aggregate_root_class, message_deserializer
+                id, aggregate_root, message_deserializer
             )
             logger.debug('Aggregate was read from event history')
         else:
