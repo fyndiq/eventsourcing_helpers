@@ -79,8 +79,9 @@ class Entity:
         """
         return getattr(entity, method_name)
 
-    def _apply_event(self, event: Any, entity: 'Entity', method_name,
-                     is_new) -> None:  # yapf: disable
+    def _apply_event(
+        self, event: Any, entity: 'Entity', method_name, is_new
+    ) -> None:
         """
         Apply an event on one entity.
 

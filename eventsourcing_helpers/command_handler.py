@@ -89,8 +89,10 @@ class ESCommandHandler(CommandHandler):
     aggregate_root: AggregateRoot = None
     repository_config: dict = None
 
-    def __init__(self, message_deserializer: Callable=from_message_to_dto,
-                 repository: Any=Repository, **kwargs) -> None:  # yapf: disable
+    def __init__(
+        self, message_deserializer: Callable = from_message_to_dto,
+        repository: Any = Repository, **kwargs
+    ) -> None:
         super().__init__(message_deserializer)
         assert self.aggregate_root
         assert self.repository_config
@@ -108,7 +110,8 @@ class ESCommandHandler(CommandHandler):
             AggregateRoot: Aggregate root with the latest state.
         """
         return self.repository.get_aggregate_root(
-            id, self.aggregate_root, self.message_deserializer)
+            id, self.aggregate_root, self.message_deserializer
+        )
 
     def _commit_staged_events(self, aggregate_root: AggregateRoot) -> None:
         """

@@ -4,16 +4,14 @@ import jsonpickle
 import structlog
 
 from eventsourcing_helpers.models import AggregateRoot
-from eventsourcing_helpers.repository.snapshot.config import (
-    get_snapshot_config  # noqa
-)
+from eventsourcing_helpers.repository.snapshot.config import get_snapshot_config
 from eventsourcing_helpers.repository.snapshot.serializer import (
     deserialize_data, serialize_data
 )
 from eventsourcing_helpers.utils import import_backend
 
 BACKENDS = {
-    'null': 'eventsourcing_helpers.repository.snapshot.backends.null.NullSnapshotBackend',   # noqa
+    'null': 'eventsourcing_helpers.repository.snapshot.backends.null.NullSnapshotBackend'  # noqa
 }
 
 logger = structlog.get_logger(__name__)
@@ -27,21 +25,25 @@ class Snapshot:
     """
     DEFAULT_BACKEND = 'null'
 
-    def __init__(self, config: dict,
-                 importer: Callable=import_backend,
-                 encode_method=jsonpickle.encode,
-                 decode_method=jsonpickle.decode,
-                 **kwargs) -> None:  # yapf: disable
+    def __init__(
+        self, config: dict, importer: Callable = import_backend,
+        encode_method=jsonpickle.encode, decode_method=jsonpickle.decode,
+        **kwargs
+    ) -> None:
         snapshot_config = get_snapshot_config(config)
         snapshot_backend_path = snapshot_config.get(
-            'backend', BACKENDS[self.DEFAULT_BACKEND])
+            'backend', BACKENDS[self.DEFAULT_BACKEND]
+        )
         snapshot_backend_config = snapshot_config.get('backend_config', '')
 
-        logger.info("Using snapshot backend", backend=snapshot_backend_path,
-                    config=snapshot_backend_config)
+        logger.info(
+            "Using snapshot backend", backend=snapshot_backend_path,
+            config=snapshot_backend_config
+        )
         snapshot_backend_class = importer(snapshot_backend_path)
         self.snapshot_backend = snapshot_backend_class(
-            snapshot_backend_config, **kwargs)
+            snapshot_backend_config, **kwargs
+        )
 
         self.decode_method = decode_method
         self.encode_method = encode_method
@@ -49,16 +51,17 @@ class Snapshot:
     def save_aggregate_as_snapshot(self, aggregate: AggregateRoot) -> None:
         pickled_data = self.encode_method(aggregate)
         data_to_save = serialize_data(
-            pickled_data, aggregate._version, aggregate.get_schema_hash())
+            pickled_data, aggregate._version, aggregate.get_schema_hash()
+        )
 
         self.snapshot_backend.save_snapshot(aggregate.id, data_to_save)
 
-    def load_aggregate_from_snapshot(self, aggregate_id: str,
-                                     current_aggregate_hash: int,
-                                     ) -> AggregateRoot:
+    def load_aggregate_from_snapshot(
+        self, aggregate_id: str, current_aggregate_hash: int
+    ) -> AggregateRoot:
         """
-        Loads an aggregate from the snapshot storage.
-        If the saved aggregate_hash in the database does not match the
+        Loads an aggregate from the snapshot storage. If the saved
+        aggregate_hash in the database does not match the
         current_aggregate_hash it means that the model has changed since the
         snapshot was saved. If that is the case the snapshot should not be used
         and None should be returned
@@ -73,8 +76,8 @@ class Snapshot:
         """
 
         snapshot_data = self.snapshot_backend.get_from_snapshot(aggregate_id)
-        (pickled_data, _, snapshot_aggregate_hash) = deserialize_data(
-            snapshot_data)
+        (pickled_data, _,
+         snapshot_aggregate_hash) = deserialize_data(snapshot_data)
 
         if pickled_data and current_aggregate_hash == snapshot_aggregate_hash:
             aggregate = self.decode_method(pickled_data)

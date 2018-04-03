@@ -10,7 +10,6 @@ BACKENDS = {
     'kafka_avro': 'eventsourcing_helpers.repository.backends.kafka.KafkaAvroBackend',  # noqa
 }
 
-
 logger = structlog.get_logger(__name__)
 
 
@@ -26,9 +25,9 @@ class Repository:
     """
     DEFAULT_BACKEND = 'kafka_avro'
 
-    def __init__(self, config: dict, importer: Callable=import_backend,
-                 **kwargs) -> None:  # yapf: disable
-
+    def __init__(
+        self, config: dict, importer: Callable = import_backend, **kwargs
+    ) -> None:
         backend_path = config.get('backend', BACKENDS[self.DEFAULT_BACKEND])
         assert 'backend_config' in config, "You must pass a backend config"
         backend_config = config.get('backend_config')
@@ -73,9 +72,9 @@ class Repository:
 
         return events
 
-    def _read_aggregate_from_snapshot(self, id: str,
-                                      aggregate_root_class: AggregateRoot
-                                      ) -> AggregateRoot:
+    def _read_aggregate_from_snapshot(
+        self, id: str, aggregate_root_class: AggregateRoot
+    ) -> AggregateRoot:
         """
         Get latest state of the aggregate root by the state from the snapshot
         storage.
@@ -88,8 +87,9 @@ class Repository:
         Returns:
             AggregateRoot: Aggregate root with the latest state.
         """
-        aggregate = self.snapshot.load_aggregate_from_snapshot(
-            id, aggregate_root_class().get_schema_hash())
+        schema_hash = aggregate_root_class().get_schema_hash()
+        aggregate = self.snapshot.load_aggregate_from_snapshot(id, schema_hash)
+
         return aggregate
 
     def _read_aggregate_from_event_history(
@@ -110,7 +110,6 @@ class Repository:
         Returns:
             AggregateRoot: Aggregate root with the latest state.
         """
-
         aggregate_root = aggregate_root_class()
         events = self._get_events(id, message_deserializer)
         aggregate_root._apply_events(events)
@@ -139,26 +138,27 @@ class Repository:
         Returns:
             AggregateRoot: Aggregate root with the latest state.
         """
-        aggregate = self._read_aggregate_from_snapshot(
-            id, aggregate_root_class)
+        aggregate = self._read_aggregate_from_snapshot(id, aggregate_root_class)
 
         if aggregate is None:
             aggregate = self._read_aggregate_from_event_history(
-                id, aggregate_root_class, message_deserializer)
+                id, aggregate_root_class, message_deserializer
+            )
             logger.debug('Aggregate was read from event history')
         else:
             logger.debug('Aggregate was read from snapshot')
 
         return aggregate
 
-    def _get_events(self, id: str, message_deserializer: Callable
-                    ) -> Generator[Any, None, None]:
+    def _get_events(
+        self, id: str, message_deserializer: Callable
+    ) -> Generator[Any, None, None]:  # yapf: disable
         """
         Get all aggregate events from the repository.
 
         Args:
             id: Aggregate root id.
-            message_deserializer (Callable): the deserializer to use for the
+            message_deserializer (Callable): The deserializer to use for the
                                              events
 
         Returns:
