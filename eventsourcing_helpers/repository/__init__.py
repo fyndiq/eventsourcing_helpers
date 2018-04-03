@@ -80,9 +80,8 @@ class Repository:
         storage.
 
         Args:
-            id (str): ID of the aggregate root.
-            aggregate_root_class (AggregateRoot): The class of the aggregate
-                                                  root
+            id: ID of the aggregate root.
+            aggregate_root_class: The class of the aggregate root.
 
         Returns:
             AggregateRoot: Aggregate root with the latest state.
@@ -101,11 +100,9 @@ class Repository:
         applying them.
 
         Args:
-            id (str): ID of the aggregate root.
-            aggregate_root_class (AggregateRoot): The class of the aggregate
-                                                  root
-            message_deserializer (Callable): the deserializer to use for the
-                                             events
+            id: ID of the aggregate root.
+            aggregate_root_class: The class of the aggregate root.
+            message_deserializer: The deserializer to use for the events.
 
         Returns:
             AggregateRoot: Aggregate root with the latest state.
@@ -129,11 +126,9 @@ class Repository:
         4. Otherwise read the Aggregate root from the event history
 
         Args:
-            id (str): ID of the aggregate root.
-            aggregate_root_class (AggregateRoot): The class of the aggregate
-                                                  root
-            message_deserializer (Callable): the deserializer to use for the
-                                             events
+            id: ID of the aggregate root.
+            aggregate_root_class: The class of the aggregate root.
+            message_deserializer: The deserializer to use for the events.
 
         Returns:
             AggregateRoot: Aggregate root with the latest state.
@@ -158,8 +153,7 @@ class Repository:
 
         Args:
             id: Aggregate root id.
-            message_deserializer (Callable): The deserializer to use for the
-                                             events
+            message_deserializer: The deserializer to use for the events.
 
         Returns:
             list: List with all events.
