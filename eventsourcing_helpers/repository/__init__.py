@@ -4,6 +4,7 @@ import structlog
 
 from eventsourcing_helpers.models import AggregateRoot
 from eventsourcing_helpers.repository.snapshot import Snapshot
+from eventsourcing_helpers.serializers import from_message_to_dto
 from eventsourcing_helpers.utils import import_backend
 
 BACKENDS = {
@@ -26,7 +27,8 @@ class Repository:
     DEFAULT_BACKEND = 'kafka_avro'
 
     def __init__(
-        self, config: dict, importer: Callable = import_backend, **kwargs
+        self, config: dict, importer: Callable = import_backend,
+        message_deserializer: Callable = from_message_to_dto, **kwargs
     ) -> None:
         backend_path = config.get('backend', BACKENDS[self.DEFAULT_BACKEND])
         assert 'backend_config' in config, "You must pass a backend config"
@@ -37,8 +39,9 @@ class Repository:
             config=backend_config
         )
         backend_class = importer(backend_path)
-        self.backend = backend_class(backend_config, **kwargs)
 
+        self.message_deserializer = message_deserializer
+        self.backend = backend_class(backend_config, **kwargs)
         self.snapshot = Snapshot(config, **kwargs)
 
     def commit(self, aggregate_root: AggregateRoot, **kwargs) -> None:
@@ -92,8 +95,7 @@ class Repository:
         return aggregate
 
     def _read_aggregate_from_event_history(
-        self, id: str, aggregate_root: AggregateRoot,
-        message_deserializer: Callable
+        self, id: str, aggregate_root: AggregateRoot
     ) -> AggregateRoot:
         """
         Get latest state of the aggregate root by reading all events and
@@ -102,20 +104,18 @@ class Repository:
         Args:
             id: ID of the aggregate root.
             aggregate_root: The class of the aggregate root.
-            message_deserializer: The deserializer to use for the events.
 
         Returns:
             AggregateRoot: Aggregate root with the latest state.
         """
         aggregate_root = aggregate_root()
-        events = self._get_events(id, message_deserializer)
+        events = self._get_events(id)
         aggregate_root._apply_events(events)
 
         return aggregate_root
 
     def get_aggregate_root(
-        self, id: str, aggregate_root: AggregateRoot,
-        message_deserializer: Callable
+        self, id: str, aggregate_root: AggregateRoot
     ) -> AggregateRoot:
         """
         Get latest state of the aggregate root.
@@ -128,7 +128,6 @@ class Repository:
         Args:
             id: ID of the aggregate root.
             aggregate_root: The class of the aggregate root.
-            message_deserializer: The deserializer to use for the events.
 
         Returns:
             AggregateRoot: Aggregate root with the latest state.
@@ -137,7 +136,7 @@ class Repository:
 
         if aggregate is None:
             aggregate = self._read_aggregate_from_event_history(
-                id, aggregate_root, message_deserializer
+                id, aggregate_root
             )
             logger.debug('Aggregate was read from event history')
         else:
@@ -145,19 +144,16 @@ class Repository:
 
         return aggregate
 
-    def _get_events(
-        self, id: str, message_deserializer: Callable
-    ) -> Generator[Any, None, None]:  # yapf: disable
+    def _get_events(self, id: str) -> Generator[Any, None, None]:
         """
         Get all aggregate events from the repository.
 
         Args:
             id: Aggregate root id.
-            message_deserializer: The deserializer to use for the events.
 
         Returns:
             list: List with all events.
         """
         with self.load(id) as events:  # type:ignore
             for event in events:
-                yield message_deserializer(event, is_new=False)
+                yield self.message_deserializer(event, is_new=False)
