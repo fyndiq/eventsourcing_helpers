@@ -80,13 +80,9 @@ class Repository:
         Returns:
             AggregateRoot: Aggregate root instance with the latest state.
         """
-        aggregate_root = self._load_from_snapshot_storage(
-            id, self.aggregate_root_cls
-        )
+        aggregate_root = self._load_from_snapshot_storage(id)
         if aggregate_root is None:
-            aggregate_root = self._load_from_event_storage(
-                id, self.aggregate_root_cls
-            )
+            aggregate_root = self._load_from_event_storage(id)
             logger.debug("Aggregate was read from event history")
         else:
             logger.debug("Aggregate was read from snapshot")
