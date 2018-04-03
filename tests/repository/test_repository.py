@@ -98,14 +98,13 @@ class RepositoryTests:
         mock_get_from_snapshot.return_value = Mock()
         repository = self.repository(self.config, self.importer)
 
-        aggregate_root = Mock
-        message_deserializer = Mock()
-        aggregate_root = repository.get_aggregate_root(
-            id, aggregate_root, message_deserializer)
+        aggregate_root_cls = Mock
+        aggregate_root = repository.load(id, aggregate_root_cls)
 
         assert aggregate_root == mock_get_from_snapshot.return_value
         mock_get_from_snapshot.assert_called_once_with(
-            id, aggregate_root)
+            id, aggregate_root_cls
+        )
         assert mock_get_from_event_history.call_count == 0
 
     @patch('eventsourcing_helpers.repository.Repository._load_from_event_storage')  # noqa
@@ -120,16 +119,16 @@ class RepositoryTests:
         mock_get_from_event_history.return_value = Mock()
         repository = self.repository(self.config, self.importer)
 
-        aggregate_root = Mock
-        message_deserializer = Mock()
-        aggregate_root = repository.get_aggregate_root(
-            id, aggregate_root, message_deserializer)
+        aggregate_root_cls = Mock
+        aggregate_root = repository.load(id, aggregate_root_cls)
 
         assert aggregate_root == mock_get_from_event_history.return_value
         mock_get_from_snapshot.assert_called_once_with(
-            id, aggregate_root)
+            id, aggregate_root_cls
+        )
         mock_get_from_event_history.assert_called_once_with(
-            id, aggregate_root, message_deserializer)
+            id, aggregate_root_cls
+        )
 
 
 class ImporterTests:

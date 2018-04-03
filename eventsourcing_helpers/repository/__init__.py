@@ -61,62 +61,9 @@ class Repository:
             aggregate_root._clear_staged_events()
             self.snapshot.save_aggregate_as_snapshot(aggregate_root)
 
-    def load(self, id: str, **kwargs) -> list:
+    def load(self, id: str, aggregate_root_cls: AggregateRoot) -> AggregateRoot:
         """
-        Load events from the repository.
-
-        Args:
-            id: Aggregate root id to load.
-
-        Returns:
-            list: Loaded events.
-        """
-        events = self.backend.load(id, **kwargs)
-
-        return events
-
-    def _load_from_snapshot_storage(
-        self, id: str, aggregate_root: AggregateRoot
-    ) -> AggregateRoot:
-        """
-        Load the aggregate from a snapshot.
-
-        Args:
-            id: ID of the aggregate root.
-            aggregate_root: The class of the aggregate root.
-
-        Returns:
-            AggregateRoot: Aggregate root with the latest state.
-        """
-        schema_hash = aggregate_root().get_schema_hash()
-        aggregate = self.snapshot.load_aggregate_from_snapshot(id, schema_hash)
-
-        return aggregate
-
-    def _load_from_event_storage(
-        self, id: str, aggregate_root: AggregateRoot
-    ) -> AggregateRoot:
-        """
-        Load the aggregate from the event storage.
-
-        Args:
-            id: ID of the aggregate root.
-            aggregate_root: The class of the aggregate root.
-
-        Returns:
-            AggregateRoot: Aggregate root with the latest state.
-        """
-        aggregate_root = aggregate_root()
-        events = self._get_events(id)
-        aggregate_root._apply_events(events)
-
-        return aggregate_root
-
-    def get_aggregate_root(
-        self, id: str, aggregate_root: AggregateRoot
-    ) -> AggregateRoot:
-        """
-        Get latest state of the aggregate root.
+        Load aggregate by ID accordingly:
 
         1. First try to get it from the snapshot.
         2. If there was nothing in the snapshot, go to 4
@@ -125,20 +72,61 @@ class Repository:
 
         Args:
             id: ID of the aggregate root.
-            aggregate_root: The class of the aggregate root.
+            aggregate_root_cls: The class of the aggregate root.
+
+        Returns:
+            AggregateRoot: Aggregate root instance with the latest state.
+        """
+        aggregate_root = self._load_from_snapshot_storage(
+            id, aggregate_root_cls
+        )
+        if aggregate_root is None:
+            aggregate_root = self._load_from_event_storage(
+                id, aggregate_root_cls
+            )
+            logger.debug("Aggregate was read from event history")
+        else:
+            logger.debug("Aggregate was read from snapshot")
+
+        return aggregate_root
+
+    def _load_from_snapshot_storage(
+        self, id: str, aggregate_root_cls: AggregateRoot
+    ) -> AggregateRoot:
+        """
+        Load the aggregate from a snapshot.
+
+        Args:
+            id: ID of the aggregate root.
+            aggregate_root_cls: The class of the aggregate root.
 
         Returns:
             AggregateRoot: Aggregate root with the latest state.
         """
-        aggregate = self._load_from_snapshot_storage(id, aggregate_root)
+        schema_hash = aggregate_root_cls().get_schema_hash()
+        aggregate_root = self.snapshot.load_aggregate_from_snapshot(
+            id, schema_hash
+        )
+        return aggregate_root
 
-        if aggregate is None:
-            aggregate = self._load_from_event_storage(id, aggregate_root)
-            logger.debug('Aggregate was read from event history')
-        else:
-            logger.debug('Aggregate was read from snapshot')
+    def _load_from_event_storage(
+        self, id: str, aggregate_root_cls: AggregateRoot
+    ) -> AggregateRoot:
+        """
+        Load the aggregate from the event storage.
 
-        return aggregate
+        Args:
+            id: ID of the aggregate root.
+            aggregate_root_cls: The class of the aggregate root.
+
+        Returns:
+            AggregateRoot: Aggregate root with the latest state.
+        """
+        aggregate_root = aggregate_root_cls()
+        events = self._get_events(id)
+        aggregate_root._apply_events(events)
+
+        return aggregate_root
 
     def _get_events(self, id: str) -> Generator[Any, None, None]:
         """
@@ -150,6 +138,6 @@ class Repository:
         Returns:
             list: List with all events.
         """
-        with self.load(id) as events:  # type:ignore
+        with self.backend.load(id) as events:  # type:ignore
             for event in events:
                 yield self.message_deserializer(event, is_new=False)
