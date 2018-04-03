@@ -27,8 +27,10 @@ class Repository:
     DEFAULT_BACKEND = 'kafka_avro'
 
     def __init__(
-        self, config: dict, importer: Callable = import_backend,
-        message_deserializer: Callable = from_message_to_dto, **kwargs
+        self, config: dict, aggregate_root_cls: AggregateRoot,
+        importer: Callable = import_backend,
+        message_deserializer: Callable = from_message_to_dto,
+        snapshot: Snapshot = Snapshot, **kwargs
     ) -> None:
         backend_path = config.get('backend', BACKENDS[self.DEFAULT_BACKEND])
         assert 'backend_config' in config, "You must pass a backend config"
@@ -40,16 +42,18 @@ class Repository:
         )
         backend_class = importer(backend_path)
 
+        self.aggregate_root_cls = aggregate_root_cls
         self.message_deserializer = message_deserializer
+        self.snapshot = snapshot(config, **kwargs)
+
         self.backend = backend_class(backend_config, **kwargs)
-        self.snapshot = Snapshot(config, **kwargs)
 
     def commit(self, aggregate_root: AggregateRoot, **kwargs) -> None:
         """
         Commit staged events to the repository.
 
         Args:
-            aggregate_root: Aggregate root to commit.
+            aggregate_root: Aggregate root with staged events to commit.
         """
         assert isinstance(aggregate_root, AggregateRoot)
         id, events = aggregate_root.id, aggregate_root._events
@@ -61,7 +65,7 @@ class Repository:
             aggregate_root._clear_staged_events()
             self.snapshot.save_aggregate_as_snapshot(aggregate_root)
 
-    def load(self, id: str, aggregate_root_cls: AggregateRoot) -> AggregateRoot:
+    def load(self, id: str) -> AggregateRoot:
         """
         Load aggregate by ID accordingly:
 
@@ -72,17 +76,16 @@ class Repository:
 
         Args:
             id: ID of the aggregate root.
-            aggregate_root_cls: The class of the aggregate root.
 
         Returns:
             AggregateRoot: Aggregate root instance with the latest state.
         """
         aggregate_root = self._load_from_snapshot_storage(
-            id, aggregate_root_cls
+            id, self.aggregate_root_cls
         )
         if aggregate_root is None:
             aggregate_root = self._load_from_event_storage(
-                id, aggregate_root_cls
+                id, self.aggregate_root_cls
             )
             logger.debug("Aggregate was read from event history")
         else:
@@ -90,39 +93,33 @@ class Repository:
 
         return aggregate_root
 
-    def _load_from_snapshot_storage(
-        self, id: str, aggregate_root_cls: AggregateRoot
-    ) -> AggregateRoot:
+    def _load_from_snapshot_storage(self, id: str) -> AggregateRoot:
         """
         Load the aggregate from a snapshot.
 
         Args:
             id: ID of the aggregate root.
-            aggregate_root_cls: The class of the aggregate root.
 
         Returns:
-            AggregateRoot: Aggregate root with the latest state.
+            AggregateRoot: Aggregate root instance with the latest state.
         """
-        schema_hash = aggregate_root_cls().get_schema_hash()
+        schema_hash = self.aggregate_root_cls().get_schema_hash()
         aggregate_root = self.snapshot.load_aggregate_from_snapshot(
             id, schema_hash
         )
         return aggregate_root
 
-    def _load_from_event_storage(
-        self, id: str, aggregate_root_cls: AggregateRoot
-    ) -> AggregateRoot:
+    def _load_from_event_storage(self, id: str) -> AggregateRoot:
         """
         Load the aggregate from the event storage.
 
         Args:
             id: ID of the aggregate root.
-            aggregate_root_cls: The class of the aggregate root.
 
         Returns:
-            AggregateRoot: Aggregate root with the latest state.
+            AggregateRoot: Aggregate root instance with the latest state.
         """
-        aggregate_root = aggregate_root_cls()
+        aggregate_root = self.aggregate_root_cls()
         events = self._get_events(id)
         aggregate_root._apply_events(events)
 
@@ -133,7 +130,7 @@ class Repository:
         Get all aggregate events from the repository.
 
         Args:
-            id: Aggregate root id.
+            id: ID of the aggregate root.
 
         Returns:
             list: List with all events.

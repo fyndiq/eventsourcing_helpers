@@ -97,7 +97,9 @@ class ESCommandHandler(CommandHandler):
         assert self.aggregate_root
         assert self.repository_config
 
-        self.repository = repository(self.repository_config, **kwargs)
+        self.repository = repository(
+            self.repository_config, self.aggregate_root, **kwargs
+        )
 
     def _get_aggregate_root(self, id: str) -> AggregateRoot:
         """
@@ -107,16 +109,16 @@ class ESCommandHandler(CommandHandler):
             id: ID of the aggregate root.
 
         Returns:
-            AggregateRoot: Aggregate root with the latest state.
+            AggregateRoot: Aggregate root instance with the latest state.
         """
-        return self.repository.load(id, self.aggregate_root)
+        return self.repository.load(id)
 
     def _commit_staged_events(self, aggregate_root: AggregateRoot) -> None:
         """
         Commit staged events to the repository.
 
         Args:
-            aggregate_root: Entity with all staged events.
+            aggregate_root: Aggregate root with staged events.
         """
         self.repository.commit(aggregate_root)
 
