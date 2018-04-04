@@ -49,22 +49,21 @@ class Snapshot:
 
     def load(self, id: str, current_hash: int) -> AggregateRoot:
         """
-        Loads an aggregate with ID from the snapshot storage.
+        Loads an aggregate root from the snapshot storage.
 
-        If the saved aggregate hash in the database does not match the
-        current hash it means that the model has changed since the
-        snapshot was saved.
+        If the saved aggregate root hash in the database does not match the
+        current hash it means that the model has changed since the snapshot was
+        saved.
 
-        If that is the case the snapshot should not be used and None should be
-        returned.
+        If that is the case the snapshot should not be used.
 
         Args:
             id: ID of the aggregate root.
-            current_hash: The hash of the current model of the
-                aggregate we are trying to load.
+            current_hash: The hash of the current model of the aggregate we are
+                trying to load.
 
         Returns:
-            AggregateRoot: The aggregate that was loaded (or None).
+            AggregateRoot: Aggregate root instance with the latest state.
         """
         snapshot = self.backend.load(id)
         aggregate_root = self.deserializer(snapshot, current_hash)

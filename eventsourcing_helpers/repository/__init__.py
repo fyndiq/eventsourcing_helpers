@@ -16,13 +16,16 @@ logger = structlog.get_logger(__name__)
 
 class Repository:
     """
-    Generic interface to communicate with a repository backend.
+    Interface to communicate with a repository backend.
 
-    The repository acts as a mediator between the domain and the
-    data mapping layer.
+    The repository acts as a mediator between the domain and the data mapping
+    layer.
 
-    More concrete it provides a way to store and retrieve events that
-    belongs to an aggregate root - from/to some kind of storage.
+    More concrete it provides a way to store and retrieve events that belongs
+    to an aggregate root from/to some kind of storage.
+
+    It also handles snapshots by saving/loading the latest state of an
+    aggregate root.
     """
     DEFAULT_BACKEND = 'kafka_avro'
 
@@ -45,7 +48,6 @@ class Repository:
         self.aggregate_root_cls = aggregate_root_cls
         self.message_deserializer = message_deserializer
         self.snapshot = snapshot(config, **kwargs)
-
         self.backend = backend_class(backend_config, **kwargs)
 
     def commit(self, aggregate_root: AggregateRoot, **kwargs) -> None:
@@ -67,12 +69,10 @@ class Repository:
 
     def load(self, id: str) -> AggregateRoot:
         """
-        Load aggregate by ID accordingly:
+        Load an aggregate root accordingly:
 
-        1. First try to get it from the snapshot.
-        2. If there was nothing in the snapshot, go to 4
-        3. Else use the aggregate received from the snapshot
-        4. Otherwise read the Aggregate root from the event history
+        1. First try to load it from the snapshot storage.
+        2. If there are no snapshot load it from the event storage.
 
         Args:
             id: ID of the aggregate root.
@@ -83,9 +83,9 @@ class Repository:
         aggregate_root = self._load_from_snapshot_storage(id)
         if aggregate_root is None:
             aggregate_root = self._load_from_event_storage(id)
-            logger.debug("Aggregate was read from event history")
+            logger.debug("Aggregate was loaded from event storage")
         else:
-            logger.debug("Aggregate was read from snapshot")
+            logger.debug("Aggregate was loaded from snapshot storage")
 
         return aggregate_root
 
@@ -100,9 +100,7 @@ class Repository:
             AggregateRoot: Aggregate root instance with the latest state.
         """
         current_hash = self.aggregate_root_cls().get_schema_hash()
-        aggregate_root = self.snapshot.load(
-            id, current_hash
-        )
+        aggregate_root = self.snapshot.load(id, current_hash)
         return aggregate_root
 
     def _load_from_event_storage(self, id: str) -> AggregateRoot:
@@ -123,7 +121,7 @@ class Repository:
 
     def _get_events(self, id: str) -> Generator[Any, None, None]:
         """
-        Get all aggregate events from the repository.
+        Get all aggregate events from the event storage.
 
         Args:
             id: ID of the aggregate root.
