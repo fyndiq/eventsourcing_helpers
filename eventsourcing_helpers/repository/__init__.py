@@ -101,6 +101,7 @@ class Repository:
         """
         current_hash = self.aggregate_root_cls().get_schema_hash()
         aggregate_root = self.snapshot.load(id, current_hash)
+
         return aggregate_root
 
     def _load_from_event_storage(self, id: str) -> AggregateRoot:
