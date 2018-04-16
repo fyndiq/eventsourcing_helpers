@@ -194,7 +194,8 @@ class Entity:
         logger.info("Clearing staged events")
         Entity._events = []
 
-    def _apply_events(self, events: List[Any]) -> None:
+    def _apply_events(self, events: List[Any],
+                      ignore_missing_apply_methods: bool = False) -> None:
         """
         Apply multiple events.
 
@@ -203,7 +204,11 @@ class Entity:
         """
         logger.info("Apply events from repository")
         for event in events:
-            self.apply_event(event, is_new=False)
+            try:
+                self.apply_event(event, is_new=False)
+            except MissingEntityApplyMethod:
+                if not ignore_missing_apply_methods:
+                    raise
 
     def create_id(self) -> str:
         """

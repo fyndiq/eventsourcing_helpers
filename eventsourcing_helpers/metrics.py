@@ -1,5 +1,7 @@
 from functools import wraps
 
+base_metric = 'eventsourcing_helpers'
+
 
 class StatsdNullClient:
     """

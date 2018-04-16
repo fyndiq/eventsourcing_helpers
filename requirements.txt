@@ -15,3 +15,6 @@ jsonpickle
 pymongo
 
 git+https://github.com/fyndiq/confluent_kafka_helpers@v0.5.2#egg=confluent-kafka-helpers
+redis==2.10.6
+hiredis==0.2.0
+fakeredis==0.9.0
