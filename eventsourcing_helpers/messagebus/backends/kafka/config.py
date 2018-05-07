@@ -8,13 +8,21 @@ def get_producer_config(config):
     if not producer_config:
         return None
 
-    producer_config.update(
+    real_producer_config = {
+        'queue.buffering.max.ms': 100,
+        'socket.blocking.max.ms': 1000,
+        'max.in.flight': 1
+    }
+
+    real_producer_config.update(producer_config)
+
+    real_producer_config.update(
         {
             'bootstrap.servers': config['bootstrap.servers'],
             'schema.registry.url': config['schema.registry.url']
         }
     )
-    return producer_config
+    return real_producer_config
 
 
 def get_consumer_config(config):
