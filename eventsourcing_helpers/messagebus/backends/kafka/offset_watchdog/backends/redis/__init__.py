@@ -22,12 +22,17 @@ class RedisOffsetWatchdogBackend(OffsetWatchdogBackend):
     def __init__(self, config: dict) -> None:
         super().__init__(config=config)
         self._redis = self._redis_sentinel = None
+        socket_connect_timeout = config.get('socket_connect_timeout',
+                                            SOCKET_CONNECT_TIMEOUT)
+        socket_timeout = config.get('socket_timeout', SOCKET_TIMEOUT)
         if 'redis_uri' in config:
             assert 'redis_sentinels' not in config
             self._redis = StrictRedis.from_url(
-                url=config['redis_uri'], decode_responses=True,
-                socket_connect_timeout=SOCKET_CONNECT_TIMEOUT,
-                socket_timeout=SOCKET_TIMEOUT
+                url=config['redis_uri'],
+                socket_connect_timeout=socket_connect_timeout,
+                socket_timeout=socket_timeout,
+                retry_on_timeout=True,
+                decode_responses=True
             )
 
         else:
@@ -40,9 +45,11 @@ class RedisOffsetWatchdogBackend(OffsetWatchdogBackend):
             ]
 
             self._redis_sentinel = Sentinel(
-                sentinels, socket_connect_timeout=SOCKET_CONNECT_TIMEOUT,
-                socket_timeout=SOCKET_TIMEOUT, retry_on_timeout=True,
-                decode_responses=True, db=config['redis_database']
+                sentinels, db=config['redis_database'],
+                socket_connect_timeout=socket_connect_timeout,
+                socket_timeout=socket_timeout,
+                retry_on_timeout=True,
+                decode_responses=True
             )
             self._redis_sentinel_service_name = config[
                 'redis_sentinel_service_name'
