@@ -17,8 +17,5 @@ setup(
     extras_require={
         'redis': ["redis>=2.10.6", "hiredis>=0.2.0"],
     },
-    dependency_links=[
-        'git+https://github.com/fyndiq/confluent_kafka_helpers@v0.6.1#egg=confluent-kafka-helpers-0.6.1'  # noqa
-    ],
     zip_safe=False
 )
