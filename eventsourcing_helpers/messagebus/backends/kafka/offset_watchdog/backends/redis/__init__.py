@@ -73,8 +73,8 @@ class RedisOffsetWatchdogBackend(OffsetWatchdogBackend):
         # https://github.com/edenhill/librdkafka/issues/1720
         # until this bug is fixed at least make sure we log when it happens.
         offset = message._meta.offset
-        offset_diff = offset - last_offset
-        if offset_diff > 1:
+        offset_diff = offset - int(last_offset)
+        if offset_diff != 1:
             logger.warning(
                 "Offset deviation detected", offset_diff=offset_diff
             )
