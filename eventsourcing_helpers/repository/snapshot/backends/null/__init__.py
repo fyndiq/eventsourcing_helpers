@@ -1,4 +1,3 @@
-from eventsourcing_helpers.models import AggregateRoot
 from eventsourcing_helpers.repository.snapshot.backends import SnapshotBackend
 
 
@@ -9,8 +8,8 @@ class NullSnapshotBackend(SnapshotBackend):
     def __init__(self, *args, **kwargs) -> None:
         pass
 
-    def save(self, id: str, aggregate_root: AggregateRoot) -> None:
+    def save(self, id: str, data: dict) -> None:
         pass
 
-    def load(self, id: str) -> None:
+    def load(self, id: str) -> dict:
         return None

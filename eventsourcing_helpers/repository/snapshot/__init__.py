@@ -3,7 +3,7 @@ from typing import Callable
 import structlog
 
 from eventsourcing_helpers.models import AggregateRoot
-from eventsourcing_helpers.repository.snapshot.config import get_snapshot_config
+from eventsourcing_helpers.repository.snapshot.config import get_snapshot_config  # noqa
 from eventsourcing_helpers.repository.snapshot.serializers import (
     from_aggregate_root_to_snapshot, from_snapshot_to_aggregate_root
 )
