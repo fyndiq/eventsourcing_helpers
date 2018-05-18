@@ -158,17 +158,6 @@ class EntityTests:
 
         assert list(entities) == [self.entity]
 
-    @patch('eventsourcing_helpers.models.Entity._get_all_entities')
-    def test_get_child_entities_handles_entity_dict_children(self, mock_entities):
-        """
-        Test that we get all child entities for the current instance.
-        """
-        self.aggregate_root.__dict__.update({'Bar': EntityDict()})
-        mock_entities.return_value = [self.entity]
-        entities = self.aggregate_root._get_child_entities()
-
-        assert list(entities) == [self.entity]
-
     def test_stage_event(self):
         """
         Test that an event is staged correctly.
