@@ -33,7 +33,7 @@ class Repository:
         self, config: dict, aggregate_root_cls: AggregateRoot,
         importer: Callable = import_backend,
         message_deserializer: Callable = from_message_to_dto,
-        snapshot: Snapshot = Snapshot, **kwargs
+        snapshot=Snapshot, **kwargs
     ) -> None:
         backend_path = config.get('backend', BACKENDS[self.DEFAULT_BACKEND])
         assert 'backend_config' in config, "You must pass a backend config"
