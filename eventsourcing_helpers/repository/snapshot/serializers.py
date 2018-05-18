@@ -20,8 +20,10 @@ def from_snapshot_to_aggregate_root(
     snapshot: dict, current_hash: int, decoder: Callable = jsonpickle.decode
 ) -> AggregateRoot:
     if not snapshot:
-        return
+        return None
 
     data, hash = snapshot['data'], snapshot['hash']
     if data and current_hash == hash:
         return decoder(data)
+    else:
+        return None
