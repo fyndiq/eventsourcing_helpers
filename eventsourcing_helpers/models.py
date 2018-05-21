@@ -1,4 +1,3 @@
-import hashlib
 import json
 import re
 import uuid
@@ -48,16 +47,6 @@ class Entity:
         keys = get_all_nested_keys(dict_representation, [])
 
         return self.__class__.__name__ + ', ' + ', '.join(keys)
-
-    def get_schema_hash(self) -> int:
-        """
-        Returns a hash which is taken on the model. If the model changes the
-        hash will also be different
-        """
-        seed = self._get_model_representation()
-        md5_hash = hashlib.md5(seed.encode())
-        string_hash = md5_hash.hexdigest()
-        return int(string_hash, 16)
 
     @property
     def _class(self):

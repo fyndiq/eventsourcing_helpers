@@ -1,3 +1,4 @@
+import hashlib
 from typing import Any, Callable, Generator
 
 import structlog
@@ -99,7 +100,7 @@ class Repository:
         Returns:
             AggregateRoot: Aggregate root instance with the latest state.
         """
-        current_hash = self.aggregate_root_cls().get_schema_hash()
+        current_hash = self.get_schema_hash()
         aggregate_root = self.snapshot.load(id, current_hash)
 
         return aggregate_root
@@ -133,3 +134,13 @@ class Repository:
         with self.backend.load(id) as events:  # type:ignore
             for event in events:
                 yield self.message_deserializer(event, is_new=False)
+
+    def get_schema_hash(self) -> int:
+        """
+        Returns a hash which is taken on the model. If the model changes the
+        hash will also be different
+        """
+        seed = self.aggregate_root_cls()._get_model_representation()
+        md5_hash = hashlib.md5(seed.encode())
+        string_hash = md5_hash.hexdigest()
+        return int(string_hash, 16)
