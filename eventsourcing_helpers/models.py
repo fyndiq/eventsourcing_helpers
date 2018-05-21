@@ -26,7 +26,7 @@ class Entity:
     _events: List[Any] = []
 
     def __init__(self) -> None:
-        self.id: bool = None
+        self.id: str = None
         self._version: int = 0
 
     def __call__(self, *args, **kwargs):
