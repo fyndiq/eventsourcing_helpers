@@ -5,8 +5,13 @@ import uuid
 from itertools import chain
 from typing import Any, Callable, Iterator, List
 
+
 import jsonpickle
 import structlog
+
+
+from eventsourcing_helpers.utils import get_all_nested_keys
+
 
 word_regexp = re.compile('[A-Z][a-z]+|[A-Z]+(?![a-z])')
 logger = structlog.get_logger(__name__)
@@ -40,17 +45,9 @@ class Entity:
     def _get_model_representation(self) -> str:
         json_representation = jsonpickle.encode(self)
         dict_representation = json.loads(json_representation)
-        own_attrs = [k for k, v in dict_representation.items()]
+        keys = get_all_nested_keys(dict_representation, [])
 
-        child_entities = list(self._get_child_entities())
-        if len(child_entities) == 0:
-            representation = f"{self._class}({own_attrs})"
-        else:
-            representation = f"{self._class}({own_attrs})"
-            for entity in child_entities:
-                representation += entity._get_model_representation()
-
-        return representation
+        return self.__class__.__name__ + ', ' + ', '.join(keys)
 
     def get_schema_hash(self) -> int:
         """

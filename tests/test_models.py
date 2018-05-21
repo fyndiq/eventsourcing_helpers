@@ -209,11 +209,13 @@ class EntityTests:
     @pytest.mark.parametrize('entity, data', [
         (NestedAggregate(), ['NestedAggregate',
                              'id', '_version',
-                             'nested_entity', 'nested_entity_id']),
+                             'nested_entity', 'nested_entity_id',
+                             'eventsourcing_helpers.models.EntityDict']),
         (DoubleNestedAggregate(), [
             'DoubleNestedAggregate', 'id', '_version',
             'nested_entity', 'nested_entity_id',
-            'second_nested_entity', 'second_nested_entity_id']),
+            'second_nested_entity', 'second_nested_entity_id',
+            'eventsourcing_helpers.models.EntityDict']),
     ])
     def test_get_model_representation_handles_nested_entities(self, entity, data):  # noqa
         representation = entity._get_model_representation()
