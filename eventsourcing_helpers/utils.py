@@ -40,7 +40,6 @@ def get_all_nested_keys(data: dict, current_keys: List) -> List:
         for item in data:
             get_all_nested_keys(item, all_keys)
     else:
-        #all_keys.append(data.keys)
         pass
 
     return all_keys
