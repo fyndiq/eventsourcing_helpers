@@ -57,7 +57,8 @@ class KafkaAvroBackend(RepositoryBackend):
         assert self.loader is not None, "Loader is not configured"
         return self.loader.load(id, **kwargs)
 
-    def get_events(self, id: str, message_deserializer: Callable) -> Generator[Any, None, None]:
+    def get_events(self, id: str, message_deserializer: Callable
+                   ) -> Generator[Any, None, None]:
         """
         Get all aggregate events from the event storage.
 

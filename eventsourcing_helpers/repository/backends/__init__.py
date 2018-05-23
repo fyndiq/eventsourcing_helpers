@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Generator, Any
 
 
 class RepositoryBackend:
@@ -12,5 +12,6 @@ class RepositoryBackend:
     def load(self, id: str, **kwargs) -> list:
         raise NotADirectoryError()
 
-    def get_events(self, id: str, message_deserializer: Callable) -> Generator[Any, None, None]:
+    def get_events(self, id: str, message_deserializer: Callable
+                   ) -> Generator[Any, None, None]:
         raise NotImplementedError()
