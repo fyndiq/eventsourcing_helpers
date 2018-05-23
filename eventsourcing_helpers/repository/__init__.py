@@ -1,5 +1,5 @@
 import hashlib
-from typing import Any, Callable, Generator
+from typing import Callable
 
 import structlog
 
@@ -116,24 +116,10 @@ class Repository:
             AggregateRoot: Aggregate root instance with the latest state.
         """
         aggregate_root = self.aggregate_root_cls()
-        events = self._get_events(id)
+        events = self.backend.get_events(id, self.message_deserializer)
         aggregate_root._apply_events(events)
 
         return aggregate_root
-
-    def _get_events(self, id: str) -> Generator[Any, None, None]:
-        """
-        Get all aggregate events from the event storage.
-
-        Args:
-            id: ID of the aggregate root.
-
-        Returns:
-            list: List with all events.
-        """
-        with self.backend.load(id) as events:  # type:ignore
-            for event in events:
-                yield self.message_deserializer(event, is_new=False)
 
     def get_schema_hash(self) -> int:
         """

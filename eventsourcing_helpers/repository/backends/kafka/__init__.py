@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Any, Generator
 
 from confluent_kafka_helpers.loader import AvroMessageLoader
 from confluent_kafka_helpers.producer import AvroProducer
@@ -56,3 +56,17 @@ class KafkaAvroBackend(RepositoryBackend):
         """
         assert self.loader is not None, "Loader is not configured"
         return self.loader.load(id, **kwargs)
+
+    def get_events(self, id: str, message_deserializer: Callable) -> Generator[Any, None, None]:
+        """
+        Get all aggregate events from the event storage.
+
+        Args:
+            id: ID of the aggregate root.
+
+        Returns:
+            list: List with all events.
+        """
+        with self.load(id) as events:  # type:ignore
+            for event in events:
+                yield message_deserializer(event, is_new=False)
