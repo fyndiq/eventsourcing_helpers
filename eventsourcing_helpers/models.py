@@ -4,13 +4,10 @@ import uuid
 from itertools import chain
 from typing import Any, Callable, Iterator, List
 
-
 import jsonpickle
 import structlog
 
-
 from eventsourcing_helpers.utils import get_all_nested_keys
-
 
 word_regexp = re.compile('[A-Z][a-z]+|[A-Z]+(?![a-z])')
 logger = structlog.get_logger(__name__)

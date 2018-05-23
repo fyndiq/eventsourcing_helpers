@@ -1,4 +1,4 @@
-from typing import Callable, Generator, Any
+from typing import Any, Callable, Generator
 
 
 class RepositoryBackend:

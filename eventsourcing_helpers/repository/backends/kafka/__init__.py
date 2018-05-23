@@ -1,4 +1,4 @@
-from typing import Callable, Any, Generator
+from typing import Any, Callable, Generator
 
 from confluent_kafka_helpers.loader import AvroMessageLoader
 from confluent_kafka_helpers.producer import AvroProducer
