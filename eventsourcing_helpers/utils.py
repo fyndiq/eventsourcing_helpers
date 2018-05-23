@@ -70,9 +70,22 @@ def get_callable_representation(target: Callable) -> str:
 
 
 def _get_method_name_representation(method):
+    """
+    We have two types of methods:
+        - normal methods
+        - classmethods
+
+    The `__self__` attribute from a normal method will return itself, however
+    it will return the `class` when it's called from the classmethod.
+
+    This is the reason we need to access the `__class__` attribute for
+    the normal method.
+    """
     method_name = getattr(method, '__name__', '')
     parent_class = method.__self__
 
+    # Check if this if the parent class is the main class or is the
+    # method itself
     is_main_class = type(parent_class) is type
     if not is_main_class:
         parent_class = parent_class.__class__
