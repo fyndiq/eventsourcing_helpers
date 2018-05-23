@@ -12,3 +12,5 @@ coverage.xml
 .idea/
 build/
 dist/
+.pytest_cache
+

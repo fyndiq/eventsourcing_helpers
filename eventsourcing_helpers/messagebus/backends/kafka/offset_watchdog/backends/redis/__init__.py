@@ -1,3 +1,4 @@
+import structlog
 from redis import StrictRedis
 from redis.sentinel import Sentinel
 
@@ -6,6 +7,8 @@ from confluent_kafka_helpers.message import Message
 from eventsourcing_helpers.messagebus.backends.kafka.offset_watchdog.backends import (  # noqa
     OffsetWatchdogBackend
 )
+
+logger = structlog.get_logger(__name__)
 
 __all__ = ['RedisOffsetWatchdogBackend']
 
@@ -22,12 +25,17 @@ class RedisOffsetWatchdogBackend(OffsetWatchdogBackend):
     def __init__(self, config: dict) -> None:
         super().__init__(config=config)
         self._redis = self._redis_sentinel = None
+        socket_connect_timeout = config.get(
+            'socket_connect_timeout', SOCKET_CONNECT_TIMEOUT
+        )
+        socket_timeout = config.get('socket_timeout', SOCKET_TIMEOUT)
         if 'redis_uri' in config:
             assert 'redis_sentinels' not in config
             self._redis = StrictRedis.from_url(
-                url=config['redis_uri'], decode_responses=True,
-                socket_connect_timeout=SOCKET_CONNECT_TIMEOUT,
-                socket_timeout=SOCKET_TIMEOUT
+                url=config['redis_uri'],
+                socket_connect_timeout=socket_connect_timeout,
+                socket_timeout=socket_timeout, retry_on_timeout=True,
+                decode_responses=True
             )
 
         else:
@@ -40,9 +48,10 @@ class RedisOffsetWatchdogBackend(OffsetWatchdogBackend):
             ]
 
             self._redis_sentinel = Sentinel(
-                sentinels, socket_connect_timeout=SOCKET_CONNECT_TIMEOUT,
-                socket_timeout=SOCKET_TIMEOUT, retry_on_timeout=True,
-                decode_responses=True, db=config['redis_database']
+                sentinels, db=config['redis_database'],
+                socket_connect_timeout=socket_connect_timeout,
+                socket_timeout=socket_timeout, retry_on_timeout=True,
+                decode_responses=True
             )
             self._redis_sentinel_service_name = config[
                 'redis_sentinel_service_name'
@@ -60,7 +69,17 @@ class RedisOffsetWatchdogBackend(OffsetWatchdogBackend):
         last_offset = self.redis.get(self._key(message))
         if last_offset is None:
             return False
-        return message._meta.offset <= int(last_offset)
+
+        # https://github.com/edenhill/librdkafka/issues/1720
+        # until this bug is fixed at least make sure we log when it happens.
+        offset = message._meta.offset
+        offset_diff = offset - int(last_offset)
+        if offset_diff != 1:
+            logger.warning(
+                "Offset deviation detected", offset_diff=offset_diff
+            )
+
+        return offset <= int(last_offset)
 
     def set_seen(self, message: Message):
         self.redis.set(self._key(message), message._meta.offset)
