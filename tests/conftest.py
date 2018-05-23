@@ -17,7 +17,9 @@ def aggregate_root_cls_mock():
         else:
             apply_events = lambda events: events
 
-        default_attrs = {'return_value._apply_events.side_effect': apply_events}
+        default_attrs = {
+            'return_value._apply_events.side_effect': apply_events,
+            'return_value._get_model_representation.return_value': 'adsafasf'}
         mock.configure_mock(**{**default_attrs, **attrs})
         return mock
 
