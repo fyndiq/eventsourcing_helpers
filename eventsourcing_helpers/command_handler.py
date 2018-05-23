@@ -4,10 +4,12 @@ import structlog
 
 from confluent_kafka_helpers.message import Message
 
+from eventsourcing_helpers import metrics
 from eventsourcing_helpers.handler import Handler
 from eventsourcing_helpers.models import AggregateRoot
 from eventsourcing_helpers.repository import Repository
 from eventsourcing_helpers.serializers import from_message_to_dto
+from eventsourcing_helpers.utils import get_callable_representation
 
 logger = structlog.get_logger(__name__)
 
@@ -52,14 +54,20 @@ class CommandHandler(Handler):
         command_class = command._class
         handler = self.handlers[command_class]
 
+        handler_name = get_callable_representation(handler)
+        handler_wrapper = metrics.timed(
+            'eventsourcing_helpers.command_handler.handle',
+            tags=[
+                f'command:{command_class}',
+                f'handler:{handler_name}'
+            ]
+        )(handler)
+
         logger.info("Calling command handler", command_class=command_class)
-        if not callable(handler):
-            assert handler_inst, "You must pass a handler instance"
-            handler = getattr(handler_inst, handler)
-        elif handler_inst:
-            handler(handler_inst, command)
+        if handler_inst:
+            handler_wrapper(handler_inst, command)
         else:
-            handler(command)
+            handler_wrapper(command)
 
     def handle(self, message: dict) -> None:
         """

@@ -4,7 +4,9 @@ import structlog
 
 from confluent_kafka_helpers.message import Message
 
+from eventsourcing_helpers import metrics
 from eventsourcing_helpers.handler import Handler
+from eventsourcing_helpers.utils import get_callable_representation
 
 logger = structlog.get_logger(__name__)
 
@@ -39,7 +41,17 @@ class EventHandler(Handler):
             event: Event to be handled.
         """
         handler = self.handlers[event._class]
-        handler(event)
+
+        handler_name = get_callable_representation(handler)
+        handler_wrapper = metrics.timed(
+            'eventsourcing_helpers.event_handler.handle',
+            tags=[
+                f'event:{event._class}',
+                f'handler:{handler_name}'
+            ]
+        )(handler)
+
+        handler_wrapper(event)
 
     def handle(self, message: dict) -> None:
         """

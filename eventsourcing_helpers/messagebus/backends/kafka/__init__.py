@@ -61,7 +61,7 @@ class KafkaAvroBackend(MessageBusBackend):
                 logger.exception("Failed to set offset, but will continue")
 
     @metrics.call_counter('eventsourcing_helpers.messagebus.kafka.handle.count')
-    @metrics.statsd.timed('eventsourcing_helpers.messagebus.kafka.handle.time')
+    @metrics.timed('eventsourcing_helpers.messagebus.kafka.handle.time')
     def _handle(
         self, handler: Callable, message: Message, consumer: AvroConsumer
     ) -> None:
