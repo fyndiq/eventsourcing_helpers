@@ -44,7 +44,8 @@ class Snapshot:
         self.deserializer = deserializer
 
     def save(self, aggregate_root: AggregateRoot) -> None:
-        snapshot = self.serializer(aggregate_root)
+        snapshot = self.serializer(
+            aggregate_root, self.backend.get_schema_hash())
         self.backend.save(aggregate_root.id, snapshot)
 
     def load(self, id: str, current_hash: int) -> AggregateRoot:

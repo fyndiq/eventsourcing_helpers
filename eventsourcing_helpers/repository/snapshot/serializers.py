@@ -6,12 +6,14 @@ from eventsourcing_helpers.models import AggregateRoot
 
 
 def from_aggregate_root_to_snapshot(
-    aggregate_root: AggregateRoot, encoder: Callable = jsonpickle.encode
+    aggregate_root: AggregateRoot,
+    current_hash: int,
+    encoder: Callable = jsonpickle.encode
 ) -> dict:
     snapshot = {
         'data': encoder(aggregate_root),
         'version': aggregate_root._version,
-        'hash': aggregate_root.get_schema_hash()
+        'hash': current_hash
     }
     return snapshot
 
