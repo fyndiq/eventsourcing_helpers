@@ -1,5 +1,5 @@
 from functools import partial
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock
 
 import pytest
 
@@ -36,7 +36,7 @@ class RepositoryTests:
 
         assert repository.snapshot.load.called is True
         assert repository.snapshot.load.return_value is None
-        assert repository.backend.load.called is True
+        assert repository.backend.get_events.called is True
         assert aggregate_root is not None
 
     def test_should_load_aggr_root_from_snapshot_storage(self, snapshot_mock):
@@ -45,7 +45,7 @@ class RepositoryTests:
         aggregate_root = repository.load(id=1)
 
         assert repository.snapshot.load.called is True
-        assert repository.backend.load.called is False
+        assert repository.backend.get_events.called is False
         assert aggregate_root is not None
 
     def test_should_apply_events_when_loading_from_event_storage(
@@ -68,9 +68,19 @@ class RepositoryTests:
         for event in self.aggregate_events:
             repository.message_deserializer.assert_any_call(event, is_new=False)  # noqa
 
+    def test_repository_commit_should_call_backend_commit(
+        self, aggregate_root_cls_mock
+    ):
+        aggregate_root_cls = aggregate_root_cls_mock(exhaust_events=False)
+        aggregate_root_cls.id = 1
+
+        repository = self.repository(aggregate_root_cls=aggregate_root_cls)
+        repository.commit(aggregate_root_cls)
+
+        assert repository.backend.commit.called is True
+
     def test_hash_gets_model_representation(self, aggregate_root_cls_mock):
         aggregate_root_cls = aggregate_root_cls_mock(exhaust_events=False)
-        aggregate_root_cls()._get_model_representation.return_value = 'a'
         repository = self.repository(aggregate_root_cls=aggregate_root_cls)
         repository.get_schema_hash()
 
