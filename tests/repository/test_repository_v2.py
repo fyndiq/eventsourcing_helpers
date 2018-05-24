@@ -61,13 +61,6 @@ class RepositoryTests:
         assert aggregate_root._apply_events.called is True
         assert list(events) == self.aggregate_events
 
-    def test_should_deserialize_events_when_loading_from_event_storage(self):
-        repository = self.repository(message_deserializer=Mock())
-        repository.load(id=1)
-
-        for event in self.aggregate_events:
-            repository.message_deserializer.assert_any_call(event, is_new=False)  # noqa
-
     def test_repository_commit_should_call_backend_commit(
         self, aggregate_root_cls_mock
     ):

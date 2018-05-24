@@ -1,8 +1,7 @@
 from functools import partial
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 from eventsourcing_helpers.repository.backends.kafka import KafkaAvroBackend
-
 
 events = [1, 2, 3]
 
@@ -70,3 +69,14 @@ class KafkaBackendTests:
             assert events == list(_events)
             load_mock.assert_called_once_with(id)
             assert message_deserializer.call_count == len(events)
+
+    def test_should_deserialize_events_when_getting_events_from_event_storage(self):
+        backend = self.backend()
+        get_events_mock = Mock(return_value=iter(events))
+        backend.get_events = get_events_mock
+
+        message_deserializer = Mock()
+        evs = backend.get_events(self.id, message_deserializer)
+
+        for event in evs:
+            message_deserializer.assert_any_call(event, is_new=False)
