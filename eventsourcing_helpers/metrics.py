@@ -54,7 +54,7 @@ def timed(base_metric, tags=None):
     def wrapped(f):
         @wraps(f)
         def decorator(*args, **kwargs):
-            statsd.timed(f"{base_metric}.time", tags=tags)
-            return f(*args, **kwargs)
+            with statsd.timed(f"{base_metric}.time", tags=tags):
+                return f(*args, **kwargs)
         return decorator
     return wrapped
