@@ -56,9 +56,10 @@ class CommandHandler(Handler):
 
         handler_name = get_callable_representation(handler)
         handler_wrapper = metrics.timed(
-            'eventsourcing_helpers.command_handler.handle',
+            'eventsourcing_helpers.handler.handle',
             tags=[
-                f'command:{command_class}',
+                'message_type:command',
+                f'message_class:{command_class}',
                 f'handler:{handler_name}'
             ]
         )(handler)

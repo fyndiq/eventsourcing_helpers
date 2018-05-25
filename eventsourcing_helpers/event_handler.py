@@ -44,9 +44,10 @@ class EventHandler(Handler):
 
         handler_name = get_callable_representation(handler)
         handler_wrapper = metrics.timed(
-            'eventsourcing_helpers.event_handler.handle',
+            'eventsourcing_helpers.handler.handle',
             tags=[
-                f'event:{event._class}',
+                'message_type:event',
+                f'message_class:{event._class}',
                 f'handler:{handler_name}'
             ]
         )(handler)
