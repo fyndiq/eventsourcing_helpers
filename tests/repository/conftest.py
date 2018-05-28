@@ -22,9 +22,9 @@ def repository_backend_mock():
     def repository_backend(return_value, **kwargs):
         mock = MagicMock(spec=RepositoryBackend, **kwargs)
         attrs = {
-            'return_value.load.return_value.'
-            '__enter__.return_value': return_value
-        }
+            'return_value.load.return_value.__enter__.return_value': return_value,
+            'return_value.get_events.return_value': return_value
+        }  # flake8: noqa
         mock.configure_mock(**attrs)
         return mock
 

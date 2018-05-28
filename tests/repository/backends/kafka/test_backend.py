@@ -9,7 +9,11 @@ events = [1, 2, 3]
 class KafkaBackendTests:
 
     def setup_method(self):
-        self.loader = Mock()
+        config = {
+            'return_value.load.return_value.__enter__.return_value': events
+        }
+        self.loader = MagicMock()
+        self.loader.configure_mock(**config)
         self.producer = Mock()
         self.value_serializer = Mock()
         self.config = {'producer': {'foo': 'bar'}, 'loader': {'foo': 'bar'}}
@@ -69,14 +73,3 @@ class KafkaBackendTests:
             assert events == list(_events)
             load_mock.assert_called_once_with(id)
             assert message_deserializer.call_count == len(events)
-
-    def test_should_deserialize_events_when_getting_events_from_event_storage(self):
-        backend = self.backend()
-        get_events_mock = Mock(return_value=iter(events))
-        backend.get_events = get_events_mock
-
-        message_deserializer = Mock()
-        evs = backend.get_events(self.id, message_deserializer)
-
-        for event in evs:
-            message_deserializer.assert_any_call(event, is_new=False)
