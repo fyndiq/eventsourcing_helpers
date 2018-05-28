@@ -36,11 +36,9 @@ def get_all_nested_keys(data: dict, current_keys: List) -> List:
                 all_keys.append(value)
             else:
                 all_keys = get_all_nested_keys(value, all_keys)
-    elif isinstance(data, list) or isinstance(data, tuple):
+    elif isinstance(data, (list, tuple)):
         for item in data:
-            get_all_nested_keys(item, all_keys)
-    else:
-        pass
+            all_keys = get_all_nested_keys(item, all_keys)
 
     return all_keys
 
