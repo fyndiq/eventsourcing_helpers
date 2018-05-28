@@ -28,6 +28,45 @@ def import_backend(location: str) -> Any:
 
 
 def get_all_nested_keys(data: dict, current_keys: List) -> List:
+    """
+    Get all keys in a dictoinary. The dictionary could have more levels of
+    nested dicts.
+    The purpose of this is to detect changes to a class. Therefore the value
+    for key: `py/object` is also saved.
+
+    Args:
+        data (dict): The dictionary to be examined
+        current_keys (List): The keys found so far (used in recursive calls)
+
+    Returns:
+        List: All keys found
+
+    Ex:
+    {
+        '_version': 0,
+        'id': None,
+        'nested_entity': {
+            '__dict__': {
+                'nested_entity_id': 'a'
+            },
+            'py/object': 'eventsourcing_helpers.models.EntityDict'
+        },
+        'py/object': 'tests.test_models.NestedAggregate'
+    }
+
+    Gives:
+    [
+        'py/object',
+        '_version',
+        'id',
+        'nested_entity',
+        'tests.test_models.NestedAggregate',
+        'py/object',
+        '__dict__',
+        'eventsourcing_helpers.models.EntityDict',
+        'nested_entity_id'
+    ]
+    """
     all_keys = deepcopy(current_keys)
     if isinstance(data, dict):
         all_keys.extend(list(data.keys()))
