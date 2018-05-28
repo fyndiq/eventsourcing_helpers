@@ -72,9 +72,13 @@ class RepositoryTests:
 
         assert repository.backend.commit.called is True
 
-    def test_hash_gets_model_representation(self, aggregate_root_cls_mock):
+    def test_load_from_snapshot_storage_should_call_get_model_representation(
+        self, aggregate_root_cls_mock
+    ):
         aggregate_root_cls = aggregate_root_cls_mock(exhaust_events=False)
         repository = self.repository(aggregate_root_cls=aggregate_root_cls)
-        repository.get_schema_hash()
+        repository._load_from_snapshot_storage(1)
 
-        aggregate_root_cls()._get_model_representation.assert_called_once_with()
+        repository.aggregate_root_cls(). \
+            _get_model_representation.assert_called_once_with()
+        repository.snapshot.get_hash.call_count == 1

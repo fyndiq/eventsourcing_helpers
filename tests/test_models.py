@@ -217,7 +217,9 @@ class EntityTests:
             'second_nested_entity', 'second_nested_entity_id',
             'eventsourcing_helpers.models.EntityDict']),
     ])
-    def test_get_model_representation_handles_nested_entities(self, entity, data):  # noqa
+    def test_get_model_representation_handles_nested_entities(
+        self, entity, data
+    ):
         representation = entity._get_model_representation()
         for field in data:
             assert field in representation

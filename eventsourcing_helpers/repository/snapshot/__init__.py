@@ -1,3 +1,4 @@
+import hashlib
 from typing import Callable
 
 import structlog
@@ -16,6 +17,15 @@ BACKENDS = {
 }
 
 logger = structlog.get_logger(__name__)
+
+
+def get_hash(self, seed) -> int:
+    """
+    Returns a hash of the given seed
+    """
+    md5_hash = hashlib.md5(seed.encode())
+    string_hash = md5_hash.hexdigest()
+    return int(string_hash, 16)
 
 
 class Snapshot:
@@ -47,7 +57,7 @@ class Snapshot:
 
     def save(self, aggregate_root: AggregateRoot) -> None:
         snapshot = self.serializer(
-            aggregate_root, self.backend.get_schema_hash())
+            aggregate_root, self.backend.get_hash())
         self.backend.save(aggregate_root.id, snapshot)
 
     def load(self, id: str, current_hash: int) -> AggregateRoot:
