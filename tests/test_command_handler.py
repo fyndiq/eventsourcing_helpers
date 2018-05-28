@@ -28,7 +28,7 @@ class ESCommandHandlerTests:
 
         command_handler = ESCommandHandler
         command_handler.aggregate_root = self.aggregate_root
-        command_handler.handlers = {command_class: 'foo_method'}
+        command_handler.handlers = {command_class: self.aggregate_root.foo_method}
         command_handler.repository_config = {'empty_config': None}
 
         self.message_deserializer = Mock()

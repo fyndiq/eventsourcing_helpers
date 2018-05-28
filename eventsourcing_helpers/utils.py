@@ -1,6 +1,6 @@
 from copy import deepcopy
 from importlib import import_module
-from typing import Any, List
+from typing import Any, Callable, List
 
 
 def import_backend(location: str) -> Any:
@@ -27,6 +27,7 @@ def import_backend(location: str) -> Any:
     return backend_cls
 
 
+
 def get_all_nested_keys(data: dict, current_keys: List) -> List:
     all_keys = deepcopy(current_keys)
     if isinstance(data, dict):
@@ -43,3 +44,35 @@ def get_all_nested_keys(data: dict, current_keys: List) -> List:
         pass
 
     return all_keys
+
+
+def get_callable_representation(target: Callable) -> str:
+    """
+    Get the representation of a callable.
+
+    Ex:
+        class Test:
+            def method(self):
+                pass
+
+            @classmethod
+            def klass(cls):
+                pass
+
+            @staticmethod
+            def static():
+                pass
+
+        def myfunc():
+            pass
+
+        >> r = get_callable_representation
+        >> r(Test), r(Test.method), r(Test.klass), r(Test.static), r(myfunc)
+        ('Test', 'Test.method', 'Test.klass', 'Test.static', 'myfunc')
+
+        >> test = Test()
+        >> r(test.method), r(test.klass), r(test.static)
+        ('Test.method', 'Test.klass', 'Test.static')
+    """
+    return getattr(target, '__qualname__', getattr(target, '__name__', ''))
+
