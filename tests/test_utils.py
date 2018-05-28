@@ -1,6 +1,8 @@
 import pytest
 
-from eventsourcing_helpers.utils import get_callable_representation
+from eventsourcing_helpers.utils import (
+    get_callable_representation, get_all_nested_keys
+)
 
 
 class Test:
@@ -35,3 +37,57 @@ def myfunc():
 ])
 def test_get_callable_representation(result, expected_result):
     assert expected_result == result
+
+
+@pytest.mark.parametrize('data, expected_result', [
+    (
+        {
+            '_version': 0,
+        },
+        [
+            '_version',
+        ]
+    ),
+    (
+        {
+            '_version': 0,
+            'id': None,
+            'py/object': 'tests.test_models.NestedAggregate'
+        },
+        [
+            '_version',
+            'id',
+            'py/object',
+            'tests.test_models.NestedAggregate',
+        ]
+    ),
+    (
+        {
+            '_version': 0,
+            'id': None,
+            'nested_entity': {
+                '__dict__': {
+                    'nested_entity_id': 'a'
+                },
+                'py/object': 'eventsourcing_helpers.models.EntityDict'
+            },
+            'py/object': 'tests.test_models.NestedAggregate'
+        },
+        [
+            '_version',
+            'id',
+            'nested_entity',
+            'py/object',
+            'tests.test_models.NestedAggregate',
+            'py/object',
+            '__dict__',
+            'eventsourcing_helpers.models.EntityDict',
+            'nested_entity_id'
+        ]
+    ),
+])
+def test_get_all_nested_keys(data, expected_result):
+    result = get_all_nested_keys(data, [])
+    for expected_key in expected_result:
+        assert expected_key in result
+
