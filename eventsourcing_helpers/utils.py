@@ -27,7 +27,6 @@ def import_backend(location: str) -> Any:
     return backend_cls
 
 
-
 def get_all_nested_keys(data: dict, current_keys: List) -> List:
     all_keys = deepcopy(current_keys)
     if isinstance(data, dict):
@@ -75,4 +74,3 @@ def get_callable_representation(target: Callable) -> str:
         ('Test.method', 'Test.klass', 'Test.static')
     """
     return getattr(target, '__qualname__', getattr(target, '__name__', ''))
-
