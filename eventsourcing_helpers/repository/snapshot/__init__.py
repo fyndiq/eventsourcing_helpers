@@ -19,7 +19,7 @@ BACKENDS = {
 logger = structlog.get_logger(__name__)
 
 
-def get_hash(self, seed: str) -> int:
+def get_hash(seed: str) -> int:
     """
     Returns a hash of the given seed
     """
