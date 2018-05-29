@@ -43,7 +43,6 @@ class SnapshotTests:
         self.backend.save.call_count == 1
 
     def test_load(self):
-        import ipdb; ipdb.set_trace()
         snapshot = self.snapshot()
         test_id = 1
         test_hash = 'hash'
