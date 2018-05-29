@@ -8,6 +8,7 @@ from eventsourcing_helpers.repository.snapshot import Snapshot
 
 class SnapshotTests:
     config = {'backend_config': {}}
+    snapshot_data_mock = 'data'
 
     @pytest.fixture(autouse=True)
     def setup_method(
@@ -15,7 +16,9 @@ class SnapshotTests:
         importer_mock
     ):
         self.aggregate_root_cls = aggregate_root_cls_mock()
-        self.backend = snapshot_backend_mock()
+        self.backend = snapshot_backend_mock(
+            return_value=self.snapshot_data_mock
+        )
         self.importer = importer_mock(return_value=self.backend)
         self.deserializer = Mock()
         self.serializer = Mock()
@@ -38,3 +41,14 @@ class SnapshotTests:
         self.serializer.call_count == 1
         self.hash_function.call_count == 1
         self.backend.save.call_count == 1
+
+    def test_load(self):
+        import ipdb; ipdb.set_trace()
+        snapshot = self.snapshot()
+        test_id = 1
+        test_hash = 'hash'
+        snapshot.load(test_id, test_hash)
+
+        self.backend().load.assert_called_once_with(test_id)
+        self.deserializer.assert_called_once_with(
+            self.snapshot_data_mock, test_hash)
