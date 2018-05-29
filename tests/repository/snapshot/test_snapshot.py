@@ -51,3 +51,10 @@ class SnapshotTests:
         self.backend().load.assert_called_once_with(test_id)
         self.deserializer.assert_called_once_with(
             self.snapshot_data_mock, test_hash)
+
+    def test_schema_hash(self):
+        snapshot = self.snapshot()
+        seed = 'a'
+        snapshot.get_schema_hash(seed)
+
+        self.hash_function.assert_called_once_with(seed)
