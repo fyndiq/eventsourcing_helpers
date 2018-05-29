@@ -59,10 +59,10 @@ class Snapshot:
         self.hash_function = hash_function
 
     def save(self, aggregate_root: AggregateRoot) -> None:
-        snapshot = self.serializer(
-            aggregate_root,
-            self.get_schema_hash(
-                aggregate_root.__class__().get_model_representation()))
+        current_hash = self.get_schema_hash(
+            aggregate_root.__class__().get_model_representation())
+
+        snapshot = self.serializer(aggregate_root, current_hash)
         self.backend.save(aggregate_root.id, snapshot)
 
     def load(self, id: str, current_hash: int) -> AggregateRoot:
