@@ -99,8 +99,8 @@ class Repository:
         Returns:
             AggregateRoot: Aggregate root instance with the latest state.
         """
-        current_hash = self.snapshot.get_hash(
-            self.aggregate_root_cls()._get_model_representation())
+        current_hash = self.snapshot.get_schema_hash(
+            self.aggregate_root_cls().get_model_representation())
         aggregate_root = self.snapshot.load(id, current_hash)
 
         return aggregate_root

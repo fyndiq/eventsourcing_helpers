@@ -80,5 +80,5 @@ class RepositoryTests:
         repository._load_from_snapshot_storage(1)
 
         repository.aggregate_root_cls(). \
-            _get_model_representation.assert_called_once_with()
-        repository.snapshot.get_hash.call_count == 1
+            get_model_representation.assert_called_once_with()
+        repository.snapshot.get_schema_hash.call_count == 1

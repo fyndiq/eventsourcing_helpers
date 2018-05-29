@@ -19,7 +19,7 @@ BACKENDS = {
 logger = structlog.get_logger(__name__)
 
 
-def get_hash(self, seed) -> int:
+def get_hash(self, seed: str) -> int:
     """
     Returns a hash of the given seed
     """
@@ -39,7 +39,9 @@ class Snapshot:
     def __init__(
         self, config: dict, importer: Callable = import_backend,
         serializer: Callable = from_aggregate_root_to_snapshot,
-        deserializer: Callable = from_snapshot_to_aggregate_root, **kwargs
+        deserializer: Callable = from_snapshot_to_aggregate_root,
+        hash_function: Callable = get_hash,
+        **kwargs
     ) -> None:
         config = get_snapshot_config(config)
         backend_path = config.get('backend', BACKENDS[self.DEFAULT_BACKEND])
@@ -54,10 +56,12 @@ class Snapshot:
 
         self.serializer = serializer
         self.deserializer = deserializer
+        self.hash_function = hash_function
 
     def save(self, aggregate_root: AggregateRoot) -> None:
         snapshot = self.serializer(
-            aggregate_root, self.backend.get_hash())
+            aggregate_root, self.backend.get_schema_hash(
+                aggregate_root.get_model_representation()))
         self.backend.save(aggregate_root.id, snapshot)
 
     def load(self, id: str, current_hash: int) -> AggregateRoot:
@@ -82,3 +86,6 @@ class Snapshot:
         aggregate_root = self.deserializer(snapshot, current_hash)
 
         return aggregate_root
+
+    def get_schema_hash(self, seed: str) -> int:
+        return self.hash_function(seed)
