@@ -202,7 +202,7 @@ class EntityTests:
         ]),
     ])
     def test_get_model_representation_includes_name_and_fields(self, entity, data):  # noqa
-        representation = entity._get_model_representation()
+        representation = entity.get_model_representation()
         for field in data:
             assert field in representation
 
@@ -220,7 +220,7 @@ class EntityTests:
     def test_get_model_representation_handles_nested_entities(
         self, entity, data
     ):
-        representation = entity._get_model_representation()
+        representation = entity.get_model_representation()
         for field in data:
             assert field in representation
 

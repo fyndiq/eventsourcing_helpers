@@ -38,7 +38,7 @@ class Entity:
         attrs = {k: v for k, v in self.__dict__.items() if v is not None}
         return f"{self._class}({attrs})"
 
-    def _get_model_representation(self) -> str:
+    def get_model_representation(self) -> str:
         json_representation = jsonpickle.encode(self)
         dict_representation = json.loads(json_representation)
         keys = get_all_nested_keys(dict_representation, [])
