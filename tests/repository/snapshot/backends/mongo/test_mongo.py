@@ -22,14 +22,24 @@ class MongoSnapshotBackendTests():
     def test_mongo_save_saves_data(self):
         id = 'a'
         data = {'b': 1}
-        import ipdb
-        ipdb.set_trace()
 
         self.mongo_snapshot_backend.save(
             id=id, data=data
         )
 
-        stored_data = self.mongo_snapshot_backend.client.snapshots.snapshots.find_one({'_id': id})
+        stored_data = self.mongo_snapshot_backend.client.snapshots.snapshots.find_one({'_id': id})  # noqa
+        expected_data = {'_id': id}
+        expected_data.update(data)
+        assert stored_data == expected_data
+
+    def test_mongo_load_loads_correct_data(self):
+        id = 'a'
+        query = {'_id': id}
+        data = {'b': 1}
+
+        self.mongo_snapshot_backend.client.snapshots.snapshots.find_one_and_replace(query, data, upsert=True)  # noqa
+        stored_data = self.mongo_snapshot_backend.load(id)
+
         expected_data = {'_id': id}
         expected_data.update(data)
         assert stored_data == expected_data
