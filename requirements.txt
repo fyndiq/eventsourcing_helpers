@@ -13,6 +13,7 @@ structlog
 yapf
 jsonpickle
 pymongo
+mongomock
 
 confluent-kafka-helpers==0.6.1
 redis==2.10.6
