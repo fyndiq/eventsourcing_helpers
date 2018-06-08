@@ -59,6 +59,14 @@ class Snapshot:
         self.hash_function = hash_function
 
     def save(self, aggregate_root: AggregateRoot) -> None:
+        """
+        Saves an aggregate to the snapshot storage
+
+        Args:
+            aggregate_root (AggregateRoot): The aggregate to be saved
+        Returns:
+            None
+        """
         current_hash = self.get_schema_hash(
             aggregate_root.__class__().get_representation())
 
