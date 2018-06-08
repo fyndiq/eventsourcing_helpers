@@ -3,7 +3,6 @@ from typing import Callable
 import structlog
 
 from eventsourcing_helpers.metrics import statsd
-
 from eventsourcing_helpers.models import AggregateRoot
 from eventsourcing_helpers.repository.snapshot import Snapshot
 from eventsourcing_helpers.serializers import from_message_to_dto
