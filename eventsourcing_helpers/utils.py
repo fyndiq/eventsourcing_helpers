@@ -41,30 +41,26 @@ def get_all_nested_keys(data: dict, current_keys: List) -> List:
     Returns:
         List: All keys found
 
-    Ex:
-    {
-        '_version': 0,
-        'id': None,
-        'nested_entity': {
-            '__dict__': {
-                'nested_entity_id': 'a'
+    Example:
+    >>> get_all_nested_keys({
+            '_version': 0,
+            'id': None,
+            'nested_entity': {
+                '__dict__': {
+                    'nested_entity_id': 'a'
+                },
+                'py/object': 'eventsourcing_helpers.models.EntityDict'
             },
-            'py/object': 'eventsourcing_helpers.models.EntityDict'
+            'py/object': 'tests.test_models.NestedAggregate'
         },
-        'py/object': 'tests.test_models.NestedAggregate'
-    }
+        []
+    )
 
-    Gives:
     [
-        'py/object',
-        '_version',
-        'id',
-        'nested_entity',
-        'tests.test_models.NestedAggregate',
-        'py/object',
-        '__dict__',
+        '_version', 'id', 'nested_entity', 'py/object', '__dict__',
+        'py/object', 'nested_entity_id',
         'eventsourcing_helpers.models.EntityDict',
-        'nested_entity_id'
+        'tests.test_models.NestedAggregate'
     ]
     """
     all_keys = deepcopy(current_keys)
