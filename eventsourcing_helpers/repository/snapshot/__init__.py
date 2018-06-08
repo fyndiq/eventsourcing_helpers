@@ -67,7 +67,7 @@ class Snapshot:
         Returns:
             None
         """
-        current_hash = self.get_schema_hash(
+        current_hash = self.hash_function(
             aggregate_root.__class__().get_representation())
 
         snapshot = self.serializer(aggregate_root, current_hash)
@@ -93,11 +93,8 @@ class Snapshot:
             AggregateRoot: Aggregate root instance with the latest state.
         """
         snapshot = self.backend.load(id)
-        current_hash = self.get_schema_hash(
+        current_hash = self.hash_function(
             aggregate_root.__class__().get_representation())
         aggregate_root = self.deserializer(snapshot, current_hash)
 
         return aggregate_root
-
-    def get_schema_hash(self, seed: str) -> str:
-        return self.hash_function(seed)

@@ -47,16 +47,10 @@ class SnapshotTests:
         aggregate_root = self.aggregate_root_cls()
         test_id = 1
         snapshot.load(test_id, aggregate_root)
-        test_hash = snapshot.get_schema_hash(
+        test_hash = snapshot.hash_function(
             aggregate_root.get_representation())
 
         self.backend().load.assert_called_once_with(test_id)
         self.deserializer.assert_called_once_with(
             self.snapshot_data_mock, test_hash)
 
-    def test_schema_hash(self):
-        snapshot = self.snapshot()
-        seed = 'a'
-        snapshot.get_schema_hash(seed)
-
-        self.hash_function.assert_called_once_with(seed)
