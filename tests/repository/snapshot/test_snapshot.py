@@ -44,9 +44,11 @@ class SnapshotTests:
 
     def test_load(self):
         snapshot = self.snapshot()
+        aggregate_root = self.aggregate_root_cls()
         test_id = 1
-        test_hash = 'hash'
-        snapshot.load(test_id, test_hash)
+        snapshot.load(test_id, aggregate_root)
+        test_hash = snapshot.get_schema_hash(
+            aggregate_root.get_representation())
 
         self.backend().load.assert_called_once_with(test_id)
         self.deserializer.assert_called_once_with(

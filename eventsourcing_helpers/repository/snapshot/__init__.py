@@ -73,7 +73,7 @@ class Snapshot:
         snapshot = self.serializer(aggregate_root, current_hash)
         self.backend.save(aggregate_root.id, snapshot)
 
-    def load(self, id: str, current_hash: int) -> AggregateRoot:
+    def load(self, id: str, aggregate_root: AggregateRoot) -> AggregateRoot:
         """
         Loads an aggregate root from the snapshot storage.
 
@@ -85,13 +85,16 @@ class Snapshot:
 
         Args:
             id: ID of the aggregate root.
-            current_hash: The hash of the current model of the aggregate we are
-                trying to load.
+            Args:
+            aggregate_root (AggregateRoot): The aggregate type of the object
+                                            to load
 
         Returns:
             AggregateRoot: Aggregate root instance with the latest state.
         """
         snapshot = self.backend.load(id)
+        current_hash = self.get_schema_hash(
+            aggregate_root.__class__().get_representation())
         aggregate_root = self.deserializer(snapshot, current_hash)
 
         return aggregate_root
