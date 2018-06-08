@@ -17,7 +17,7 @@ def from_aggregate_root_to_snapshot(
         aggregate_root (AggregateRoot): The aggregate root to be saved
         current_hash (int): The hash of the aggregate_root schema
         encoder (Callable, optional): The function that encodes the aggregate
-                                      root into data for storage
+            root into data for storage
 
     Returns:
         dict: The data blob to be stored in the snapshot storage
@@ -46,7 +46,7 @@ def from_snapshot_to_aggregate_root(
     Args:
         snapshot (dict): the snapshot data
         current_hash (int): The current hash of the schema of the object to be
-                            created (AggregateRoot or child)
+            created (AggregateRoot or child)
         decoder (Callable, optional): The decoder of the snapshot data
 
     Returns:
