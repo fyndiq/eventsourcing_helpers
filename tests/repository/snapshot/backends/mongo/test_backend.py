@@ -7,7 +7,7 @@ from eventsourcing_helpers.repository.snapshot.backends.mongo import (
 
 
 class MongoSnapshotBackendTests():
-    config = {'MONGO_URI': 'mongodb://localhost:27017'}
+    config = {'host': 'mongodb://localhost:27017'}
 
     @pytest.fixture(autouse=True)
     def setup_method(
