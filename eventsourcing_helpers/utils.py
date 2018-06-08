@@ -35,8 +35,8 @@ def get_all_nested_keys(data: dict, current_keys: List) -> List:
     for key: `py/object` is also saved.
 
     Args:
-        data (dict): The dictionary to be examined
-        current_keys (List): The keys found so far (used in recursive calls)
+        data: The dictionary to be examined
+        current_keys: The keys found so far (used in recursive calls)
 
     Returns:
         List: All keys found

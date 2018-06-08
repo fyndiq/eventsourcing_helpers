@@ -14,9 +14,9 @@ def from_aggregate_root_to_snapshot(
     Serializes an aggregate root into a format suitable for snapshot storage
 
     Args:
-        aggregate_root (AggregateRoot): The aggregate root to be saved
-        current_hash (int): The hash of the aggregate_root schema
-        encoder (Callable, optional): The function that encodes the aggregate
+        aggregate_root: The aggregate root to be saved
+        current_hash: The hash of the aggregate_root schema
+        encoder (optional): The function that encodes the aggregate
             root into data for storage
 
     Returns:
@@ -44,10 +44,10 @@ def from_snapshot_to_aggregate_root(
     """Converts the snapshot data into an AggregateRoot (or child)
 
     Args:
-        snapshot (dict): the snapshot data
-        current_hash (int): The current hash of the schema of the object to be
+        snapshot: the snapshot data
+        current_hash: The current hash of the schema of the object to be
             created (AggregateRoot or child)
-        decoder (Callable, optional): The decoder of the snapshot data
+        decoder (optional): The decoder of the snapshot data
 
     Returns:
         AggregateRoot: The restored object
