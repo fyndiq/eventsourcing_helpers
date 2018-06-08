@@ -12,14 +12,26 @@ class MongoSnapshotBackend(SnapshotBackend):
         self.db = self.client.snapshots
 
     def save(self, id: str, data: dict) -> None:
+        """
+        Saves the data to the snapshot storage
+
+        Args:
+            id (str): The id to save the data for
+            data (dict): data to be saved
+        Returns:
+            None
+        """
         query = {'_id': id}
         self.db.snapshots.find_one_and_replace(query, data, upsert=True)
 
     def load(self, id: str) -> dict:
         """
-        Get the aggregate with the specific id from the snapshot
-        storage.
-        Return a tuple with (aggregate_root, aggregate_version, aggregate_hash)
+        Get the aggregate with the specific id from the snapshot storage
+
+        Args:
+            id (str): The id to retrieve the data for
+        Returns:
+            dict: The stored snapshot data
         """
         query = {'_id': id}
 
