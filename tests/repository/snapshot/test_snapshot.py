@@ -53,4 +53,3 @@ class SnapshotTests:
         self.backend().load.assert_called_once_with(test_id)
         self.deserializer.assert_called_once_with(
             self.snapshot_data_mock, test_hash)
-

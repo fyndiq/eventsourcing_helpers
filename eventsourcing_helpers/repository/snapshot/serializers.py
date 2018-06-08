@@ -10,6 +10,26 @@ def from_aggregate_root_to_snapshot(
     current_hash: int,
     encoder: Callable = jsonpickle.encode
 ) -> dict:
+    """
+    Serializes an aggregate root into a format suitable for snapshot storage
+
+    Args:
+        aggregate_root (AggregateRoot): The aggregate root to be saved
+        current_hash (int): The hash of the aggregate_root schema
+        encoder (Callable, optional): The function that encodes the aggregate
+                                      root into data for storage
+
+    Returns:
+        dict: The data blob to be stored in the snapshot storage
+
+    Example:
+    >>> from_aggregate_root_to_snapshot(aggregate, 123456)
+    {
+        'data': '{"py/object": "eventsourcing_helpers.models.AggregateRoot",
+        "_version": 0, "id": null}', 'version': 0, 'hash': 123456
+    }
+
+    """
     snapshot = {
         'data': encoder(aggregate_root),
         'version': aggregate_root._version,
@@ -21,6 +41,22 @@ def from_aggregate_root_to_snapshot(
 def from_snapshot_to_aggregate_root(
     snapshot: dict, current_hash: int, decoder: Callable = jsonpickle.decode
 ) -> AggregateRoot:
+    """Converts the snapshot data into an AggregateRoot (or child)
+
+    Args:
+        snapshot (dict): the snapshot data
+        current_hash (int): The current hash of the schema of the object to be
+                            created (AggregateRoot or child)
+        decoder (Callable, optional): The decoder of the snapshot data
+
+    Returns:
+        AggregateRoot: The restored object
+
+    Example:
+    >>> from_snapshot_to_aggregate_root(snapshot, 123456)
+    AggregateRoot({'_version': 0})
+    """
+
     if not snapshot:
         return None
 
