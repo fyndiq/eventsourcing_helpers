@@ -2,6 +2,8 @@ from typing import Callable
 
 import structlog
 
+from eventsourcing_helpers.metrics import statsd
+
 from eventsourcing_helpers.models import AggregateRoot
 from eventsourcing_helpers.repository.snapshot import Snapshot
 from eventsourcing_helpers.serializers import from_message_to_dto
@@ -82,9 +84,11 @@ class Repository:
         """
         aggregate_root = self._load_from_snapshot_storage(id)
         if aggregate_root is None:
+            statsd.increment('eventsourcing_helpers.snapshot.cache.misses')
             aggregate_root = self._load_from_event_storage(id)
             logger.debug("Aggregate was loaded from event storage")
         else:
+            statsd.increment('eventsourcing_helpers.snapshot.cache.hits')
             logger.debug("Aggregate was loaded from snapshot storage")
 
         return aggregate_root
