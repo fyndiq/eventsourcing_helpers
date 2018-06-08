@@ -201,8 +201,8 @@ class EntityTests:
             'status', 'tags', 'properties'
         ]),
     ])
-    def test_get_model_representation_includes_name_and_fields(self, entity, data):  # noqa
-        representation = entity.get_model_representation()
+    def test_get_representation_includes_name_and_fields(self, entity, data):  # noqa
+        representation = entity.get_representation()
         for field in data:
             assert field in representation
 
@@ -217,10 +217,10 @@ class EntityTests:
             'second_nested_entity', 'second_nested_entity_id',
             'eventsourcing_helpers.models.EntityDict']),
     ])
-    def test_get_model_representation_handles_nested_entities(
+    def test_get_representation_handles_nested_entities(
         self, entity, data
     ):
-        representation = entity.get_model_representation()
+        representation = entity.get_representation()
         for field in data:
             assert field in representation
 
