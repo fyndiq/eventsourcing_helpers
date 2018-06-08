@@ -6,7 +6,7 @@ from eventsourcing_helpers.repository.snapshot.backends import SnapshotBackend
 class MongoSnapshotBackend(SnapshotBackend):
     def __init__(self, config: dict, mongo_client_class=MongoClient) -> None:
 
-        assert 'host' in config, 'You must specify MONGO_URI!'
+        assert 'host' in config, 'You must specify host!'
         self.client = mongo_client_class(**config)
         self.db = self.client.snapshots
 
