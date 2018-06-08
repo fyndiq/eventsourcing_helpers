@@ -14,7 +14,7 @@ class MongoSnapshotBackendTests():
         self, aggregate_root_cls_mock, snapshot_backend_mock,
         importer_mock
     ):
-        self.mongo_snapshot_backend = MongoSnapshotBackend(
+        self.backend = MongoSnapshotBackend(
             self.config,
             MongoClient
         )
@@ -23,11 +23,11 @@ class MongoSnapshotBackendTests():
         id = 'a'
         data = {'b': 1}
 
-        self.mongo_snapshot_backend.save(
+        self.backend.save(
             id=id, data=data
         )
 
-        stored_data = self.mongo_snapshot_backend.client.snapshots.snapshots.find_one({'_id': id})  # noqa
+        stored_data = self.backend.client.snapshots.snapshots.find_one({'_id': id})  # noqa
         expected_data = {'_id': id}
         expected_data.update(data)
         assert stored_data == expected_data
@@ -37,8 +37,8 @@ class MongoSnapshotBackendTests():
         query = {'_id': id}
         data = {'b': 1}
 
-        self.mongo_snapshot_backend.client.snapshots.snapshots.find_one_and_replace(query, data, upsert=True)  # noqa
-        stored_data = self.mongo_snapshot_backend.load(id)
+        self.backend.client.snapshots.snapshots.find_one_and_replace(query, data, upsert=True)  # noqa
+        stored_data = self.backend.load(id)
 
         expected_data = {'_id': id}
         expected_data.update(data)
