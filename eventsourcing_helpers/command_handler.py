@@ -4,8 +4,8 @@ import structlog
 
 from confluent_kafka_helpers.message import Message
 
-from eventsourcing_helpers import metrics
 from eventsourcing_helpers.handler import Handler
+from eventsourcing_helpers.metrics import statsd
 from eventsourcing_helpers.models import AggregateRoot
 from eventsourcing_helpers.repository import Repository
 from eventsourcing_helpers.serializers import from_message_to_dto
@@ -76,7 +76,7 @@ class CommandHandler(Handler):
         command_class = command._class
         handler = self.handlers[command_class]
         handler_name = get_callable_representation(handler)
-        with metrics.timed(
+        with statsd.timed(
             'eventsourcing_helpers.handler.handle',
             tags=[
                 'message_type:command',
@@ -152,7 +152,7 @@ class ESCommandHandler(CommandHandler):
         command_class = command._class
         handler = self.handlers[command_class]
         handler_name = get_callable_representation(handler)
-        with metrics.timed(
+        with statsd.timed(
             'eventsourcing_helpers.handler.handle',
             tags=[
                 'message_type:command',
