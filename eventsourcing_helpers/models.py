@@ -1,9 +1,13 @@
+import json
 import re
 import uuid
 from itertools import chain
 from typing import Any, Callable, Iterator, List
 
+import jsonpickle
 import structlog
+
+from eventsourcing_helpers.utils import get_all_nested_keys
 
 word_regexp = re.compile('[A-Z][a-z]+|[A-Z]+(?![a-z])')
 logger = structlog.get_logger(__name__)
@@ -23,7 +27,7 @@ class Entity:
     _events: List[Any] = []
 
     def __init__(self) -> None:
-        self.id: bool = None
+        self.id: str = None
         self._version: int = 0
 
     def __call__(self, *args, **kwargs):
@@ -33,6 +37,13 @@ class Entity:
     def __repr__(self) -> str:
         attrs = {k: v for k, v in self.__dict__.items() if v is not None}
         return f"{self._class}({attrs})"
+
+    def get_representation(self) -> str:
+        json_representation = jsonpickle.encode(self)
+        dict_representation = json.loads(json_representation)
+        keys = get_all_nested_keys(dict_representation, [])
+
+        return self.__class__.__name__ + ', ' + ', '.join(keys)
 
     @property
     def _class(self):
@@ -51,8 +62,9 @@ class Entity:
         """
         return getattr(entity, method_name)
 
-    def _apply_event(self, event: Any, entity: 'Entity', method_name,
-                     is_new) -> None:  # yapf: disable
+    def _apply_event(
+        self, event: Any, entity: 'Entity', method_name, is_new
+    ) -> None:
         """
         Apply an event on one entity.
 

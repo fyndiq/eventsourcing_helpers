@@ -6,8 +6,9 @@ from eventsourcing_helpers.serializers import from_message_to_dto
 class Handler:
     handlers: dict = {}
 
-    def __init__(self, message_deserializer: Callable=
-                 from_message_to_dto) -> None:  # yapf: disable
+    def __init__(
+        self, message_deserializer: Callable = from_message_to_dto
+    ) -> None:
         assert self.handlers
         self.message_deserializer = message_deserializer
 

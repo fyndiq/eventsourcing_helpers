@@ -1,4 +1,4 @@
-from typing import Any, Callable, Generator
+from typing import Any, Callable
 
 import structlog
 
@@ -98,27 +98,17 @@ class ESCommandHandler(CommandHandler):
     aggregate_root: AggregateRoot = None
     repository_config: dict = None
 
-    def __init__(self, message_deserializer: Callable=from_message_to_dto,
-                 repository: Any=Repository, **kwargs) -> None:  # yapf: disable
+    def __init__(
+        self, message_deserializer: Callable = from_message_to_dto,
+        repository: Any = Repository, **kwargs
+    ) -> None:
         super().__init__(message_deserializer)
         assert self.aggregate_root
         assert self.repository_config
 
-        self.repository = repository(self.repository_config, **kwargs)
-
-    def _get_events(self, id: str) -> Generator[Any, None, None]:
-        """
-        Get all aggregate events from the repository.
-
-        Args:
-            id: Aggregate root id.
-
-        Returns:
-            list: List with all events.
-        """
-        with self.repository.load(id) as events:
-            for event in events:
-                yield self.message_deserializer(event, is_new=False)
+        self.repository = repository(
+            self.repository_config, self.aggregate_root, **kwargs
+        )
 
     def _get_aggregate_root(self, id: str) -> AggregateRoot:
         """
@@ -128,19 +118,16 @@ class ESCommandHandler(CommandHandler):
             id: ID of the aggregate root.
 
         Returns:
-            AggregateRoot: Aggregate root with the latest state.
+            AggregateRoot: Aggregate root instance with the latest state.
         """
-        aggregate_root = self.aggregate_root()
-        aggregate_root._apply_events(self._get_events(id))
-
-        return aggregate_root
+        return self.repository.load(id)
 
     def _commit_staged_events(self, aggregate_root: AggregateRoot) -> None:
         """
         Commit staged events to the repository.
 
         Args:
-            aggregate_root: Entity with all staged events.
+            aggregate_root: Aggregate root with staged events.
         """
         self.repository.commit(aggregate_root)
 

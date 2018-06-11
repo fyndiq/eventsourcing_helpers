@@ -12,9 +12,11 @@ setup(
     install_requires=[
         'structlog>=17.2.0',
         'cnamedtuple>=0.1.6',
+        'jsonpickle==0.9.6',
         'confluent-kafka-helpers==0.6.1'
     ],
-    extras_require={
+    extras_requires={
+        'mongo': ["pymongo==3.6.1"],
         'redis': ["redis>=2.10.6", "hiredis>=0.2.0"],
     },
     zip_safe=False

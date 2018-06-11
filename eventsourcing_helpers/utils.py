@@ -1,5 +1,6 @@
+from copy import deepcopy
 from importlib import import_module
-from typing import Any, Callable
+from typing import Any, Callable, List
 
 
 def import_backend(location: str) -> Any:
@@ -24,6 +25,58 @@ def import_backend(location: str) -> Any:
 
     backend_cls = getattr(module, class_name)
     return backend_cls
+
+
+def get_all_nested_keys(data: dict, current_keys: List) -> List:
+    """
+    Get all keys in a dictoinary. The dictionary could have more levels of
+    nested dicts.
+    The purpose of this is to detect changes to a class. Therefore the value
+    for key: `py/object` is also saved.
+
+    Args:
+        data: The dictionary to be examined
+        current_keys: The keys found so far (used in recursive calls)
+
+    Returns:
+        List: All keys found
+
+    Example:
+    >>> get_all_nested_keys(
+    ...     {
+    ...         '_version': 0,
+    ...         'id': None,
+    ...         'nested_entity': {
+    ...             '__dict__': {
+    ...                 'nested_entity_id': 'a'
+    ...             },
+    ...             'py/object': 'eventsourcing_helpers.models.EntityDict'
+    ...         },
+    ...         'py/object': 'tests.test_models.NestedAggregate'
+    ...     },
+    ...     []
+    ... )
+
+    [
+        '_version', 'id', 'nested_entity', 'py/object', '__dict__',
+        'py/object', 'nested_entity_id',
+        'eventsourcing_helpers.models.EntityDict',
+        'tests.test_models.NestedAggregate'
+    ]
+    """
+    all_keys = deepcopy(current_keys)
+    if isinstance(data, dict):
+        all_keys.extend(list(data.keys()))
+        for key, value in data.items():
+            if key == 'py/object':
+                all_keys.append(value)
+            else:
+                all_keys = get_all_nested_keys(value, all_keys)
+    elif isinstance(data, (list, tuple)):
+        for item in data:
+            all_keys = get_all_nested_keys(item, all_keys)
+
+    return all_keys
 
 
 def get_callable_representation(target: Callable) -> str:

@@ -13,6 +13,32 @@ class Bar(Entity):
     pass
 
 
+class LargerTestAggregate(AggregateRoot):
+    def __init__(self):
+        super().__init__()
+        self.title = None
+        self.description = None
+        self.status = None
+        self.tags = None
+        self.properties = None
+
+
+class NestedAggregate(AggregateRoot):
+    def __init__(self):
+        super().__init__()
+        self.nested_entity = EntityDict()
+        self.nested_entity.nested_entity_id = 'a'
+
+
+class DoubleNestedAggregate(AggregateRoot):
+    def __init__(self):
+        super().__init__()
+        self.nested_entity = EntityDict()
+        self.nested_entity.nested_entity_id = 'a'
+        self.nested_entity.second_nested_entity = EntityDict()
+        self.nested_entity.second_nested_entity.second_nested_entity_id = 'a'
+
+
 class AggregateRootTests:
 
     def test_subclass(self):
@@ -167,6 +193,36 @@ class EntityTests:
         )
         mock_apply.assert_called_once_with(self.aggregate_root, method_name)
         mock_stage.assert_called_once_with(self.event, is_new)
+
+    @pytest.mark.parametrize('entity, data', [
+        (Foo(), ['Foo', 'id', '_version']),
+        (LargerTestAggregate(), [
+            'LargerTestAggregate', 'id', '_version', 'title', 'description',
+            'status', 'tags', 'properties'
+        ]),
+    ])
+    def test_get_representation_includes_name_and_fields(self, entity, data):  # noqa
+        representation = entity.get_representation()
+        for field in data:
+            assert field in representation
+
+    @pytest.mark.parametrize('entity, data', [
+        (NestedAggregate(), ['NestedAggregate',
+                             'id', '_version',
+                             'nested_entity', 'nested_entity_id',
+                             'eventsourcing_helpers.models.EntityDict']),
+        (DoubleNestedAggregate(), [
+            'DoubleNestedAggregate', 'id', '_version',
+            'nested_entity', 'nested_entity_id',
+            'second_nested_entity', 'second_nested_entity_id',
+            'eventsourcing_helpers.models.EntityDict']),
+    ])
+    def test_get_representation_handles_nested_entities(
+        self, entity, data
+    ):
+        representation = entity.get_representation()
+        for field in data:
+            assert field in representation
 
 
 class EntityDictTests:
