@@ -43,7 +43,7 @@ class ESCommandHandlerTests:
     @patch(f'{module}.ESCommandHandler._handle_command')
     @patch(f'{module}.ESCommandHandler._get_aggregate_root')
     @patch(f'{module}.ESCommandHandler._can_handle_command')
-    @patch(f'{module}.metrics.timed')
+    @patch(f'{module}.statsd.timed')
     def test_handle(self, mock_metrics_timed, mock_can_handle,
                     mock_get, mock_handle, mock_commit
                     ):
@@ -106,7 +106,7 @@ class CommandHandlerTests:
 
     @patch(f'{module}.CommandHandler._handle_command')
     @patch(f'{module}.CommandHandler._can_handle_command')
-    @patch(f'{module}.metrics.timed')
+    @patch(f'{module}.statsd.timed')
     def test_handle(self, mock_metrics_timed, mock_can_handle, mock_handle):
         """
         Test that the correct methods are invoked when handling a command.
