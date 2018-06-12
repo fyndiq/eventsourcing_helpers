@@ -43,10 +43,15 @@ class ESCommandHandlerTests:
     @patch(f'{module}.ESCommandHandler._handle_command')
     @patch(f'{module}.ESCommandHandler._get_aggregate_root')
     @patch(f'{module}.ESCommandHandler._can_handle_command')
-    def test_handle(self, mock_can_handle, mock_get, mock_handle, mock_commit):
+    @patch(f'{module}.statsd.timed')
+    def test_handle(self, mock_metrics_timed, mock_can_handle,
+                    mock_get, mock_handle, mock_commit
+                    ):
         """
         Test that the correct methods are invoked when handling a command.
         """
+        mock_metrics_timed.return_value.__enter__.return_value = Mock
+
         mock_can_handle.return_value = True
         mock_get.return_value = self.aggregate_root
 
@@ -101,10 +106,13 @@ class CommandHandlerTests:
 
     @patch(f'{module}.CommandHandler._handle_command')
     @patch(f'{module}.CommandHandler._can_handle_command')
-    def test_handle(self, mock_can_handle, mock_handle):
+    @patch(f'{module}.statsd.timed')
+    def test_handle(self, mock_metrics_timed, mock_can_handle, mock_handle):
         """
         Test that the correct methods are invoked when handling a command.
         """
+        mock_metrics_timed.return_value.__enter__.return_value = Mock
+
         mock_can_handle.return_value = True
         self.handler.handle(message)
 
@@ -130,3 +138,4 @@ class CommandHandlerTests:
         """
         self.handler._handle_command(command)
         self.mock_handler.called_once_with(command)
+

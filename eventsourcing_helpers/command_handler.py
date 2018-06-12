@@ -4,8 +4,8 @@ import structlog
 
 from confluent_kafka_helpers.message import Message
 
-from eventsourcing_helpers import metrics
 from eventsourcing_helpers.handler import Handler
+from eventsourcing_helpers.metrics import statsd
 from eventsourcing_helpers.models import AggregateRoot
 from eventsourcing_helpers.repository import Repository
 from eventsourcing_helpers.serializers import from_message_to_dto
@@ -54,21 +54,11 @@ class CommandHandler(Handler):
         command_class = command._class
         handler = self.handlers[command_class]
 
-        handler_name = get_callable_representation(handler)
-        handler_wrapper = metrics.timed(
-            'eventsourcing_helpers.handler.handle',
-            tags=[
-                'message_type:command',
-                f'message_class:{command_class}',
-                f'handler:{handler_name}'
-            ]
-        )(handler)
-
         logger.info("Calling command handler", command_class=command_class)
         if handler_inst:
-            handler_wrapper(handler_inst, command)
+            handler(handler_inst, command)
         else:
-            handler_wrapper(command)
+            handler(command)
 
     def handle(self, message: dict) -> None:
         """
@@ -82,7 +72,19 @@ class CommandHandler(Handler):
 
         command = self.message_deserializer(message)
         logger.info("Handling command", command_class=command._class)
-        self._handle_command(command)
+
+        command_class = command._class
+        handler = self.handlers[command_class]
+        handler_name = get_callable_representation(handler)
+        with statsd.timed(
+            'eventsourcing_helpers.handler.handle.time',
+            tags=[
+                'message_type:command',
+                f'message_class:{command_class}',
+                f'handler:{handler_name}'
+            ]
+        ):
+            self._handle_command(command)
 
 
 class ESCommandHandler(CommandHandler):
@@ -147,6 +149,17 @@ class ESCommandHandler(CommandHandler):
         command = self.message_deserializer(message)
         logger.info("Handling command", command_class=command._class)
 
-        aggregate_root = self._get_aggregate_root(command.id)
-        self._handle_command(command, handler_inst=aggregate_root)
-        self._commit_staged_events(aggregate_root)
+        command_class = command._class
+        handler = self.handlers[command_class]
+        handler_name = get_callable_representation(handler)
+        with statsd.timed(
+            'eventsourcing_helpers.handler.handle.time',
+            tags=[
+                'message_type:command',
+                f'message_class:{command_class}',
+                f'handler:{handler_name}'
+            ]
+        ):
+            aggregate_root = self._get_aggregate_root(command.id)
+            self._handle_command(command, handler_inst=aggregate_root)
+            self._commit_staged_events(aggregate_root)
