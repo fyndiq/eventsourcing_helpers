@@ -5,7 +5,6 @@ from pymongo.errors import PyMongoError
 
 from eventsourcing_helpers.repository.snapshot.backends import SnapshotBackend
 
-
 default_config = {
     'connectTimeoutMS': 2000,
     'serverSelectionTimeoutMS': 1000,
@@ -21,7 +20,6 @@ class MongoSnapshotBackend(SnapshotBackend):
         mongo_config.update(config)
         self.client = mongo_client_class(**mongo_config)
         self.db = self.client.snapshots
-        #self.db.command("serverStatus")
 
     def save(self, id: str, data: dict) -> None:
         """
