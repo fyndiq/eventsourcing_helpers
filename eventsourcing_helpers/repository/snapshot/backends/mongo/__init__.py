@@ -6,10 +6,10 @@ from eventsourcing_helpers.repository.snapshot.backends import SnapshotBackend
 
 class MongoSnapshotBackend(SnapshotBackend):
     def __init__(self, config: dict, mongo_client_class=MongoClient) -> None:
-
         assert 'host' in config, 'You must specify host!'
         self.client = mongo_client_class(**config)
         self.db = self.client.snapshots
+        self.db.command("serverStatus")
 
     def save(self, id: str, data: dict) -> None:
         """
@@ -37,5 +37,5 @@ class MongoSnapshotBackend(SnapshotBackend):
         try:
             snapshot_data = self.db.snapshots.find_one(query)
             return snapshot_data
-        except PyMongoError exception:
+        except PyMongoError:
             return None
