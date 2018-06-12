@@ -1,4 +1,5 @@
 from pymongo import MongoClient
+from pymongo.errors import PyMongoError
 
 from eventsourcing_helpers.repository.snapshot.backends import SnapshotBackend
 
@@ -33,6 +34,8 @@ class MongoSnapshotBackend(SnapshotBackend):
             dict: The stored snapshot data
         """
         query = {'_id': id}
-
-        snapshot_data = self.db.snapshots.find_one(query)
-        return snapshot_data
+        try:
+            snapshot_data = self.db.snapshots.find_one(query)
+            return snapshot_data
+        except PyMongoError exception:
+            return None
