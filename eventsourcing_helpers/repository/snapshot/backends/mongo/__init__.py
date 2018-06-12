@@ -1,15 +1,27 @@
+from copy import deepcopy
+
 from pymongo import MongoClient
 from pymongo.errors import PyMongoError
 
 from eventsourcing_helpers.repository.snapshot.backends import SnapshotBackend
 
 
+default_config = {
+    'connectTimeoutMS': 2000,
+    'serverSelectionTimeoutMS': 1000,
+    'waitQueueTimeoutMS': 1000,
+    'socketTimeoutMS': 1000,
+}
+
+
 class MongoSnapshotBackend(SnapshotBackend):
     def __init__(self, config: dict, mongo_client_class=MongoClient) -> None:
         assert 'host' in config, 'You must specify host!'
-        self.client = mongo_client_class(**config)
+        mongo_config = deepcopy(default_config)
+        mongo_config.update(config)
+        self.client = mongo_client_class(**mongo_config)
         self.db = self.client.snapshots
-        self.db.command("serverStatus")
+        #self.db.command("serverStatus")
 
     def save(self, id: str, data: dict) -> None:
         """
