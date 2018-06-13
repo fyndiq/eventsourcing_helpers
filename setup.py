@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="eventsourcing-helpers",
-    version="0.7.2",
+    version="0.8.0-beta",
     description="Helpers for practicing the Event sourcing pattern",
     url="https://github.com/fyndiq/eventsourcing_helpers",
     author="Fyndiq AB",
