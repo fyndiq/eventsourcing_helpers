@@ -1,13 +1,21 @@
 from pymongo import MongoClient
+from pymongo.errors import PyMongoError
 
 from eventsourcing_helpers.repository.snapshot.backends import SnapshotBackend
+
+DEFAULT_CONFIG = {
+    'connectTimeoutMS': 2000,
+    'serverSelectionTimeoutMS': 1000,
+    'waitQueueTimeoutMS': 1000,
+    'socketTimeoutMS': 1000,
+}
 
 
 class MongoSnapshotBackend(SnapshotBackend):
     def __init__(self, config: dict, mongo_client_class=MongoClient) -> None:
-
         assert 'host' in config, 'You must specify host!'
-        self.client = mongo_client_class(**config)
+        mongo_config = {**DEFAULT_CONFIG, **config}
+        self.client = mongo_client_class(**mongo_config)
         self.db = self.client.snapshots
 
     def save(self, id: str, data: dict) -> None:
@@ -33,6 +41,8 @@ class MongoSnapshotBackend(SnapshotBackend):
             dict: The stored snapshot data
         """
         query = {'_id': id}
-
-        snapshot_data = self.db.snapshots.find_one(query)
-        return snapshot_data
+        try:
+            snapshot_data = self.db.snapshots.find_one(query)
+            return snapshot_data
+        except PyMongoError:
+            return None
