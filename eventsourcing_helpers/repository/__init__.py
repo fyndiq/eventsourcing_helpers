@@ -1,6 +1,7 @@
 from typing import Callable
 
 import structlog
+from confluent_kafka import KafkaException
 
 from eventsourcing_helpers.metrics import statsd
 from eventsourcing_helpers.models import AggregateRoot
@@ -64,9 +65,19 @@ class Repository:
         if events:
             assert id, "The id must be set on the aggregate root"
             logger.info("Committing staged events to repository")
-            self.backend.commit(id=id, events=events, **kwargs)
-            aggregate_root._clear_staged_events()
             self.snapshot.save(aggregate_root)
+            try:
+                self.backend.commit(id=id, events=events, **kwargs)
+            except KafkaException as e:
+                logger.info("Kafka commit failed, rolling back snapshot!")
+                statsd.increment(
+                    'eventsourcing_helpers.snapshot.cache.rollbacks',
+                    tags=[f'id={aggregate_root.id}']
+                )
+                self.snapshot.rollback(aggregate_root)
+                raise e
+
+            aggregate_root._clear_staged_events()
 
     def load(self, id: str) -> AggregateRoot:
         """

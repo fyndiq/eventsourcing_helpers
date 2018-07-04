@@ -63,7 +63,7 @@ class Snapshot:
         Saves an aggregate to the snapshot storage
 
         Args:
-            aggregate_root (AggregateRoot): The aggregate to be saved
+            aggregate_root: The aggregate to be saved
         Returns:
             None
         """
@@ -86,7 +86,7 @@ class Snapshot:
         Args:
             id: ID of the aggregate root.
             Args:
-            aggregate_root (AggregateRoot): The aggregate type of the object
+            aggregate_root: The aggregate type of the object
                                             to load
 
         Returns:
@@ -98,3 +98,18 @@ class Snapshot:
         aggregate_root = self.deserializer(snapshot, current_hash)
 
         return aggregate_root
+
+    def rollback(self, aggregate_root: AggregateRoot) -> None:
+        """
+        Rolls back latest change in the snapshot storage.
+        If the last change cannot be "rolled back" then the entry must be
+        deleted. This will make us take the most recent data from the event
+        storage
+
+        Args:
+            aggregate_root: The aggregate to be rolled back
+
+        Returns:
+            None
+        """
+        self.backend.rollback(aggregate_root.id)
