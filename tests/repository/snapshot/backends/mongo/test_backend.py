@@ -77,3 +77,17 @@ class MongoSnapshotBackendTests():
         self.backend = MongoSnapshotBackend(config, mongo_client_mock)
 
         mongo_client_mock.assert_called_once_with(**expected_call)
+
+    def test_mongo_rollback_deletes_latest_snapshot(self):
+        id = 'a'
+        query = {'_id': id}
+        data = {'b': 1}
+
+        db = self.backend.client.snapshots.snapshots
+        db.find_one_and_replace(
+            query, data, upsert=True
+        )
+        assert db.find().count() == 1
+
+        self.backend.rollback(id)
+        assert db.find().count() == 0

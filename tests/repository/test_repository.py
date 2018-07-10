@@ -2,6 +2,7 @@ from functools import partial
 from unittest.mock import Mock
 
 import pytest
+from confluent_kafka import KafkaException
 
 from eventsourcing_helpers.repository import Repository
 
@@ -61,7 +62,7 @@ class RepositoryTests:
         assert aggregate_root._apply_events.called is True
         assert list(events) == self.aggregate_events
 
-    def test_repository_commit_should_call_backend_commit(
+    def test_repository_commit_should_call_backend_and_snapshot(
         self, aggregate_root_cls_mock
     ):
         aggregate_root_cls = aggregate_root_cls_mock(exhaust_events=False)
@@ -71,3 +72,19 @@ class RepositoryTests:
         repository.commit(aggregate_root_cls)
 
         assert repository.backend.commit.called is True
+        assert repository.snapshot.save.called is True
+
+    def test_repository_commit_should_rollback_snapshot_on_kafka_exception(
+        self, aggregate_root_cls_mock
+    ):
+        aggregate_root_cls = aggregate_root_cls_mock(exhaust_events=False)
+        aggregate_root_cls.id = 1
+
+        repository = self.repository(aggregate_root_cls=aggregate_root_cls)
+        repository.backend.commit.side_effect = KafkaException
+
+        with pytest.raises(KafkaException):
+            repository.commit(aggregate_root_cls)
+
+            assert repository.snapshot.save.called is True
+            assert repository.snapshot.rollback.called is True
