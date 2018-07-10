@@ -61,3 +61,11 @@ class SnapshotTests:
         snapshot.rollback(aggregate_root)
 
         self.backend().rollback.assert_called_once_with(aggregate_root.id)
+
+    def test_delete(self):
+        snapshot = self.snapshot()
+        aggregate_root = self.aggregate_root_cls()
+        aggregate_root.id = 1
+        snapshot.delete(aggregate_root)
+
+        self.backend().delete.assert_called_once_with(aggregate_root.id)
