@@ -160,6 +160,11 @@ class ESCommandHandler(CommandHandler):
                 f'handler:{handler_name}'
             ]
         ):
-            aggregate_root = self._get_aggregate_root(command.id)
-            self._handle_command(command, handler_inst=aggregate_root)
+            aggregate_root, is_snapshot = self._get_aggregate_root(command.id)
+            try:
+                self._handle_command(command, handler_inst=aggregate_root)
+            except Exception as e:
+                if is_snapshot:
+                    self.repository.snapshot.delete(aggregate_root)
+                raise e
             self._commit_staged_events(aggregate_root)

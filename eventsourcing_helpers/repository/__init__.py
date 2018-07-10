@@ -90,18 +90,22 @@ class Repository:
             id: ID of the aggregate root.
 
         Returns:
-            AggregateRoot: Aggregate root instance with the latest state.
+            A Tuple: (aggregate_root, is_snapshot)
+            aggregate_root: Aggregate root instance with the latest state.
+            is_snapshot: True if the aggregate was loaded from snapshot db.
         """
         aggregate_root = self._load_from_snapshot_storage(id)
         if aggregate_root is None:
             statsd.increment('eventsourcing_helpers.snapshot.cache.misses')
             aggregate_root = self._load_from_event_storage(id)
             logger.debug("Aggregate was loaded from event storage")
+            is_snapshot = False
         else:
             statsd.increment('eventsourcing_helpers.snapshot.cache.hits')
             logger.debug("Aggregate was loaded from snapshot storage")
+            is_snapshot = True
 
-        return aggregate_root
+        return aggregate_root, is_snapshot
 
     def _load_from_snapshot_storage(self, id: str) -> AggregateRoot:
         """
