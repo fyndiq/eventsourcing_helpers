@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Tuple
 
 import structlog
 from confluent_kafka import KafkaException
@@ -79,7 +79,7 @@ class Repository:
 
             aggregate_root._clear_staged_events()
 
-    def load(self, id: str) -> AggregateRoot:
+    def load(self, id: str) -> Tuple[AggregateRoot, bool]:
         """
         Load an aggregate root accordingly:
 

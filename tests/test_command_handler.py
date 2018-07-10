@@ -53,7 +53,7 @@ class ESCommandHandlerTests:
         mock_metrics_timed.return_value.__enter__.return_value = Mock
 
         mock_can_handle.return_value = True
-        mock_get.return_value = self.aggregate_root
+        mock_get.return_value = (self.aggregate_root, False)
 
         self.handler.handle(message)
 
