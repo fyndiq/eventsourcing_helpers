@@ -56,5 +56,16 @@ class MongoSnapshotBackend(SnapshotBackend):
         Returns:
             None
         """
+        self.delete(id)
+
+    def delete(self, id: str) -> None:
+        """
+        Deletes the data of the snapshot with specified id.
+
+        Args:
+            id (str): The id to save the data for
+        Returns:
+            None
+        """
         query = {'_id': id}
         self.db.snapshots.delete_many(query)

@@ -12,3 +12,6 @@ class SnapshotBackend:
 
     def rollback(self, id: str) -> None:
         raise NotImplementedError()
+
+    def delete(self, id: str) -> None:
+        raise NotImplementedError()

@@ -16,3 +16,6 @@ class NullSnapshotBackend(SnapshotBackend):
 
     def rollback(self, id: str) -> None:
         pass
+
+    def delete(self, id: str) -> None:
+        pass

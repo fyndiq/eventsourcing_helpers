@@ -113,3 +113,15 @@ class Snapshot:
             None
         """
         self.backend.rollback(aggregate_root.id)
+
+    def delete(self, aggregate_root: AggregateRoot) -> None:
+        """
+        Deletes the snapshot of the aggregate root.
+
+        Args:
+            aggregate_root: The aggregate to be deleted
+
+        Returns:
+            None
+        """
+        self.backend.delete(aggregate_root.id)
