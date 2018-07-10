@@ -72,7 +72,7 @@ class Repository:
                 logger.info("Kafka commit failed, rolling back snapshot!")
                 statsd.increment(
                     'eventsourcing_helpers.snapshot.cache.rollbacks',
-                    tags=[f'id={aggregate_root.id}']
+                    tags=[f'id={id}']
                 )
                 self.snapshot.rollback(aggregate_root)
                 raise e
