@@ -91,3 +91,13 @@ class MongoSnapshotBackendTests():
 
         self.backend.delete(id)
         assert db.find().count() == 0
+
+    def test_mongo_delete_can_delete_empty(self):
+        id = 'a'
+        query = {'_id': id}
+        data = {'b': 1}
+
+        db = self.backend.client.snapshots.snapshots
+        assert db.find().count() == 0
+        self.backend.delete(id)
+        assert db.find().count() == 0
