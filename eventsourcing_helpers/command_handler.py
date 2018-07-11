@@ -161,5 +161,13 @@ class ESCommandHandler(CommandHandler):
             ]
         ):
             aggregate_root = self._get_aggregate_root(command.id)
-            self._handle_command(command, handler_inst=aggregate_root)
+            try:
+                self._handle_command(command, handler_inst=aggregate_root)
+            except Exception as e:
+                self.repository.snapshot.delete(aggregate_root)
+                statsd.increment(
+                    'eventsourcing_helpers.snapshot.cache.delete',
+                    tags=[f'id={aggregate_root.id}']
+                )
+                raise e
             self._commit_staged_events(aggregate_root)

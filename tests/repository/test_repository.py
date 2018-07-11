@@ -74,7 +74,7 @@ class RepositoryTests:
         assert repository.backend.commit.called is True
         assert repository.snapshot.save.called is True
 
-    def test_repository_commit_should_rollback_snapshot_on_kafka_exception(
+    def test_repository_commit_should_delete_snapshot_on_kafka_exception(
         self, aggregate_root_cls_mock
     ):
         aggregate_root_cls = aggregate_root_cls_mock(exhaust_events=False)
@@ -87,4 +87,4 @@ class RepositoryTests:
             repository.commit(aggregate_root_cls)
 
             assert repository.snapshot.save.called is True
-            assert repository.snapshot.rollback.called is True
+            assert repository.snapshot.delete.called is True

@@ -1,8 +1,11 @@
 from copy import deepcopy
 from unittest.mock import MagicMock, Mock, patch
 
+import pytest
+
 from eventsourcing_helpers.command_handler import (
-    CommandHandler, ESCommandHandler)
+    CommandHandler, ESCommandHandler
+)
 
 module = 'eventsourcing_helpers.command_handler'
 
@@ -28,7 +31,8 @@ class ESCommandHandlerTests:
 
         command_handler = ESCommandHandler
         command_handler.aggregate_root = self.aggregate_root
-        command_handler.handlers = {command_class: self.aggregate_root.foo_method}
+        command_handler.handlers = {
+            command_class: self.aggregate_root.foo_method}
         command_handler.repository_config = {'empty_config': None}
 
         self.message_deserializer = Mock()
@@ -64,6 +68,27 @@ class ESCommandHandlerTests:
             command, handler_inst=self.aggregate_root
         )
         mock_commit.assert_called_once_with(self.aggregate_root)
+
+    @patch(f'{module}.ESCommandHandler._commit_staged_events')
+    @patch(f'{module}.ESCommandHandler._handle_command')
+    @patch(f'{module}.ESCommandHandler._get_aggregate_root')
+    @patch(f'{module}.ESCommandHandler._can_handle_command')
+    @patch(f'{module}.statsd.timed')
+    def test_handle_deletes_snapshot_on_error(
+        self, mock_metrics_timed, mock_can_handle,
+        mock_get, mock_handle, mock_commit
+    ):
+        mock_metrics_timed.return_value.__enter__.return_value = Mock
+
+        mock_can_handle.return_value = True
+        mock_get.return_value = self.aggregate_root
+        mock_handle.side_effect = TypeError
+
+        with pytest.raises(TypeError):
+            self.handler.handle(message)
+
+        self.handler.repository.snapshot.delete.assert_called_once_with(
+            self.aggregate_root)
 
     def test_commit_staged_events(self):
         """
@@ -138,4 +163,3 @@ class CommandHandlerTests:
         """
         self.handler._handle_command(command)
         self.mock_handler.called_once_with(command)
-

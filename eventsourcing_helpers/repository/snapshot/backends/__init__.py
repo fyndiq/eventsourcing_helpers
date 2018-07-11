@@ -10,5 +10,5 @@ class SnapshotBackend:
     def load(self, id: str) -> dict:
         raise NotImplementedError()
 
-    def rollback(self, id: str) -> None:
+    def delete(self, id: str) -> None:
         raise NotImplementedError()

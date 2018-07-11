@@ -47,9 +47,9 @@ class MongoSnapshotBackend(SnapshotBackend):
         except PyMongoError:
             return None
 
-    def rollback(self, id: str) -> None:
+    def delete(self, id: str) -> None:
         """
-        Rolls back the data of the snapshot with specified id.
+        Deletes the data of the snapshot with specified id.
 
         Args:
             id (str): The id to save the data for

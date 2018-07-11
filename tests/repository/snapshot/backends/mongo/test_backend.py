@@ -78,7 +78,7 @@ class MongoSnapshotBackendTests():
 
         mongo_client_mock.assert_called_once_with(**expected_call)
 
-    def test_mongo_rollback_deletes_latest_snapshot(self):
+    def test_mongo_delete_deletes_latest_snapshot(self):
         id = 'a'
         query = {'_id': id}
         data = {'b': 1}
@@ -89,5 +89,13 @@ class MongoSnapshotBackendTests():
         )
         assert db.find().count() == 1
 
-        self.backend.rollback(id)
+        self.backend.delete(id)
+        assert db.find().count() == 0
+
+    def test_mongo_delete_can_delete_empty(self):
+        id = 'a'
+
+        db = self.backend.client.snapshots.snapshots
+        assert db.find().count() == 0
+        self.backend.delete(id)
         assert db.find().count() == 0

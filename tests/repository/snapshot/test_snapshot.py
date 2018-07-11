@@ -54,10 +54,10 @@ class SnapshotTests:
         self.deserializer.assert_called_once_with(
             self.snapshot_data_mock, test_hash)
 
-    def test_rollback(self):
+    def test_delete(self):
         snapshot = self.snapshot()
         aggregate_root = self.aggregate_root_cls()
         aggregate_root.id = 1
-        snapshot.rollback(aggregate_root)
+        snapshot.delete(aggregate_root)
 
-        self.backend().rollback.assert_called_once_with(aggregate_root.id)
+        self.backend().delete.assert_called_once_with(aggregate_root.id)
