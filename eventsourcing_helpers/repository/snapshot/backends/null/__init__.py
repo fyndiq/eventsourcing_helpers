@@ -14,8 +14,5 @@ class NullSnapshotBackend(SnapshotBackend):
     def load(self, id: str) -> dict:
         return None
 
-    def rollback(self, id: str) -> None:
-        pass
-
     def delete(self, id: str) -> None:
         pass

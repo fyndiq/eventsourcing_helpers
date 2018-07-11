@@ -31,7 +31,8 @@ class ESCommandHandlerTests:
 
         command_handler = ESCommandHandler
         command_handler.aggregate_root = self.aggregate_root
-        command_handler.handlers = {command_class: self.aggregate_root.foo_method}
+        command_handler.handlers = {
+            command_class: self.aggregate_root.foo_method}
         command_handler.repository_config = {'empty_config': None}
 
         self.message_deserializer = Mock()
@@ -56,7 +57,7 @@ class ESCommandHandlerTests:
         mock_metrics_timed.return_value.__enter__.return_value = Mock
 
         mock_can_handle.return_value = True
-        mock_get.return_value = (self.aggregate_root, False)
+        mock_get.return_value = self.aggregate_root
 
         self.handler.handle(message)
 
@@ -80,7 +81,7 @@ class ESCommandHandlerTests:
         mock_metrics_timed.return_value.__enter__.return_value = Mock
 
         mock_can_handle.return_value = True
-        mock_get.return_value = (self.aggregate_root, True)
+        mock_get.return_value = self.aggregate_root
         mock_handle.side_effect = TypeError
 
         with pytest.raises(TypeError):

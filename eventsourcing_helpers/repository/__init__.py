@@ -1,4 +1,4 @@
-from typing import Callable, Tuple
+from typing import Callable
 
 import structlog
 from confluent_kafka import KafkaException
@@ -74,12 +74,12 @@ class Repository:
                     'eventsourcing_helpers.snapshot.cache.rollbacks',
                     tags=[f'id={id}']
                 )
-                self.snapshot.rollback(aggregate_root)
+                self.snapshot.delete(aggregate_root)
                 raise e
 
             aggregate_root._clear_staged_events()
 
-    def load(self, id: str) -> Tuple[AggregateRoot, bool]:
+    def load(self, id: str) -> AggregateRoot:
         """
         Load an aggregate root accordingly:
 
@@ -90,22 +90,18 @@ class Repository:
             id: ID of the aggregate root.
 
         Returns:
-            A Tuple: (aggregate_root, is_snapshot)
-            aggregate_root: Aggregate root instance with the latest state.
-            is_snapshot: True if the aggregate was loaded from snapshot db.
+            AggregateRoot: Aggregate root instance with the latest state.
         """
         aggregate_root = self._load_from_snapshot_storage(id)
         if aggregate_root is None:
             statsd.increment('eventsourcing_helpers.snapshot.cache.misses')
             aggregate_root = self._load_from_event_storage(id)
             logger.debug("Aggregate was loaded from event storage")
-            is_snapshot = False
         else:
             statsd.increment('eventsourcing_helpers.snapshot.cache.hits')
             logger.debug("Aggregate was loaded from snapshot storage")
-            is_snapshot = True
 
-        return aggregate_root, is_snapshot
+        return aggregate_root
 
     def _load_from_snapshot_storage(self, id: str) -> AggregateRoot:
         """

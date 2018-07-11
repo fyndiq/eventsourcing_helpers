@@ -1,4 +1,4 @@
-from typing import Any, Callable, Tuple
+from typing import Any, Callable
 
 import structlog
 
@@ -112,7 +112,7 @@ class ESCommandHandler(CommandHandler):
             self.repository_config, self.aggregate_root, **kwargs
         )
 
-    def _get_aggregate_root(self, id: str) -> Tuple[AggregateRoot, bool]:
+    def _get_aggregate_root(self, id: str) ->AggregateRoot:
         """
         Get latest state of the aggregate root.
 
@@ -160,11 +160,14 @@ class ESCommandHandler(CommandHandler):
                 f'handler:{handler_name}'
             ]
         ):
-            aggregate_root, is_snapshot = self._get_aggregate_root(command.id)
+            aggregate_root = self._get_aggregate_root(command.id)
             try:
                 self._handle_command(command, handler_inst=aggregate_root)
             except Exception as e:
-                if is_snapshot:
-                    self.repository.snapshot.delete(aggregate_root)
+                self.repository.snapshot.delete(aggregate_root)
+                statsd.increment(
+                    'eventsourcing_helpers.snapshot.cache.rollbacks',
+                    tags=[f'id={aggregate_root.id}']
+                )
                 raise e
             self._commit_staged_events(aggregate_root)

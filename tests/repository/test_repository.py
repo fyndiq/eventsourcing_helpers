@@ -33,30 +33,28 @@ class RepositoryTests:
 
     def test_should_load_aggr_root_from_event_storage(self):
         repository = self.repository()
-        aggregate_root, is_snapshot = repository.load(id=1)
+        aggregate_root = repository.load(id=1)
 
         assert repository.snapshot.load.called is True
         assert repository.snapshot.load.return_value is None
         assert repository.backend.get_events.called is True
         assert aggregate_root is not None
-        assert is_snapshot is False
 
     def test_should_load_aggr_root_from_snapshot_storage(self, snapshot_mock):
         snapshot = snapshot_mock(return_value=Mock())
         repository = self.repository(snapshot=snapshot)
-        aggregate_root, is_snapshot = repository.load(id=1)
+        aggregate_root = repository.load(id=1)
 
         assert repository.snapshot.load.called is True
         assert repository.backend.get_events.called is False
         assert aggregate_root is not None
-        assert is_snapshot is True
 
     def test_should_apply_events_when_loading_from_event_storage(
         self, aggregate_root_cls_mock
     ):
         aggregate_root_cls = aggregate_root_cls_mock(exhaust_events=False)
         repository = self.repository(aggregate_root_cls=aggregate_root_cls)
-        aggregate_root, _ = repository.load(id=1)
+        aggregate_root= repository.load(id=1)
 
         args, kwargs = aggregate_root._apply_events.call_args
         events, *_ = args
@@ -76,7 +74,7 @@ class RepositoryTests:
         assert repository.backend.commit.called is True
         assert repository.snapshot.save.called is True
 
-    def test_repository_commit_should_rollback_snapshot_on_kafka_exception(
+    def test_repository_commit_should_delete_snapshot_on_kafka_exception(
         self, aggregate_root_cls_mock
     ):
         aggregate_root_cls = aggregate_root_cls_mock(exhaust_events=False)
@@ -89,4 +87,4 @@ class RepositoryTests:
             repository.commit(aggregate_root_cls)
 
             assert repository.snapshot.save.called is True
-            assert repository.snapshot.rollback.called is True
+            assert repository.snapshot.delete.called is True

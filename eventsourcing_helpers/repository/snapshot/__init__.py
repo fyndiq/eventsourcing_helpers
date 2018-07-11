@@ -99,21 +99,6 @@ class Snapshot:
 
         return aggregate_root
 
-    def rollback(self, aggregate_root: AggregateRoot) -> None:
-        """
-        Rolls back latest change in the snapshot storage.
-        If the last change cannot be "rolled back" then the entry must be
-        deleted. This will make us take the most recent data from the event
-        storage
-
-        Args:
-            aggregate_root: The aggregate to be rolled back
-
-        Returns:
-            None
-        """
-        self.backend.rollback(aggregate_root.id)
-
     def delete(self, aggregate_root: AggregateRoot) -> None:
         """
         Deletes the snapshot of the aggregate root.
