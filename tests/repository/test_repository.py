@@ -54,7 +54,7 @@ class RepositoryTests:
     ):
         aggregate_root_cls = aggregate_root_cls_mock(exhaust_events=False)
         repository = self.repository(aggregate_root_cls=aggregate_root_cls)
-        aggregate_root= repository.load(id=1)
+        aggregate_root = repository.load(id=1)
 
         args, kwargs = aggregate_root._apply_events.call_args
         events, *_ = args
