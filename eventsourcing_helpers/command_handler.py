@@ -112,7 +112,7 @@ class ESCommandHandler(CommandHandler):
             self.repository_config, self.aggregate_root, **kwargs
         )
 
-    def _get_aggregate_root(self, id: str) ->AggregateRoot:
+    def _get_aggregate_root(self, id: str) -> AggregateRoot:
         """
         Get latest state of the aggregate root.
 
