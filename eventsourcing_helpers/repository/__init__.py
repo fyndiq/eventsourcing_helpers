@@ -71,7 +71,7 @@ class Repository:
             except KafkaException as e:
                 logger.info("Kafka commit failed, rolling back snapshot!")
                 statsd.increment(
-                    'eventsourcing_helpers.snapshot.cache.rollbacks',
+                    'eventsourcing_helpers.snapshot.cache.delete',
                     tags=[f'id={id}']
                 )
                 self.snapshot.delete(aggregate_root)
