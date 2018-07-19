@@ -1,5 +1,7 @@
 from functools import wraps
 
+base_metric = 'eventsourcing_helpers'
+
 
 class StatsdNullClient:
     """
@@ -41,5 +43,18 @@ def call_counter(base_metric):
             except Exception:
                 statsd.increment(f"{base_metric}.error")
                 raise
+        return decorator
+    return wrapped
+
+
+def timed(base_metric, tags=None):
+    if tags is None:
+        tags = []
+
+    def wrapped(f):
+        @wraps(f)
+        def decorator(*args, **kwargs):
+            with statsd.timed(f"{base_metric}.time", tags=tags):
+                return f(*args, **kwargs)
         return decorator
     return wrapped

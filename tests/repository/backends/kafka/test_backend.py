@@ -1,13 +1,19 @@
 from functools import partial
-from unittest.mock import Mock
+from unittest.mock import MagicMock, Mock, patch
 
 from eventsourcing_helpers.repository.backends.kafka import KafkaAvroBackend
+
+events = [1, 2, 3]
 
 
 class KafkaBackendTests:
 
     def setup_method(self):
-        self.loader = Mock()
+        config = {
+            'return_value.load.return_value.__enter__.return_value': events
+        }
+        self.loader = MagicMock()
+        self.loader.configure_mock(**config)
         self.producer = Mock()
         self.value_serializer = Mock()
         self.config = {'producer': {'foo': 'bar'}, 'loader': {'foo': 'bar'}}
@@ -50,3 +56,20 @@ class KafkaBackendTests:
         backend = self.backend()
         backend.load(self.id)
         self.loader.return_value.load.assert_called_once_with(self.id)
+
+    def test_get_events(self):
+        backend = self.backend()
+        message_deserializer = Mock()
+        message_deserializer.side_effect = lambda m, **kwargs: m
+
+        config = {
+            'return_value.__enter__.return_value': events
+        }
+        load_mock = MagicMock()
+        load_mock.configure_mock(**config)
+
+        with patch('eventsourcing_helpers.repository.backends.kafka.KafkaAvroBackend.load', load_mock):  # noqa
+            _events = backend.get_events(id, message_deserializer)
+            assert events == list(_events)
+            load_mock.assert_called_once_with(id)
+            assert message_deserializer.call_count == len(events)

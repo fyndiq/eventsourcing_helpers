@@ -8,11 +8,27 @@ class Message:
     """
     Message proxy class.
 
-    Adds some extra features and redirects all attribute lookups to the wrapped
-    message class.
+    Wraps a message class to provide some extra features.
+
+    All attribute lookups are redirected to the wrapped message class.
     """
+
     def __init__(self, **kwargs) -> None:
+        # At this point the instance variable `self._wrapped` is already set.
+        #
+        # The reason we are saving it in `self.__dict__` is to skip hitting the
+        # `__setattr__`dunder method - and thus getting the "Messages are read
+        # only" error.
         self.__dict__['_wrapped'] = self._wrapped(**kwargs)  # type: ignore
+
+    @property
+    def _class(self) -> str:
+        return self._wrapped.__class__.__name__  # type: ignore
+
+    def to_dict(self) -> dict:
+        items = self._wrapped._asdict().items()  # type: ignore
+        items = {k: v for k, v in items if v is not None}
+        return items
 
     def __eq__(self, other) -> bool:
         return self.__dict__ == other.__dict__
@@ -23,14 +39,9 @@ class Message:
     def __setattr__(self, *args) -> None:
         raise AttributeError("Messages are read only")
 
-    @property
-    def _class(self) -> str:
-        return self._wrapped.__class__.__name__  # type: ignore
-
-    def to_dict(self) -> dict:
-        items = self._wrapped._asdict().items()  # type: ignore
-        filtered = {k: v for k, v in items if v is not None}
-        return filtered
+    def __getattr__(self, name: str) -> Callable:
+        # redirects all attribute lookups to the real message class.
+        raise NotImplementedError
 
 
 class NewMessage(Message):
@@ -40,6 +51,7 @@ class NewMessage(Message):
     If we try to access an attribute that doesn't exist we should raise an
     AttributeError.
     """
+
     def __getattr__(self, name: str) -> Callable:
         attr = getattr(self._wrapped, name)
         return copy.deepcopy(attr)
@@ -55,6 +67,7 @@ class OldMessage(Message):
     Otherwise we would have to implement try/catch logic in our apply methods
     when we add new fields to our Avro schemas.
     """
+
     def __getattr__(self, name: str) -> Callable:
         attr = getattr(self._wrapped, name, None)
         return copy.deepcopy(attr)
@@ -85,7 +98,7 @@ def message_factory(message_cls: namedtuple, is_new=True) -> type:
         Message: Message proxy.
 
     Example:
-        >>> @Event
+        >>> @message_factory
         ... class OrderCreated(NamedTuple):
         ...     id: str
         ...     state: str
@@ -97,13 +110,19 @@ def message_factory(message_cls: namedtuple, is_new=True) -> type:
         >>> isinstance(event, Message)
         True
     """
+    # Dynamically create a new class with the same name as the message
+    # (event/command) we are wrapping.
+    #
+    # The new class will inherit from `proxy_cls` and `object` with one
+    # instance variable set `_wrapped` which is the actual message
+    # (event/command) being wrapped.
     proxy_cls = NewMessage if is_new else OldMessage
     proxy = type(
-        message_cls.__name__, (proxy_cls, object),
-        {'_wrapped': message_cls}
+        message_cls.__name__, (proxy_cls, object), {'_wrapped': message_cls}
     )
     return proxy
 
 
+# Make the names more explicit for which type of message we are dealing with.
 Event = lambda message: message_factory(message)
 Command = lambda message: message_factory(message)

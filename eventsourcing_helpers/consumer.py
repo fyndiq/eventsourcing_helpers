@@ -1,6 +1,5 @@
-from eventsourcing_helpers.messagebus import MessageBus
-
 from eventsourcing_helpers.handler import Handler
+from eventsourcing_helpers.messagebus import MessageBus
 
 
 class Consumer:

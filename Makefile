@@ -4,7 +4,7 @@ setup:
 lint:
 	./scripts/lint.sh
 
-test:
+test: lint
 	./scripts/test.sh
 
 test-ci:

@@ -1,7 +1,8 @@
 from cnamedtuple import namedtuple
 
-from eventsourcing_helpers.message import Message, message_factory
 from confluent_kafka_helpers.message import Message as ConfluentMessage
+
+from eventsourcing_helpers.message import Message, message_factory
 
 
 def from_message_to_dto(message: ConfluentMessage, is_new=True) -> Message:

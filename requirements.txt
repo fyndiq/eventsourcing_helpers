@@ -1,12 +1,21 @@
 cnamedtuple
 codecov
 flake8
+flake8-isort
 ipdb
-mypy
+isort
+mypy<0.600
 pytest
 pytest-coverage
 pytest-mock
 pytest-sugar
 structlog
+yapf
+jsonpickle
+pymongo
+mongomock
 
-git+https://github.com/fyndiq/confluent_kafka_helpers@v0.5.2#egg=confluent-kafka-helpers
+confluent-kafka-helpers==0.6.1
+redis==2.10.6
+hiredis==0.2.0
+fakeredis==0.9.0

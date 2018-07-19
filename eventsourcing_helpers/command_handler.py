@@ -1,13 +1,15 @@
-from typing import Any, Callable, Generator
+from typing import Any, Callable
 
 import structlog
 
 from confluent_kafka_helpers.message import Message
 
 from eventsourcing_helpers.handler import Handler
+from eventsourcing_helpers.metrics import statsd
 from eventsourcing_helpers.models import AggregateRoot
 from eventsourcing_helpers.repository import Repository
 from eventsourcing_helpers.serializers import from_message_to_dto
+from eventsourcing_helpers.utils import get_callable_representation
 
 logger = structlog.get_logger(__name__)
 
@@ -53,10 +55,7 @@ class CommandHandler(Handler):
         handler = self.handlers[command_class]
 
         logger.info("Calling command handler", command_class=command_class)
-        if not callable(handler):
-            assert handler_inst, "You must pass a handler instance"
-            handler = getattr(handler_inst, handler)
-        elif handler_inst:
+        if handler_inst:
             handler(handler_inst, command)
         else:
             handler(command)
@@ -73,7 +72,19 @@ class CommandHandler(Handler):
 
         command = self.message_deserializer(message)
         logger.info("Handling command", command_class=command._class)
-        self._handle_command(command)
+
+        command_class = command._class
+        handler = self.handlers[command_class]
+        handler_name = get_callable_representation(handler)
+        with statsd.timed(
+            'eventsourcing_helpers.handler.handle.time',
+            tags=[
+                'message_type:command',
+                f'message_class:{command_class}',
+                f'handler:{handler_name}'
+            ]
+        ):
+            self._handle_command(command)
 
 
 class ESCommandHandler(CommandHandler):
@@ -89,27 +100,17 @@ class ESCommandHandler(CommandHandler):
     aggregate_root: AggregateRoot = None
     repository_config: dict = None
 
-    def __init__(self, message_deserializer: Callable=from_message_to_dto,
-                 repository: Any=Repository, **kwargs) -> None:  # yapf: disable
+    def __init__(
+        self, message_deserializer: Callable = from_message_to_dto,
+        repository: Any = Repository, **kwargs
+    ) -> None:
         super().__init__(message_deserializer)
         assert self.aggregate_root
         assert self.repository_config
 
-        self.repository = repository(self.repository_config, **kwargs)
-
-    def _get_events(self, id: str) -> Generator[Any, None, None]:
-        """
-        Get all aggregate events from the repository.
-
-        Args:
-            id: Aggregate root id.
-
-        Returns:
-            list: List with all events.
-        """
-        with self.repository.load(id) as events:
-            for event in events:
-                yield self.message_deserializer(event, is_new=False)
+        self.repository = repository(
+            self.repository_config, self.aggregate_root, **kwargs
+        )
 
     def _get_aggregate_root(self, id: str) -> AggregateRoot:
         """
@@ -119,19 +120,16 @@ class ESCommandHandler(CommandHandler):
             id: ID of the aggregate root.
 
         Returns:
-            AggregateRoot: Aggregate root with the latest state.
+            AggregateRoot: Aggregate root instance with the latest state.
         """
-        aggregate_root = self.aggregate_root()
-        aggregate_root._apply_events(self._get_events(id))
-
-        return aggregate_root
+        return self.repository.load(id)
 
     def _commit_staged_events(self, aggregate_root: AggregateRoot) -> None:
         """
         Commit staged events to the repository.
 
         Args:
-            aggregate_root: Entity with all staged events.
+            aggregate_root: Aggregate root with staged events.
         """
         self.repository.commit(aggregate_root)
 
@@ -151,6 +149,25 @@ class ESCommandHandler(CommandHandler):
         command = self.message_deserializer(message)
         logger.info("Handling command", command_class=command._class)
 
-        aggregate_root = self._get_aggregate_root(command.id)
-        self._handle_command(command, handler_inst=aggregate_root)
-        self._commit_staged_events(aggregate_root)
+        command_class = command._class
+        handler = self.handlers[command_class]
+        handler_name = get_callable_representation(handler)
+        with statsd.timed(
+            'eventsourcing_helpers.handler.handle.time',
+            tags=[
+                'message_type:command',
+                f'message_class:{command_class}',
+                f'handler:{handler_name}'
+            ]
+        ):
+            aggregate_root = self._get_aggregate_root(command.id)
+            try:
+                self._handle_command(command, handler_inst=aggregate_root)
+            except Exception as e:
+                self.repository.snapshot.delete(aggregate_root)
+                statsd.increment(
+                    'eventsourcing_helpers.snapshot.cache.delete',
+                    tags=[f'id={aggregate_root.id}']
+                )
+                raise e
+            self._commit_staged_events(aggregate_root)

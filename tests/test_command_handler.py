@@ -1,8 +1,11 @@
 from copy import deepcopy
 from unittest.mock import MagicMock, Mock, patch
 
+import pytest
+
 from eventsourcing_helpers.command_handler import (
-    CommandHandler, ESCommandHandler)
+    CommandHandler, ESCommandHandler
+)
 
 module = 'eventsourcing_helpers.command_handler'
 
@@ -28,7 +31,8 @@ class ESCommandHandlerTests:
 
         command_handler = ESCommandHandler
         command_handler.aggregate_root = self.aggregate_root
-        command_handler.handlers = {command_class: 'foo_method'}
+        command_handler.handlers = {
+            command_class: self.aggregate_root.foo_method}
         command_handler.repository_config = {'empty_config': None}
 
         self.message_deserializer = Mock()
@@ -43,10 +47,15 @@ class ESCommandHandlerTests:
     @patch(f'{module}.ESCommandHandler._handle_command')
     @patch(f'{module}.ESCommandHandler._get_aggregate_root')
     @patch(f'{module}.ESCommandHandler._can_handle_command')
-    def test_handle(self, mock_can_handle, mock_get, mock_handle, mock_commit):
+    @patch(f'{module}.statsd.timed')
+    def test_handle(self, mock_metrics_timed, mock_can_handle,
+                    mock_get, mock_handle, mock_commit
+                    ):
         """
         Test that the correct methods are invoked when handling a command.
         """
+        mock_metrics_timed.return_value.__enter__.return_value = Mock
+
         mock_can_handle.return_value = True
         mock_get.return_value = self.aggregate_root
 
@@ -59,6 +68,27 @@ class ESCommandHandlerTests:
             command, handler_inst=self.aggregate_root
         )
         mock_commit.assert_called_once_with(self.aggregate_root)
+
+    @patch(f'{module}.ESCommandHandler._commit_staged_events')
+    @patch(f'{module}.ESCommandHandler._handle_command')
+    @patch(f'{module}.ESCommandHandler._get_aggregate_root')
+    @patch(f'{module}.ESCommandHandler._can_handle_command')
+    @patch(f'{module}.statsd.timed')
+    def test_handle_deletes_snapshot_on_error(
+        self, mock_metrics_timed, mock_can_handle,
+        mock_get, mock_handle, mock_commit
+    ):
+        mock_metrics_timed.return_value.__enter__.return_value = Mock
+
+        mock_can_handle.return_value = True
+        mock_get.return_value = self.aggregate_root
+        mock_handle.side_effect = TypeError
+
+        with pytest.raises(TypeError):
+            self.handler.handle(message)
+
+        self.handler.repository.snapshot.delete.assert_called_once_with(
+            self.aggregate_root)
 
     def test_commit_staged_events(self):
         """
@@ -84,33 +114,6 @@ class ESCommandHandlerTests:
         self.handler._handle_command(command, handler_inst=self.aggregate_root)
         self.aggregate_root.foo_method.called_once_with(command)
 
-    @patch(f'{module}.ESCommandHandler._get_events')
-    def test_get_aggregate_root(self, mock_get_events):
-        """
-        Test that we get the correct aggregate root and that the correct
-        methods are invoked.
-        """
-        mock_get_events.return_value = events
-        aggregate_root = self.handler._get_aggregate_root(command.id)
-
-        self.aggregate_root.return_value == aggregate_root
-        mock_get_events.assert_called_once_with(command.id)
-        self.aggregate_root._apply_events.called_once_with(events)
-
-    def test_get_events(self):
-        """
-        Test that we get the correct events and that the correct methods
-        are invoked.
-        """
-        self.message_deserializer.side_effect = lambda m, **kwargs: m
-        _events = self.handler._get_events(command.id)
-
-        assert events == list(_events)
-        self.repository.return_value.load.assert_called_once_with(command.id)
-        assert self.message_deserializer.call_count == len(events)
-
-        self.message_deserializer.side_effect = None
-
 
 class CommandHandlerTests:
     def setup_method(self):
@@ -128,10 +131,13 @@ class CommandHandlerTests:
 
     @patch(f'{module}.CommandHandler._handle_command')
     @patch(f'{module}.CommandHandler._can_handle_command')
-    def test_handle(self, mock_can_handle, mock_handle):
+    @patch(f'{module}.statsd.timed')
+    def test_handle(self, mock_metrics_timed, mock_can_handle, mock_handle):
         """
         Test that the correct methods are invoked when handling a command.
         """
+        mock_metrics_timed.return_value.__enter__.return_value = Mock
+
         mock_can_handle.return_value = True
         self.handler.handle(message)
 
