@@ -1,3 +1,4 @@
+import copy
 from typing import Callable
 
 from cnamedtuple import namedtuple
@@ -52,7 +53,8 @@ class NewMessage(Message):
     """
 
     def __getattr__(self, name: str) -> Callable:
-        return getattr(self._wrapped, name)
+        attr = getattr(self._wrapped, name)
+        return copy.deepcopy(attr)
 
 
 class OldMessage(Message):
@@ -67,7 +69,8 @@ class OldMessage(Message):
     """
 
     def __getattr__(self, name: str) -> Callable:
-        return getattr(self._wrapped, name, None)
+        attr = getattr(self._wrapped, name, None)
+        return copy.deepcopy(attr)
 
 
 def message_factory(message_cls: namedtuple, is_new=True) -> type:
