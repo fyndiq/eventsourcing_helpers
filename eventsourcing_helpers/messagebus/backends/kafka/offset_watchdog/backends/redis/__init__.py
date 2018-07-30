@@ -1,4 +1,3 @@
-import structlog
 from redis import StrictRedis
 from redis.sentinel import Sentinel
 
@@ -7,8 +6,9 @@ from confluent_kafka_helpers.message import Message
 from eventsourcing_helpers.messagebus.backends.kafka.offset_watchdog.backends import (  # noqa
     OffsetWatchdogBackend
 )
-
-logger = structlog.get_logger(__name__)
+from eventsourcing_helpers.messagebus.backends.kafka.offset_watchdog.utils import (  # noqa
+    check_offset_deviation
+)
 
 __all__ = ['RedisOffsetWatchdogBackend']
 
@@ -70,14 +70,8 @@ class RedisOffsetWatchdogBackend(OffsetWatchdogBackend):
         if last_offset is None:
             return False
 
-        # https://github.com/edenhill/librdkafka/issues/1720
-        # until this bug is fixed at least make sure we log when it happens.
         offset = message._meta.offset
-        offset_diff = offset - int(last_offset)
-        if offset_diff != 1:
-            logger.warning(
-                "Offset deviation detected", offset_diff=offset_diff
-            )
+        check_offset_deviation(offset, last_offset)
 
         return offset <= int(last_offset)
 

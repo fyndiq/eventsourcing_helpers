@@ -3,6 +3,9 @@ from confluent_kafka_helpers.message import Message
 from eventsourcing_helpers.messagebus.backends.kafka.offset_watchdog.backends import (  # noqa
     OffsetWatchdogBackend
 )
+from eventsourcing_helpers.messagebus.backends.kafka.offset_watchdog.utils import (  # noqa
+    check_offset_deviation
+)
 
 
 class InMemoryOffsetWatchdogBackend(OffsetWatchdogBackend):
@@ -16,7 +19,9 @@ class InMemoryOffsetWatchdogBackend(OffsetWatchdogBackend):
 
     def seen(self, message: Message) -> bool:
         last_offset = self._offset_map.get(self._key(message), -1)
-        return message._meta.offset <= last_offset
+        offset = message._meta.offset
+        check_offset_deviation(offset, last_offset)
+        return offset <= last_offset
 
     def set_seen(self, message: Message):
         self._offset_map[self._key(message)] = message._meta.offset
