@@ -77,7 +77,7 @@ class CommandHandler(Handler):
         handler = self.handlers[command_class]
         handler_name = get_callable_representation(handler)
         with statsd.timed(
-            'eventsourcing_helpers.handler.handle.time',
+            'eventsourcing_helpers.handler.handle',
             tags=[
                 'message_type:command',
                 f'message_class:{command_class}',
@@ -153,7 +153,7 @@ class ESCommandHandler(CommandHandler):
         handler = self.handlers[command_class]
         handler_name = get_callable_representation(handler)
         with statsd.timed(
-            'eventsourcing_helpers.handler.handle.time',
+            'eventsourcing_helpers.handler.handle',
             tags=[
                 'message_type:command',
                 f'message_class:{command_class}',
