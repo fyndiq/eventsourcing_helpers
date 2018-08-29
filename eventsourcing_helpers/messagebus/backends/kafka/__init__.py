@@ -3,6 +3,7 @@ from functools import partial
 from typing import Callable
 
 import structlog
+from confluent_kafka import KafkaException, KafkaError
 
 from confluent_kafka_helpers.consumer import AvroConsumer
 from confluent_kafka_helpers.message import Message
@@ -70,7 +71,14 @@ class KafkaAvroBackend(MessageBusBackend):
             handler(message)
             self._set_handled(message)
         if consumer.is_auto_commit is False:
-            consumer.commit(asynchronous=False)
+            try:
+                consumer.commit(asynchronous=False)
+            except KafkaException as e:
+                error_code = e.args[0].code()
+                if error_code == KafkaError._NO_OFFSET:
+                    logger.warning("Offset already committed")
+                else:
+                    raise
         end_time = time.time() - start_time
         logger.debug(f"Message processed in {end_time:.5f}s")
 
