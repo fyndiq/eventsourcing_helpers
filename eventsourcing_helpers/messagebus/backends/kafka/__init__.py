@@ -3,7 +3,7 @@ from functools import partial
 from typing import Callable
 
 import structlog
-from confluent_kafka import KafkaException, KafkaError
+from confluent_kafka import KafkaError, KafkaException
 
 from confluent_kafka_helpers.consumer import AvroConsumer
 from confluent_kafka_helpers.message import Message
