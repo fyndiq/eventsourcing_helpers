@@ -1,7 +1,7 @@
 # Event sourcing helpers
 Python helpers for practicing the event sourcing pattern using DDD.
 
-[![CircleCI](https://circleci.com/gh/fyndiq/eventsourcing_helpers/tree/master.svg?style=svg)](https://circleci.com/gh/fyndiq/eventsourcing_helpers/tree/master)
+[![CircleCI](https://circleci.com/gh/fyndiq/eventsourcing_helpers/tree/master.svg?style=shield)](https://circleci.com/gh/fyndiq/eventsourcing_helpers/tree/master)
 [![codecov](https://codecov.io/gh/fyndiq/eventsourcing_helpers/branch/master/graph/badge.svg)](https://codecov.io/gh/fyndiq/eventsourcing_helpers)
 
 ### Creating new releases
