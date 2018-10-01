@@ -48,6 +48,7 @@ class OffsetWatchdog:
     ) -> None:
         backend_path = config.get('backend', BACKENDS[self.DEFAULT_BACKEND])
         backend_config = config.get('backend_config')
+        self._consumer_id = backend_config.pop('group.id', None)
 
         logger.debug(
             "Using offset watchdog backend", backend=backend_path,
@@ -57,7 +58,6 @@ class OffsetWatchdog:
         self.backend: OffsetWatchdogBackend = backend_class(
             config=backend_config
         )
-        self._consumer_id = backend_config.pop('group.id', None)
 
     def seen(self, message: Message) -> bool:
         """Checks if the `message` has been seen before"""
