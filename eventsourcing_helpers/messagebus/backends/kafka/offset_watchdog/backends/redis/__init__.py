@@ -12,50 +12,40 @@ logger = structlog.get_logger(__name__)
 
 __all__ = ['RedisOffsetWatchdogBackend']
 
-SOCKET_TIMEOUT = 0.1
-SOCKET_CONNECT_TIMEOUT = 0.1
-
 
 class RedisOffsetWatchdogBackend(OffsetWatchdogBackend):
     """
     Redis offset watchdog backend.
+
     Stores the last offsets in a Redis database.
     """
+    DEFAULT_CONFIG = {
+        'socket_connect_timeout': 1.0,
+        'socket_timeout': 1.0,
+        'retry_on_timeout': True,
+        'decode_responses': True
+    }
 
     def __init__(self, config: dict) -> None:
         super().__init__(config=config)
-        self._redis = self._redis_sentinel = None
-        socket_connect_timeout = config.get(
-            'socket_connect_timeout', SOCKET_CONNECT_TIMEOUT
-        )
-        socket_timeout = config.get('socket_timeout', SOCKET_TIMEOUT)
-        if 'redis_uri' in config:
-            assert 'redis_sentinels' not in config
-            self._redis = StrictRedis.from_url(
-                url=config['redis_uri'],
-                socket_connect_timeout=socket_connect_timeout,
-                socket_timeout=socket_timeout, retry_on_timeout=True,
-                decode_responses=True
-            )
+        self._redis = None
+        self._redis_sentinel = None
+        config = {**self.DEFAULT_CONFIG, **config}
 
+        if 'url' in config:
+            assert 'sentinels' not in config
+            self._redis = StrictRedis.from_url(**config)
         else:
-            assert 'redis_sentinels' in config
-            assert 'redis_sentinel_service_name' in config
+            assert 'sentinels' in config
+            assert 'service_name' in config
 
             sentinels = [
-                tuple(h.split(':'))
-                for h in config['redis_sentinels'].split(',')
+                tuple(h.split(':')) for h in config.pop('sentinels').split(',')
             ]
+            service_name = config.pop('service_name')
 
-            self._redis_sentinel = Sentinel(
-                sentinels, db=config['redis_database'],
-                socket_connect_timeout=socket_connect_timeout,
-                socket_timeout=socket_timeout, retry_on_timeout=True,
-                decode_responses=True
-            )
-            self._redis_sentinel_service_name = config[
-                'redis_sentinel_service_name'
-            ]
+            self._redis_sentinel = Sentinel(sentinels=sentinels, **config)
+            self._redis_sentinel_service_name = service_name
 
     @property
     def redis(self) -> StrictRedis:
@@ -75,9 +65,7 @@ class RedisOffsetWatchdogBackend(OffsetWatchdogBackend):
         offset = message._meta.offset
         offset_diff = offset - int(last_offset)
         if offset_diff != 1:
-            logger.warning(
-                "Offset deviation detected", offset_diff=offset_diff
-            )
+            logger.warning("Offset deviation detected", offset_diff=offset_diff)
 
         return offset <= int(last_offset)
 
