@@ -42,10 +42,8 @@ class RedisOffsetWatchdogBackend(OffsetWatchdogBackend):
             sentinels = [
                 tuple(h.split(':')) for h in config.pop('sentinels').split(',')
             ]
-            service_name = config.pop('service_name')
-
             self._redis_sentinel = Sentinel(sentinels=sentinels, **config)
-            self._redis_sentinel_service_name = service_name
+            self._redis_sentinel_service_name = config.pop('service_name')
 
     @property
     def redis(self) -> StrictRedis:
