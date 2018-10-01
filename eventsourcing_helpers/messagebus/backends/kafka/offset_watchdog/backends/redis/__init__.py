@@ -31,6 +31,7 @@ class RedisOffsetWatchdogBackend(OffsetWatchdogBackend):
         self._redis = None
         self._redis_sentinel = None
         config = {**self.DEFAULT_CONFIG, **config}
+        config.pop('group.id', None)
 
         if 'url' in config:
             assert 'sentinels' not in config

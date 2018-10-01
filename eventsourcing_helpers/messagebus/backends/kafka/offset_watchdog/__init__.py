@@ -48,7 +48,7 @@ class OffsetWatchdog:
     ) -> None:
         backend_path = config.get('backend', BACKENDS[self.DEFAULT_BACKEND])
         backend_config = config.get('backend_config')
-        self._consumer_id = backend_config.pop('group.id', None)
+        self._consumer_id = backend_config['group.id']
 
         logger.debug(
             "Using offset watchdog backend", backend=backend_path,
