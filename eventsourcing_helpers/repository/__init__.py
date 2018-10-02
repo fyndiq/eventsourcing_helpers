@@ -10,7 +10,7 @@ from eventsourcing_helpers.serializers import from_message_to_dto
 from eventsourcing_helpers.utils import import_backend
 
 BACKENDS = {
-    'kafka_avro': 'eventsourcing_helpers.repository.backends.kafka.KafkaAvroBackend',  # noqa
+    'kafka_avro': 'eventsourcing_helpers.repository.backends.kafka.KafkaAvroBackend',
 }
 
 logger = structlog.get_logger(__name__)

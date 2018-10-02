@@ -1,6 +1,6 @@
 from confluent_kafka_helpers.message import Message
 
-from eventsourcing_helpers.messagebus.backends.kafka.offset_watchdog.backends import (  # noqa
+from eventsourcing_helpers.messagebus.backends.kafka.offset_watchdog.backends import (
     OffsetWatchdogBackend
 )
 

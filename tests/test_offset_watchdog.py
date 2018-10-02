@@ -1,12 +1,12 @@
 from unittest.mock import Mock
 
-from eventsourcing_helpers.messagebus.backends.kafka.offset_watchdog import \
-    OffsetWatchdog
-
-from eventsourcing_helpers.messagebus.backends.kafka.offset_watchdog.backends.memory import \
+from eventsourcing_helpers.messagebus.backends.kafka.offset_watchdog import OffsetWatchdog
+from eventsourcing_helpers.messagebus.backends.kafka.offset_watchdog.backends.memory import (
     InMemoryOffsetWatchdogBackend
-from eventsourcing_helpers.messagebus.backends.kafka.offset_watchdog.backends.null import \
+)
+from eventsourcing_helpers.messagebus.backends.kafka.offset_watchdog.backends.null import (
     NullOffsetWatchdogBackend
+)
 
 
 class OffsetWatchdogTests:

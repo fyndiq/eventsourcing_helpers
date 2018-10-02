@@ -201,7 +201,7 @@ class EntityTests:
             'status', 'tags', 'properties'
         ]),
     ])
-    def test_get_representation_includes_name_and_fields(self, entity, data):  # noqa
+    def test_get_representation_includes_name_and_fields(self, entity, data):
         representation = entity.get_representation()
         for field in data:
             assert field in representation

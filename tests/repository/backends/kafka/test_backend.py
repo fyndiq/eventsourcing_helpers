@@ -7,11 +7,8 @@ events = [1, 2, 3]
 
 
 class KafkaBackendTests:
-
     def setup_method(self):
-        config = {
-            'return_value.load.return_value.__enter__.return_value': events
-        }
+        config = {'return_value.load.return_value.__enter__.return_value': events}
         self.loader = MagicMock()
         self.loader.configure_mock(**config)
         self.producer = Mock()
@@ -21,9 +18,8 @@ class KafkaBackendTests:
         self.get_loader_config = Mock(return_value=self.config['loader'])
         self.id, self.events = 1, [1, 2, 3]
         self.backend = partial(
-            KafkaAvroBackend, self.config, self.producer, self.loader,
-            self.value_serializer, self.get_producer_config,
-            self.get_loader_config
+            KafkaAvroBackend, self.config, self.producer, self.loader, self.value_serializer,
+            self.get_producer_config, self.get_loader_config
         )
 
     def test_init(self):
@@ -34,9 +30,11 @@ class KafkaBackendTests:
         self.backend()
 
         self.loader.assert_called_once_with(self.config['loader'])
-        self.producer.assert_called_once_with({
-            'foo': 'bar'
-        }, value_serializer=self.value_serializer)
+        self.producer.assert_called_once_with(
+            {
+                'foo': 'bar'
+            }, value_serializer=self.value_serializer
+        )
 
     def test_commit(self):
         """
@@ -62,13 +60,13 @@ class KafkaBackendTests:
         message_deserializer = Mock()
         message_deserializer.side_effect = lambda m, **kwargs: m
 
-        config = {
-            'return_value.__enter__.return_value': events
-        }
+        config = {'return_value.__enter__.return_value': events}
         load_mock = MagicMock()
         load_mock.configure_mock(**config)
 
-        with patch('eventsourcing_helpers.repository.backends.kafka.KafkaAvroBackend.load', load_mock):  # noqa
+        with patch(
+            'eventsourcing_helpers.repository.backends.kafka.KafkaAvroBackend.load', load_mock
+        ):
             _events = backend.get_events(id, message_deserializer)
             assert events == list(_events)
             load_mock.assert_called_once_with(id)
