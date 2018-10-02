@@ -13,9 +13,9 @@ def aggregate_root_cls_mock():
         # since the events is a generator we must exhaust it to trigger
         # the call to `backend.load`.
         if exhaust_events:
-            apply_events = lambda events: [e for e in events]
+            apply_events = lambda events, **kwargs: [e for e in events]
         else:
-            apply_events = lambda events: events
+            apply_events = lambda events, **kwargs: events
 
         default_attrs = {
             'return_value._apply_events.side_effect': apply_events,
