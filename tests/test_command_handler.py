@@ -3,9 +3,7 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
-from eventsourcing_helpers.command_handler import (
-    CommandHandler, ESCommandHandler
-)
+from eventsourcing_helpers.command_handler import CommandHandler, ESCommandHandler
 
 module = 'eventsourcing_helpers.command_handler'
 

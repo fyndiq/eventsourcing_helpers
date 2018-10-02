@@ -5,22 +5,29 @@ from copy import deepcopy
 def get_producer_config(config):
     config = deepcopy(config)
     producer_config = config.get('producer')
+    if not producer_config:
+        return {}
+
     producer_config.update({
-        'bootstrap.servers': config['bootstrap.servers'],
-        'schema.registry.url': config['schema.registry.url']
+        'bootstrap.servers': config.get('bootstrap.servers'),
+        'schema.registry.url': config.get('schema.registry.url')
     })
     return producer_config
 
 
 def get_loader_config(config):
     config = deepcopy(config)
-    loader_config = defaultdict(dict, config.get('loader'))
+    loader_config = config.get('loader')
+    if not loader_config:
+        return {}
+
+    loader_config = defaultdict(dict, loader_config)
     loader_config.update({
-        'bootstrap.servers': config['bootstrap.servers'],
-        'schema.registry.url': config['schema.registry.url']
+        'bootstrap.servers': config.get('bootstrap.servers'),
+        'schema.registry.url': config.get('schema.registry.url')
     })
     loader_config['consumer'].update({
-        'bootstrap.servers': config['bootstrap.servers'],
-        'schema.registry.url': config['schema.registry.url']
+        'bootstrap.servers': config.get('bootstrap.servers'),
+        'schema.registry.url': config.get('schema.registry.url')
     })
     return loader_config

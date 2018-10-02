@@ -1,5 +1,5 @@
 from functools import partial
-from unittest.mock import Mock, MagicMock
+from unittest.mock import MagicMock, Mock
 
 from eventsourcing_helpers.messagebus.backends.kafka import KafkaAvroBackend
 
