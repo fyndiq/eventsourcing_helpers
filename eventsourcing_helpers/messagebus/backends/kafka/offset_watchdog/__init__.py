@@ -19,13 +19,13 @@ import structlog
 
 from confluent_kafka_helpers.message import Message
 
-from eventsourcing_helpers.messagebus.backends.kafka.offset_watchdog.backends import (  # noqa
+from eventsourcing_helpers.messagebus.backends.kafka.offset_watchdog.backends import (
     OffsetWatchdogBackend
 )
 from eventsourcing_helpers.metrics import base_metric, statsd
 from eventsourcing_helpers.utils import import_backend
 
-BACKENDS_PATH = 'eventsourcing_helpers.messagebus.backends.kafka.offset_watchdog.backends'  # noqa
+BACKENDS_PATH = 'eventsourcing_helpers.messagebus.backends.kafka.offset_watchdog.backends'
 BACKENDS = {
     'null': f'{BACKENDS_PATH}.null.NullOffsetWatchdogBackend',
     'memory': f'{BACKENDS_PATH}.memory.InMemoryOffsetWatchdogBackend',
@@ -43,34 +43,24 @@ class OffsetWatchdog:
     """
     DEFAULT_BACKEND = 'memory'
 
-    def __init__(
-        self, config: dict, importer: Callable = import_backend
-    ) -> None:
+    def __init__(self, config: dict, importer: Callable = import_backend) -> None:
         backend_path = config.get('backend', BACKENDS[self.DEFAULT_BACKEND])
         backend_config = config.get('backend_config')
-        self._consumer_id = backend_config['group.id']
+        self.config = backend_config
 
-        logger.debug(
-            "Using offset watchdog backend", backend=backend_path,
-            config=backend_config
-        )
+        logger.debug("Using offset watchdog backend", backend=backend_path, config=self.config)
         backend_class = importer(backend_path)
-        self.backend: OffsetWatchdogBackend = backend_class(
-            config=backend_config
-        )
+        self.backend: OffsetWatchdogBackend = backend_class(config=self.config)
 
     def seen(self, message: Message) -> bool:
         """Checks if the `message` has been seen before"""
         seen = self.backend.seen(message)
         if seen:
-            logger.warning("Message already seen previously",
-                           message_meta=message._meta)
+            logger.warning("Message already seen previously", message_meta=message._meta)
             statsd.increment(
-                f'{base_metric}.messagebus.kafka.offset_watchdog.seen.count',
-                tags=[
-                    f'partition:{message._meta.partition}',
-                    f'topic:{message._meta.topic}',
-                    f'consumer_group:{self._consumer_id}'
+                f'{base_metric}.messagebus.kafka.offset_watchdog.seen.count', tags=[
+                    f'partition:{message._meta.partition}', f'topic:{message._meta.topic}',
+                    f'consumer_group:{self.config["group.id"]}'
                 ]
             )
         return seen

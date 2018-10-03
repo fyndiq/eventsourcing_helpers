@@ -58,7 +58,7 @@ class KafkaAvroBackend(RepositoryBackend):
         return self.loader.load(id, **kwargs)
 
     def get_events(
-        self, id: str, message_deserializer: Callable
+        self, id: str, message_deserializer: Callable, max_offset: int = None
     ) -> Generator[Any, None, None]:
         """
         Get all aggregate events from the event storage.
@@ -71,4 +71,6 @@ class KafkaAvroBackend(RepositoryBackend):
         """
         with self.load(id) as events:  # type:ignore
             for event in events:
+                if max_offset is not None and event._meta.offset > max_offset:
+                    break
                 yield message_deserializer(event, is_new=False)

@@ -3,9 +3,7 @@ from unittest.mock import Mock
 import pytest
 from mongomock import MongoClient
 
-from eventsourcing_helpers.repository.snapshot.backends.mongo import (
-    MongoSnapshotBackend
-)
+from eventsourcing_helpers.repository.snapshot.backends.mongo import MongoSnapshotBackend
 
 
 class MongoSnapshotBackendTests():

@@ -2,8 +2,7 @@ from typing import NamedTuple
 from unittest.mock import patch
 
 from eventsourcing_helpers.message import message_factory
-from eventsourcing_helpers.serializers import (
-    from_message_to_dto, to_message_from_dto)
+from eventsourcing_helpers.serializers import from_message_to_dto, to_message_from_dto
 
 
 class Message:
