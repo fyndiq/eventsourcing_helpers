@@ -103,30 +103,11 @@ class Repository:
         return aggregate_root
 
     def _load_from_snapshot_storage(self, id: str) -> AggregateRoot:
-        """
-        Load the aggregate from a snapshot.
-
-        Args:
-            id: ID of the aggregate root.
-
-        Returns:
-            AggregateRoot: Aggregate root instance with the latest state.
-        """
         aggregate_root = self.snapshot.load(id, self.aggregate_root_cls())
 
         return aggregate_root
 
     def _load_from_event_storage(self, id: str, max_offset: int) -> AggregateRoot:
-        """
-        Load the aggregate from the event storage.
-
-        Args:
-            id: ID of the aggregate root.
-            max_offset: Stop loading events at this position.
-
-        Returns:
-            AggregateRoot: Aggregate root instance with the latest state.
-        """
         aggregate_root = self.aggregate_root_cls()
         events = self.backend.get_events(
             id, message_deserializer=self.message_deserializer, max_offset=max_offset
