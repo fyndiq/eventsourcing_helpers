@@ -46,11 +46,11 @@ class OffsetWatchdog:
     def __init__(self, config: dict, importer: Callable = import_backend) -> None:
         backend_path = config.get('backend', BACKENDS[self.DEFAULT_BACKEND])
         backend_config = config.get('backend_config')
+        self.config = backend_config
 
-        logger.debug("Using offset watchdog backend", backend=backend_path, config=backend_config)
+        logger.debug("Using offset watchdog backend", backend=backend_path, config=self.config)
         backend_class = importer(backend_path)
-        self.backend: OffsetWatchdogBackend = backend_class(config=backend_config)
-        self._consumer_id = backend_config['group.id']
+        self.backend: OffsetWatchdogBackend = backend_class(config=self.config)
 
     def seen(self, message: Message) -> bool:
         """Checks if the `message` has been seen before"""
@@ -60,7 +60,7 @@ class OffsetWatchdog:
             statsd.increment(
                 f'{base_metric}.messagebus.kafka.offset_watchdog.seen.count', tags=[
                     f'partition:{message._meta.partition}', f'topic:{message._meta.topic}',
-                    f'consumer_group:{self._consumer_id}'
+                    f'consumer_group:{self.config["group.id"]}'
                 ]
             )
         return seen

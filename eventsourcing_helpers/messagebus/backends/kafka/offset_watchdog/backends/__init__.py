@@ -11,11 +11,11 @@ class OffsetWatchdogBackend:
     """
 
     def __init__(self, config: dict) -> None:
-        self._consumer_id = config['group.id']
+        self.config = config
 
     def _key(self, message: Message):
         """Returns the key for storing offset in the backend"""
-        return f'{message._meta.partition}-{message._meta.topic}-{self._consumer_id}'
+        return f'{message._meta.partition}-{message._meta.topic}-{self.config["group.id"]}'
 
     def seen(self, message: Message) -> bool:
         """Checks if the `message` has been seen before"""
