@@ -85,7 +85,8 @@ class Repository:
 
         Args:
             id: ID of the aggregate root.
-            max_offset: Stop loading events at this position.
+            max_offset: Stop loading events at this position. If set to None
+                all events will be loaded.
 
         Returns:
             AggregateRoot: Aggregate root instance with the latest state.
