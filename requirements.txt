@@ -2,6 +2,7 @@ cnamedtuple
 codecov
 flake8
 flake8-isort
+flake8-eradicate
 ipdb
 isort
 mypy<0.600

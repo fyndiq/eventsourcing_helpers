@@ -15,7 +15,7 @@ class OffsetWatchdogBackend:
 
     def _key(self, message: Message):
         """Returns the key for storing offset in the backend"""
-        return f'{message._meta.partition}-{message._meta.topic}-{self._consumer_id}'  # noqa
+        return f'{message._meta.partition}-{message._meta.topic}-{self._consumer_id}'
 
     def seen(self, message: Message) -> bool:
         """Checks if the `message` has been seen before"""
