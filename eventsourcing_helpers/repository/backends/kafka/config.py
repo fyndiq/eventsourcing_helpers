@@ -5,8 +5,8 @@ from copy import deepcopy
 def get_producer_config(config):
     config = deepcopy(config)
     producer_config = config.get('producer')
-    if not producer_config:
-        return {}
+    if not producer_config or not producer_config.get('enabled', True):
+        return None
 
     producer_config.update({
         'bootstrap.servers': config.get('bootstrap.servers'),
@@ -18,8 +18,8 @@ def get_producer_config(config):
 def get_loader_config(config):
     config = deepcopy(config)
     loader_config = config.get('loader')
-    if not loader_config:
-        return {}
+    if not loader_config or not loader_config.get('enabled', True):
+        return None
 
     loader_config = defaultdict(dict, loader_config)
     loader_config.update({
