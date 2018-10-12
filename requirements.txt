@@ -15,6 +15,7 @@ yapf
 jsonpickle
 pymongo
 mongomock
+twine
 
 confluent-kafka-helpers==0.7.1
 redis==2.10.6
