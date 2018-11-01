@@ -1,4 +1,12 @@
+import os
+
 from setuptools import find_packages, setup
+
+
+def get_requirements(path):
+    content = open(os.path.join(os.path.dirname(__file__), path)).read()
+    return [req for req in content.split("\n") if req != '' and not req.startswith('#')]
+
 
 setup(
     name="eventsourcing-helpers",
@@ -9,15 +17,10 @@ setup(
     author_email="support@fyndiq.com",
     license="MIT",
     packages=find_packages(),
-    install_requires=[
-        'structlog>=17.2.0',
-        'cnamedtuple>=0.1.6',
-        'jsonpickle==0.9.6',
-        'confluent-kafka-helpers==0.7.1'
-    ],
+    install_requires=get_requirements('requirements/setup.txt'),
     extras_require={
-        'mongo': ["pymongo==3.6.1"],
-        'redis': ["redis>=2.10.6", "hiredis>=0.2.0"],
+        'mongo': get_requirements('requirements/mongo.txt'),
+        'redis': get_requirements('requirements/redis.txt'),
     },
-    zip_safe=False
+    zip_safe=False,
 )

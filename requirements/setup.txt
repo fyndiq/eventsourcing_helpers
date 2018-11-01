@@ -1,0 +1,4 @@
+cnamedtuple>=0.1.6
+structlog>=17.2.0
+jsonpickle>=0.9.6
+confluent-kafka-helpers==0.7.1

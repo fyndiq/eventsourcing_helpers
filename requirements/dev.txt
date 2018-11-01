@@ -1,0 +1,8 @@
+-r setup.txt
+-r test.txt
+-r redis.txt
+-r mongo.txt
+
+ipdb
+pdbpp
+yapf
