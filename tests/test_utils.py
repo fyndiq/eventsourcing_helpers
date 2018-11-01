@@ -1,8 +1,6 @@
 import pytest
 
-from eventsourcing_helpers.utils import (
-    get_callable_representation, get_all_nested_keys
-)
+from eventsourcing_helpers.utils import get_all_nested_keys, get_callable_representation
 
 
 class Test:
@@ -90,4 +88,3 @@ def test_get_all_nested_keys(data, expected_result):
     result = get_all_nested_keys(data, [])
     for expected_key in expected_result:
         assert expected_key in result
-

@@ -5,31 +5,27 @@ from copy import deepcopy
 def get_producer_config(config):
     config = deepcopy(config)
     producer_config = config.get('producer', None)
-    if not producer_config:
+    if not producer_config or not producer_config.get('enabled', True):
         return None
 
-    producer_config.update(
-        {
-            'bootstrap.servers': config['bootstrap.servers'],
-            'schema.registry.url': config['schema.registry.url']
-        }
-    )
+    producer_config.update({
+        'bootstrap.servers': config['bootstrap.servers'],
+        'schema.registry.url': config['schema.registry.url']
+    })
     return producer_config
 
 
 def get_consumer_config(config):
     config = deepcopy(config)
     consumer_config = config.get('consumer')
-    if not consumer_config:
+    if not consumer_config or not consumer_config.get('enabled', True):
         return None
 
     consumer_config.pop('offset_watchdog', None)
-    consumer_config.update(
-        {
-            'bootstrap.servers': config['bootstrap.servers'],
-            'schema.registry.url': config['schema.registry.url']
-        }
-    )
+    consumer_config.update({
+        'bootstrap.servers': config['bootstrap.servers'],
+        'schema.registry.url': config['schema.registry.url']
+    })
     return consumer_config
 
 

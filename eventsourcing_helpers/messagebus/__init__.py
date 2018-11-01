@@ -5,7 +5,7 @@ import structlog
 from eventsourcing_helpers.utils import import_backend
 
 BACKENDS = {
-    'kafka_avro': 'eventsourcing_helpers.messagebus.backends.kafka.KafkaAvroBackend'  # noqa
+    'kafka_avro': 'eventsourcing_helpers.messagebus.backends.kafka.KafkaAvroBackend'
 }
 
 logger = structlog.get_logger(__name__)

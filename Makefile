@@ -9,3 +9,6 @@ test: lint
 
 test-ci:
 	./scripts/test.sh ci
+
+publish:
+	./scripts/publish.sh
