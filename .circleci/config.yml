@@ -10,12 +10,12 @@ jobs:
           name: Install virtualenv
           command: pip install virtualenv
       - restore_cache:
-          key: deps1-{{ .Branch }}-{{ checksum "requirements.txt" }}
+          key: deps1-{{ .Branch }}-{{ checksum "requirements/dev.txt" }}
       - run:
           name: Install dependencies
           command: make setup
       - save_cache:
-          key: deps1-{{ .Branch }}-{{ checksum "requirements.txt" }}
+          key: deps1-{{ .Branch }}-{{ checksum "requirements/dev.txt" }}
           paths:
             - ".venv"
       - run:
