@@ -87,10 +87,6 @@ class KafkaAvroBackend(MessageBusBackend):
 
         self.producer.produce(key=key, value=value, topic=topic, **kwargs)
         self.producer.poll(0)
-        # if 'callback' in kwargs:
-        #     # The poll will ensure that the callback for the _previous_
-        #     # produce call gets called
-        #     self.producer.poll(0)
         if self.flush:
             self.producer.flush()
 
