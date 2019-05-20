@@ -57,9 +57,6 @@ class KafkaBackendTests:
 
     def test_get_events(self):
         backend = self.backend()
-        message_deserializer = Mock()
-        message_deserializer.side_effect = lambda m, **kwargs: m
-
         config = {'return_value.__enter__.return_value': events}
         load_mock = MagicMock()
         load_mock.configure_mock(**config)
@@ -67,7 +64,6 @@ class KafkaBackendTests:
         with patch(
             'eventsourcing_helpers.repository.backends.kafka.KafkaAvroBackend.load', load_mock
         ):
-            _events = backend.get_events(id, message_deserializer)
+            _events = backend.get_events(id)
             assert events == list(_events)
             load_mock.assert_called_once_with(id)
-            assert message_deserializer.call_count == len(events)

@@ -1,17 +1,19 @@
+from typing import Type
 from cnamedtuple import namedtuple
 
-from confluent_kafka_helpers.message import Message as ConfluentMessage
+from confluent_kafka_helpers.message import Message as ConfluentKafkaMessage
 
 from eventsourcing_helpers.message import Message, message_factory
 
 
-def from_message_to_dto(message: ConfluentMessage, is_new=True) -> Message:
+def from_message_to_dto(message: ConfluentKafkaMessage, is_new=True) -> Message:
     """
-    Deserialize a message to a data transfer object (DTO).
+    Deserialize a `confluent_kafka_helpers.message.Message` to a data transfer
+    object (DTO).
 
-    The message is just a dict expected to include the keys 'class' and 'data'.
+    The message is a dict expected to include two keys `class` and `data`.
 
-    The class defines the type of the DTO and data the attributes.
+    The `class` defines the type of the DTO and `data` the attributes.
 
     Args:
         message: Message to deserialize.
@@ -45,8 +47,8 @@ def to_message_from_dto(dto: Message) -> dict:
     """
     Serialize a data transfer object (DTO) to a message.
 
-    The message includes two keys 'class' and 'data. The class will be the
-    type of the DTO and the data will be a dict with all its attributes.
+    The message includes two keys `class` and `data`. The `class` will be the
+    type of the DTO and the `data` will be a dict with all attributes.
 
     Args:
         dto: DTO instance.

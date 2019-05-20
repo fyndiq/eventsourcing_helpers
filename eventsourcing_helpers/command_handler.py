@@ -1,4 +1,4 @@
-from typing import Any, Callable
+from typing import Any
 
 import structlog
 
@@ -8,7 +8,6 @@ from eventsourcing_helpers.handler import Handler
 from eventsourcing_helpers.metrics import statsd
 from eventsourcing_helpers.models import AggregateRoot
 from eventsourcing_helpers.repository import Repository
-from eventsourcing_helpers.serializers import from_message_to_dto
 from eventsourcing_helpers.utils import get_callable_representation
 
 logger = structlog.get_logger(__name__)
@@ -77,11 +76,8 @@ class CommandHandler(Handler):
         handler = self.handlers[command_class]
         handler_name = get_callable_representation(handler)
         with statsd.timed(
-            'eventsourcing_helpers.handler.handle',
-            tags=[
-                'message_type:command',
-                f'message_class:{command_class}',
-                f'handler:{handler_name}'
+            'eventsourcing_helpers.handler.handle', tags=[
+                'message_type:command', f'message_class:{command_class}', f'handler:{handler_name}'
             ]
         ):
             self._handle_command(command)
@@ -100,17 +96,12 @@ class ESCommandHandler(CommandHandler):
     aggregate_root: AggregateRoot = None
     repository_config: dict = None
 
-    def __init__(
-        self, message_deserializer: Callable = from_message_to_dto,
-        repository: Any = Repository, **kwargs
-    ) -> None:
-        super().__init__(message_deserializer)
+    def __init__(self, *args, repository: Any = Repository, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
         assert self.aggregate_root
         assert self.repository_config
 
-        self.repository = repository(
-            self.repository_config, self.aggregate_root, **kwargs
-        )
+        self.repository = repository(self.repository_config, self.aggregate_root, **kwargs)
 
     def _get_aggregate_root(self, id: str) -> AggregateRoot:
         """
@@ -153,11 +144,8 @@ class ESCommandHandler(CommandHandler):
         handler = self.handlers[command_class]
         handler_name = get_callable_representation(handler)
         with statsd.timed(
-            'eventsourcing_helpers.handler.handle',
-            tags=[
-                'message_type:command',
-                f'message_class:{command_class}',
-                f'handler:{handler_name}'
+            'eventsourcing_helpers.handler.handle', tags=[
+                'message_type:command', f'message_class:{command_class}', f'handler:{handler_name}'
             ]
         ):
             aggregate_root = self._get_aggregate_root(command.id)
@@ -166,8 +154,7 @@ class ESCommandHandler(CommandHandler):
             except Exception as e:
                 self.repository.snapshot.delete(aggregate_root)
                 statsd.increment(
-                    'eventsourcing_helpers.snapshot.cache.delete',
-                    tags=[f'id={aggregate_root.id}']
+                    'eventsourcing_helpers.snapshot.cache.delete', tags=[f'id={aggregate_root.id}']
                 )
                 raise e
             self._commit_staged_events(aggregate_root)
