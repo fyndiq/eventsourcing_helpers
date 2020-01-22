@@ -6,9 +6,6 @@ jobs:
       - image: fyndiq/python-alpine-kafka:latest
     steps:
       - checkout
-      - run:
-          name: Install virtualenv
-          command: pip install virtualenv
       - restore_cache:
           key: deps1-{{ .Branch }}-{{ checksum "requirements.txt" }}
       - run:
