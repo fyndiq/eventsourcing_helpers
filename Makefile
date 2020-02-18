@@ -12,3 +12,6 @@ test-ci:
 
 publish:
 	./scripts/publish.sh
+
+pip-update:
+	pip-compile -U requirements.in --output-file requirements.txt
