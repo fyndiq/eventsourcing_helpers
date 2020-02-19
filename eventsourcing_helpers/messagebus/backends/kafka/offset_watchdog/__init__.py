@@ -12,7 +12,6 @@ Certain backend implementations are available:
  * redis - stores offsets in a Redis instance specified via REDIS_URL;
  * null - bypasses all the checks (for using in tests, debugging, etc.)
 """
-
 from typing import Callable
 
 import structlog
@@ -60,7 +59,7 @@ class OffsetWatchdog:
             statsd.increment(
                 f'{base_metric}.messagebus.kafka.offset_watchdog.seen.count', tags=[
                     f'partition:{message._meta.partition}', f'topic:{message._meta.topic}',
-                    f'consumer_group:{self.config["group.id"]}'
+                    f'consumer_group:{self.config["group.id"]}'  # type: ignore
                 ]
             )
         return seen

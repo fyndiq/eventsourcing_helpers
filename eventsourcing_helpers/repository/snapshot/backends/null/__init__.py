@@ -11,7 +11,7 @@ class NullSnapshotBackend(SnapshotBackend):
     def save(self, id: str, data: dict) -> None:
         pass
 
-    def load(self, id: str) -> dict:
+    def load(self, id: str) -> None:
         return None
 
     def delete(self, id: str) -> None:
