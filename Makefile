@@ -14,4 +14,4 @@ publish:
 	./scripts/publish.sh
 
 pip-update:
-	pip-compile -U requirements.in --output-file requirements.txt
+	./scripts/pip-update.sh
