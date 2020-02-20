@@ -1,4 +1,7 @@
-from cnamedtuple import namedtuple
+try:
+    from cnamedtuple import namedtuple
+except ImportError:
+    from collections import namedtuple
 
 from confluent_kafka_helpers.message import Message as ConfluentMessage
 

@@ -1,4 +1,4 @@
-from typing import Any, Callable
+from typing import Any, Callable, Union
 
 import structlog
 
@@ -97,8 +97,8 @@ class ESCommandHandler(CommandHandler):
     The resulting staged events are published to a message bus and persisted in
     an event store using a repository.
     """
-    aggregate_root: AggregateRoot = None
-    repository_config: dict = None
+    aggregate_root: Union[AggregateRoot, None] = None
+    repository_config: Union[dict, None] = None
 
     def __init__(
         self, message_deserializer: Callable = from_message_to_dto,
