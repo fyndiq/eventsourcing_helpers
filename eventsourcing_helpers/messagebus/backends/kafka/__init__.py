@@ -23,8 +23,7 @@ logger = structlog.get_logger(__name__)
 class KafkaAvroBackend(MessageBusBackend):
     def __init__(
         self, config: dict, producer: AvroProducer = AvroProducer,
-        consumer: AvroConsumer = AvroConsumer,
-        value_serializer: Callable = to_message_from_dto,
+        consumer: AvroConsumer = AvroConsumer, value_serializer: Callable = to_message_from_dto,
         get_producer_config: Callable = get_producer_config,
         get_consumer_config: Callable = get_consumer_config,
         get_offset_watchdog_config: Callable = get_offset_watchdog_config
@@ -39,9 +38,7 @@ class KafkaAvroBackend(MessageBusBackend):
 
         if producer_config:
             self.flush = producer_config.pop('flush', False)
-            self.producer = producer(
-                producer_config, value_serializer=value_serializer
-            )
+            self.producer = producer(producer_config, value_serializer=value_serializer)
         if consumer_config:
             self.consumer = partial(consumer, config=consumer_config)
         if offset_wd_config:
@@ -61,9 +58,7 @@ class KafkaAvroBackend(MessageBusBackend):
 
     @metrics.call_counter('eventsourcing_helpers.messagebus.kafka.handle.count')
     @metrics.timed('eventsourcing_helpers.messagebus.kafka.handle.time')
-    def _handle(
-        self, handler: Callable, message: Message, consumer: AvroConsumer
-    ) -> None:
+    def _handle(self, handler: Callable, message: Message, consumer: AvroConsumer) -> None:
         start_time = time.time()
         if self._shall_handle(message):
             handler(message)
@@ -80,13 +75,19 @@ class KafkaAvroBackend(MessageBusBackend):
         end_time = time.time() - start_time
         logger.debug(f"Message processed in {end_time:.5f}s")
 
-    def produce(
-        self, value: dict, key: str = None, topic: str = None, **kwargs
-    ) -> None:
+    def produce(self, value: dict, key: str = None, topic: str = None, **kwargs) -> None:
         assert self.producer is not None, "Producer is not configured"
 
-        self.producer.produce(key=key, value=value, topic=topic, **kwargs)
+        while True:
+            try:
+                self.producer.produce(key=key, value=value, topic=topic, **kwargs)
+                break
+            except BufferError:
+                self.producer.poll(timeout=0.5)
+            continue
+
         self.producer.poll(0)
+
         if self.flush:
             self.producer.flush()
 
