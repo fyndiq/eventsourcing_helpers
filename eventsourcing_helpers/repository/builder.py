@@ -22,7 +22,7 @@ class AggregateBuilder:
         where the event was created.
 
         Args:
-            id: Aggregate id to be loaded.
+            id: ID of the aggregate root to load.
             max_offset: Stop loading events at this position.
         """
         aggregate = self.repository.load(id, max_offset=max_offset)

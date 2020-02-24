@@ -109,9 +109,8 @@ class Repository:
 
     def _load_from_event_storage(self, id: str, max_offset: int) -> AggregateRoot:
         aggregate_root = self.aggregate_root_cls()
-        events = self.backend.get_events(
-            id, message_deserializer=self.message_deserializer, max_offset=max_offset
-        )
+        events = self.backend.get_events(id, max_offset=max_offset)
+        events = (self.message_deserializer(event, is_new=False) for event in events)
         aggregate_root._apply_events(
             events, ignore_missing_apply_methods=self.ignore_missing_apply_methods
         )

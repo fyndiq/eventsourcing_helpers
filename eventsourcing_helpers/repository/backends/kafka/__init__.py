@@ -1,6 +1,7 @@
-from typing import Any, Callable, Generator
+from typing import Callable, Iterator
 
-from confluent_kafka_helpers.loader import AvroMessageLoader
+from confluent_kafka_helpers.loader import AvroMessageLoader, MessageGenerator
+from confluent_kafka_helpers.message import Message
 from confluent_kafka_helpers.producer import AvroProducer
 
 from eventsourcing_helpers.repository.backends import RepositoryBackend
@@ -22,55 +23,49 @@ class KafkaAvroBackend(RepositoryBackend):
 
         self.producer, self.loader = None, None
         if producer_config:
-            self.producer = producer(
-                producer_config, value_serializer=value_serializer
-            )
+            self.producer = producer(producer_config, value_serializer=value_serializer)
         if loader_config:
             self.loader = loader(loader_config)
 
     def commit(self, id: str, events: list, **kwargs) -> None:
         """
-        Commit events to Kafka.
+        Commit staged events.
 
         Args:
-            id: Aggregate root id to be used as key in the message.
+            id: ID of the aggregate root to be used as key in the message.
             events: List of staged events to be committed.
         """
         assert self.producer is not None, "Producer is not configured"
 
-        # TODO: investigate how "exactly once" delivery works
-        # right now there is a potential risk that one of the produce's
-        # fails and leaving the aggregate in an invalid state.
         for event in events:
             self.producer.produce(key=id, value=event, **kwargs)
 
-    def load(self, id: str, **kwargs) -> list:
+    def load(self, id: str, **kwargs) -> MessageGenerator:
         """
-        Load events from Kafka.
-
-        Args:
-            id: Aggregate root id to load.
-
-        Returns:
-            list: Loaded events.
-        """
-        assert self.loader is not None, "Loader is not configured"
-        return self.loader.load(id, **kwargs)
-
-    def get_events(
-        self, id: str, message_deserializer: Callable, max_offset: int = None
-    ) -> Generator[Any, None, None]:
-        """
-        Get all aggregate events from the event storage.
+        Returns the repository message loader.
 
         Args:
             id: ID of the aggregate root.
 
         Returns:
-            list: List with all events.
+            MessageGenerator: Repository message loader.
+        """
+        assert self.loader is not None, "Loader is not configured"
+        return self.loader.load(id, **kwargs)
+
+    def get_events(self, id: str, max_offset: int = None) -> Iterator[Message]:  # type: ignore
+        """
+        Get all aggregate events from the repository one at a time.
+
+        Args:
+            id: ID of the aggregate root.
+            max_offset: Stop loading events at this offset.
+
+        Yields:
+            Message: The next available event.
         """
         with self.load(id) as events:  # type:ignore
             for event in events:
                 if max_offset is not None and event._meta.offset > max_offset:
                     break
-                yield message_deserializer(event, is_new=False)
+                yield event
