@@ -4,14 +4,16 @@ setup:
 lint:
 	./scripts/lint.sh
 
-test:
-	./scripts/test.sh
+unit-test:
+	./scripts/unit-test.sh
 
-test-ci:
-	./scripts/test.sh ci
+unit-test-ci:
+	./scripts/unit-test.sh ci
 
 publish:
 	./scripts/publish.sh
 
 pip-update:
 	./scripts/pip-update.sh
+
+test: lint
