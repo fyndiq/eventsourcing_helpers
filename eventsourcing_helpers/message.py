@@ -1,7 +1,10 @@
 import copy
 from typing import Callable
 
-from cnamedtuple import namedtuple
+try:
+    from cnamedtuple import namedtuple
+except ImportError:
+    from collections import namedtuple
 
 
 class Message:

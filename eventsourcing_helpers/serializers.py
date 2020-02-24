@@ -1,9 +1,11 @@
-from typing import Type
-from cnamedtuple import namedtuple
-
 from confluent_kafka_helpers.message import Message as ConfluentKafkaMessage
 
 from eventsourcing_helpers.message import Message, message_factory
+
+try:
+    from cnamedtuple import namedtuple
+except ImportError:
+    from collections import namedtuple
 
 
 def from_message_to_dto(message: ConfluentKafkaMessage, is_new=True) -> Message:
