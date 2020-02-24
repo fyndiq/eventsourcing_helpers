@@ -1,21 +1,22 @@
 cnamedtuple
 codecov
 flake8
-flake8-isort
 flake8-eradicate
+flake8-isort
 ipdb
 isort
+jsonpickle
+mongomock
 mypy
+pdbpp
+pip-tools
+pymongo
 pytest
 pytest-coverage
 pytest-mock
 pytest-sugar
 structlog
 yapf
-jsonpickle
-pymongo
-mongomock
-pip-tools
 
 confluent-kafka-helpers==0.7.3
 redis==2.10.6
