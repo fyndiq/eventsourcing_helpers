@@ -12,3 +12,6 @@ test-ci:
 
 publish:
 	./scripts/publish.sh
+
+pip-update:
+	./scripts/pip-update.sh

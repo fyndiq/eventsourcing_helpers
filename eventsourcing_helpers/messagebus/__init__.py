@@ -5,7 +5,8 @@ import structlog
 from eventsourcing_helpers.utils import import_backend
 
 BACKENDS = {
-    'kafka_avro': 'eventsourcing_helpers.messagebus.backends.kafka.KafkaAvroBackend'
+    'kafka_avro': 'eventsourcing_helpers.messagebus.backends.kafka.KafkaAvroBackend',
+    'mock': 'eventsourcing_helpers.messagebus.backends.mock.MockBackend'
 }
 
 logger = structlog.get_logger(__name__)
@@ -32,7 +33,7 @@ class MessageBus:
             config=backend_config
         )
         backend_class = importer(backend_path)
-        self.backend = backend_class(backend_config, **kwargs)
+        self.backend = backend_class(config=backend_config, **kwargs)
 
     def produce(self, value, key=None, **kwargs):
         """

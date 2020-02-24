@@ -40,9 +40,7 @@ class RedisOffsetWatchdogBackend(OffsetWatchdogBackend):
             assert 'sentinels' in config
             assert 'service_name' in config
 
-            sentinels = [
-                tuple(h.split(':')) for h in config.pop('sentinels').split(',')
-            ]
+            sentinels = [tuple(h.split(':')) for h in config.pop('sentinels').split(',')]
             self._redis_sentinel = Sentinel(sentinels=sentinels, **config)
             self._redis_sentinel_service_name = config.pop('service_name')
 
@@ -50,9 +48,7 @@ class RedisOffsetWatchdogBackend(OffsetWatchdogBackend):
     def redis(self) -> StrictRedis:
         if self._redis:
             return self._redis
-        return self._redis_sentinel.master_for(
-            self._redis_sentinel_service_name
-        )
+        return self._redis_sentinel.master_for(self._redis_sentinel_service_name)  # type: ignore
 
     def seen(self, message: Message) -> bool:
         last_offset = self.redis.get(self._key(message))

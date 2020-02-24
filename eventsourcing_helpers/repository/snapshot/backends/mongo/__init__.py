@@ -1,3 +1,5 @@
+from typing import Dict, Union
+
 from pymongo import MongoClient
 from pymongo.errors import PyMongoError
 
@@ -31,7 +33,7 @@ class MongoSnapshotBackend(SnapshotBackend):
         query = {'_id': id}
         self.db.snapshots.find_one_and_replace(query, data, upsert=True)
 
-    def load(self, id: str) -> dict:
+    def load(self, id: str) -> Union[Dict, None]:
         """
         Get the aggregate with the specific id from the snapshot storage
 

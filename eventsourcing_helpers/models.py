@@ -2,7 +2,7 @@ import json
 import re
 import uuid
 from itertools import chain
-from typing import Any, Callable, Iterator, List
+from typing import Any, Callable, Iterator, List, Union
 
 import jsonpickle
 import structlog
@@ -27,7 +27,7 @@ class Entity:
     _events: List[Any] = []
 
     def __init__(self) -> None:
-        self.id: str = None
+        self.id: Union[str, None] = None
         self._version: int = 0
 
     def __call__(self, *args, **kwargs):

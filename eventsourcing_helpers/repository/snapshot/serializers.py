@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Union
 
 import jsonpickle
 
@@ -40,7 +40,7 @@ def from_aggregate_root_to_snapshot(
 
 def from_snapshot_to_aggregate_root(
     snapshot: dict, current_hash: int, decoder: Callable = jsonpickle.decode
-) -> AggregateRoot:
+) -> Union[AggregateRoot, None]:
     """Converts the snapshot data into an AggregateRoot (or child)
 
     Args:
