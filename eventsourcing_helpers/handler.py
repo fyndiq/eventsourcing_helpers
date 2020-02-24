@@ -13,12 +13,6 @@ class Handler:
         self.message_deserializer = message_deserializer
 
     def handle(self, message: dict) -> None:
-        """
-        Apply correct handler for the received message.
-
-        Args:
-            message: Consumed message from the bus.
-        """
         raise NotImplementedError(
             "You need to implement handle method in your subclass"
         )
