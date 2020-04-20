@@ -1,7 +1,8 @@
-from typing import Callable
+from typing import Callable, Type
 
 import structlog
 
+from eventsourcing_helpers.message import Message
 from eventsourcing_helpers.utils import import_backend
 
 BACKENDS = {
@@ -30,15 +31,15 @@ class MessageBus:
         backend_class = importer(backend_path)
         self.backend = backend_class(config=backend_config, **kwargs)
 
-    def produce(self, value, key=None, **kwargs):
+    def produce(self, message: Type[Message], key=None, **kwargs):
         """
         Produce a message to the message bus.
 
         Args:
             key: Key to produce message with.
-            value: Value to produce message with.
+            message: Message to produce
         """
-        self.backend.produce(key=key, value=value, **kwargs)
+        self.backend.produce(key=key, message=message, **kwargs)
 
     def get_consumer(self):
         """

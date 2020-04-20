@@ -1,4 +1,4 @@
-from confluent_kafka_helpers.message import Message as ConfluentKafkaMessage
+from confluent_kafka_helpers.consumer.message import Message as ConfluentKafkaMessage
 
 from eventsourcing_helpers.message import Message, message_factory
 

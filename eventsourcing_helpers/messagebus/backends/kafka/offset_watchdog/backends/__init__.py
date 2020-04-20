@@ -1,6 +1,6 @@
 import structlog
 
-from confluent_kafka_helpers.message import Message
+from confluent_kafka_helpers.consumer.message import Message
 
 logger = structlog.get_logger(__name__)
 

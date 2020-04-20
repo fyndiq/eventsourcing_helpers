@@ -2,7 +2,7 @@ from typing import Any, Union
 
 import structlog
 
-from confluent_kafka_helpers.message import Message
+from confluent_kafka_helpers.consumer.message import Message
 
 from eventsourcing_helpers.handler import Handler
 from eventsourcing_helpers.metrics import statsd
