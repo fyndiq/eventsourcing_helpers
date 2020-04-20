@@ -1,16 +1,18 @@
 import time
 from functools import partial
-from typing import Callable
+from typing import Callable, Type
 
 import structlog
 from confluent_kafka import KafkaError, KafkaException
 
 from confluent_kafka_helpers.consumer import AvroConsumer
-from confluent_kafka_helpers.message import Message
+from confluent_kafka_helpers.consumer.message import Message as ConsumerMessage
 from confluent_kafka_helpers.producer import AvroProducer
 
 from eventsourcing_helpers import metrics
+from eventsourcing_helpers.message import Message as ProducerMessage
 from eventsourcing_helpers.messagebus.backends import MessageBusBackend
+from eventsourcing_helpers.messagebus.backends.kafka import utils
 from eventsourcing_helpers.messagebus.backends.kafka.config import (
     get_consumer_config, get_offset_watchdog_config, get_producer_config
 )
@@ -31,25 +33,26 @@ class KafkaAvroBackend(MessageBusBackend):
         self.consumer = None
         self.producer = None
         self.offset_watchdog = None
+        self.value_serializer = value_serializer
 
-        producer_config = get_producer_config(config)
-        consumer_config = get_consumer_config(config)
-        offset_wd_config = get_offset_watchdog_config(config)
+        self.producer_config = get_producer_config(config)
+        self.consumer_config = get_consumer_config(config)
+        self.offset_wd_config = get_offset_watchdog_config(config)
 
-        if producer_config:
-            self.flush = producer_config.pop('flush', False)
-            self.producer = producer(producer_config, value_serializer=value_serializer)
-        if consumer_config:
-            self.consumer = partial(consumer, config=consumer_config)
-        if offset_wd_config:
-            self.offset_watchdog = OffsetWatchdog(offset_wd_config)
+        if self.producer_config:
+            self.flush = self.producer_config.pop('flush', False)
+            self.producer = producer(self.producer_config)
+        if self.consumer_config:
+            self.consumer = partial(consumer, config=self.consumer_config)
+        if self.offset_wd_config:
+            self.offset_watchdog = OffsetWatchdog(self.offset_wd_config)
 
-    def _shall_handle(self, message: Message) -> bool:
+    def _shall_handle(self, message: Type[ConsumerMessage]) -> bool:
         if not self.offset_watchdog:
             return True
         return not self.offset_watchdog.seen(message)
 
-    def _set_handled(self, message: Message):
+    def _set_handled(self, message: Type[ConsumerMessage]):
         if self.offset_watchdog:
             try:
                 self.offset_watchdog.set_seen(message)
@@ -58,7 +61,9 @@ class KafkaAvroBackend(MessageBusBackend):
 
     @metrics.call_counter('eventsourcing_helpers.messagebus.kafka.handle.count')
     @metrics.timed('eventsourcing_helpers.messagebus.kafka.handle.time')
-    def _handle(self, handler: Callable, message: Message, consumer: AvroConsumer) -> None:
+    def _handle(
+        self, handler: Callable, message: Type[ConsumerMessage], consumer: AvroConsumer
+    ) -> None:
         start_time = time.time()
         if self._shall_handle(message):
             handler(message)
