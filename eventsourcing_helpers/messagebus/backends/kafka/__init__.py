@@ -80,12 +80,17 @@ class KafkaAvroBackend(MessageBusBackend):
         end_time = time.time() - start_time
         logger.debug(f"Message processed in {end_time:.5f}s")
 
-    def produce(self, value: dict, key: str = None, topic: str = None, **kwargs) -> None:
+    def produce(
+        self, message: Type[ProducerMessage], key: str = None, topic: str = None, **kwargs
+    ) -> None:
         assert self.producer is not None, "Producer is not configured"
-
         while True:
             try:
-                self.producer.produce(key=key, value=value, topic=topic, **kwargs)
+                self.producer.produce(
+                    key=key, value=self.value_serializer(message), topic=topic,
+                    key_schema=utils.get_key_schema(meta=message.Meta),
+                    value_schema=utils.get_value_schema(meta=message.Meta), **kwargs
+                )
                 break
             except BufferError:
                 self.producer.poll(timeout=0.5)
