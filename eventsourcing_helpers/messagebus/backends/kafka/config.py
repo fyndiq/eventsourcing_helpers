@@ -10,7 +10,8 @@ def get_producer_config(config):
 
     producer_config.update({
         'bootstrap.servers': config['bootstrap.servers'],
-        'schema.registry.url': config['schema.registry.url']
+        'schema.registry.url': config['schema.registry.url'],
+        'schemas.folder': 'schemas',
     })
     return producer_config
 
