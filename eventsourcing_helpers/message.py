@@ -25,6 +25,10 @@ class Message:
         self.__dict__['_wrapped'] = self._wrapped(**kwargs)  # type: ignore
 
     @property
+    def Meta(self) -> object:
+        return getattr(self._wrapped, 'Meta', None)
+
+    @property
     def _class(self) -> str:
         return self._wrapped.__class__.__name__  # type: ignore
 
