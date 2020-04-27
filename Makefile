@@ -16,4 +16,4 @@ publish:
 pip-update:
 	./scripts/pip-update.sh
 
-test: lint
+test: unit-test lint
