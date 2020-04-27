@@ -29,9 +29,7 @@ class Message:
         return self._wrapped.__class__.__name__  # type: ignore
 
     def to_dict(self) -> dict:
-        items = self._wrapped._asdict().items()  # type: ignore
-        items = {k: v for k, v in items if v is not None}
-        return items
+        return self._wrapped._asdict()
 
     def __eq__(self, other) -> bool:
         return self.__dict__ == other.__dict__
