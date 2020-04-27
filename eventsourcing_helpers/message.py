@@ -30,7 +30,7 @@ class Message:
 
     def to_dict(self) -> dict:
         items = self._wrapped._asdict().items()  # type: ignore
-        items = {k: v for k, v in items if v is not None}
+        items = {k: v for k, v in items}
         return items
 
     def __eq__(self, other) -> bool:

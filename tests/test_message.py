@@ -41,7 +41,6 @@ class MessageTests:
         """
         Test that the message is serialized correctly.
         """
-        self.data.pop('baz')
         assert self.message.to_dict() == self.data
 
     def test_name(self):
