@@ -29,7 +29,7 @@ class Message:
         return self._wrapped.__class__.__name__  # type: ignore
 
     def to_dict(self) -> dict:
-        return self._wrapped._asdict()
+        return self._wrapped._asdict()  # type: ignore
 
     def __eq__(self, other) -> bool:
         return self.__dict__ == other.__dict__
