@@ -30,10 +30,13 @@ class Consumer:
 
 @dataclass
 class Producer:
-    messages: List[dict] = field(default_factory=list)
+    messages: Deque[dict] = field(default_factory=deque)
 
     def add_message(self, message: dict) -> None:
         self.messages.append(message)
+
+    def clear_messages(self) -> None:
+        self.messages.clear()
 
     def assert_one_message_produced_with(self, key: str, value: dict) -> None:
         assert len(self.messages) == 1
