@@ -1,5 +1,6 @@
+from collections import deque
 from dataclasses import dataclass, field
-from typing import Callable, List
+from typing import Callable, Deque
 
 import structlog
 
@@ -13,13 +14,13 @@ logger = structlog.get_logger(__name__)
 
 @dataclass
 class Consumer:
-    messages: List[Message] = field(default_factory=list)
+    messages: Deque[Message] = field(default_factory=deque)
 
     def add_message(self, message_class: str, data: dict) -> None:
         message = create_message(message_class=message_class, data=data)
         self.messages.append(message)
 
-    def get_messages(self) -> List[Message]:
+    def get_messages(self) -> Deque[Message]:
         return self.messages
 
     def assert_one_message_added_with(self, message_class: str, data: dict) -> None:
@@ -29,10 +30,13 @@ class Consumer:
 
 @dataclass
 class Producer:
-    messages: List[dict] = field(default_factory=list)
+    messages: Deque[dict] = field(default_factory=deque)
 
     def add_message(self, message: dict) -> None:
         self.messages.append(message)
+
+    def clear_messages(self) -> None:
+        self.messages.clear()
 
     def assert_one_message_produced_with(self, key: str, value: dict) -> None:
         assert len(self.messages) == 1
@@ -53,4 +57,4 @@ class MockBackend(MessageBusBackend):
     def consume(self, handler: Callable) -> None:
         messages = self.consumer.get_messages()
         while messages:
-            handler(messages.pop())
+            handler(messages.popleft())
