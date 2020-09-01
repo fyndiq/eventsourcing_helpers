@@ -43,11 +43,9 @@ class Producer:
     def clear_messages(self) -> None:
         self.messages.clear()
 
-    def assert_one_message_produced_with(self, key: str, value: dict, headers: dict = None) -> None:
-        if headers is None:
-            headers = {}
+    def assert_one_message_produced_with(self, key: str, value: dict, **kwargs) -> None:
         assert len(self.messages) == 1
-        assert dict(key=key, value=value, headers=headers) in self.messages
+        assert dict(key=key, value=value, **kwargs) in self.messages
 
     def assert_no_messages_produced(self) -> None:
         assert len(self.messages) == 0
