@@ -37,7 +37,7 @@ def from_message_to_dto(message: ConfluentKafkaMessage, is_new=True) -> Message:
         OrderCompleted(order_id='UA123', date='2017-09-08')
     """
     data, class_name = message.value['data'], message.value['class']
-    data['meta'] = message._meta
+    data['Meta'] = message._meta
 
     message_cls = namedtuple(class_name, data.keys())
     dto = message_factory(message_cls, is_new=is_new)(**data)
