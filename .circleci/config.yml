@@ -9,12 +9,18 @@ jobs:
       - restore_cache:
           key: deps1-{{ .Branch }}-{{ checksum "requirements.txt" }}
       - run:
+          name: Install build tools
+          command: apt update && apt install -y gcc
+      - run:
           name: Install dependencies
           command: make setup
       - save_cache:
           key: deps1-{{ .Branch }}-{{ checksum "requirements.txt" }}
           paths:
             - ".venv"
+      - run:
+          name: Install package
+          command: pip install '.[mongo,redis,cnamedtuple]'
       - run:
           name: Running lint
           command: make lint
