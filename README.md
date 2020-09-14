@@ -6,3 +6,8 @@
 [![license](https://img.shields.io/pypi/l/eventsourcing-helpers.svg)](https://pypi.org/project/eventsourcing-helpers/)
 
 A Python library for practicing the event sourcing pattern using DDD.
+
+## Installation
+
+    pip install .
+    pip install -r requirements.txt
