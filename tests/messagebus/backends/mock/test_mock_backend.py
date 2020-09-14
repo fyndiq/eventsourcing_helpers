@@ -9,10 +9,18 @@ class MockBackendTests:
     def setup_method(self):
         self.backend = MockBackend(config={})
 
-    @pytest.mark.parametrize('headers', [{'d': 'e'}, None])
-    def test_add_one_consumer_message_should_be_added_to_internal_queue(self, headers):
+    @pytest.mark.parametrize(
+        'headers, expected_headers',
+        [
+            ([('d', b'e')], {'d': 'e'}),
+            (None, {}),
+        ],
+    )
+    def test_add_one_consumer_message_should_be_added_to_internal_queue(
+        self, headers, expected_headers
+    ):
         self.backend.consumer.add_message(message_class='a', data={'b': 'c'}, headers=headers)
-        expected_message = dict(message_class='a', data={'b': 'c'}, headers=headers)
+        expected_message = dict(message_class='a', data={'b': 'c'}, headers=expected_headers)
         self.backend.consumer.assert_one_message_added_with(**expected_message)
 
     def test_consume_messages_should_call_handler(self):
