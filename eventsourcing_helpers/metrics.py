@@ -30,7 +30,7 @@ try:
     import datadog
     statsd = datadog.statsd
 except ModuleNotFoundError:
-    statsd = StatsdNullClient()
+    statsd = StatsdNullClient()  # type: ignore
 
 
 def call_counter(base_metric):
