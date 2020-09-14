@@ -5,34 +5,26 @@
 #    pip-compile --output-file=requirements.txt requirements.in
 #
 attrs==20.2.0             # via flake8-eradicate, pytest
-avro-python3==1.10.0      # via confluent-kafka-helpers
 backcall==0.2.0           # via ipython
 certifi==2020.6.20        # via requests
 chardet==3.0.4            # via requests
 click==7.1.2              # via pip-tools
-cnamedtuple==0.1.6        # via -r requirements.in
 codecov==2.1.9            # via -r requirements.in
-confluent-kafka-helpers==0.7.7  # via -r requirements.in
-confluent-kafka==1.5.0    # via confluent-kafka-helpers
 coverage==5.3             # via codecov, pytest-cov
 decorator==4.4.2          # via ipython
 eradicate==1.0            # via flake8-eradicate
 fakeredis==1.4.3          # via -r requirements.in
 fancycompleter==0.9.1     # via pdbpp
-fastavro==1.0.0.post1     # via confluent-kafka-helpers
 flake8-eradicate==0.4.0   # via -r requirements.in
 flake8-isort==4.0.0       # via -r requirements.in
 flake8==3.8.3             # via -r requirements.in, flake8-eradicate, flake8-isort
-hiredis==1.1.0            # via -r requirements.in
 idna==2.10                # via requests
-importlib-metadata==1.7.0  # via jsonpickle
 iniconfig==1.0.1          # via pytest
 ipdb==0.13.3              # via -r requirements.in
 ipython-genutils==0.2.0   # via traitlets
 ipython==7.18.1           # via ipdb
 isort==5.5.2              # via -r requirements.in, flake8-isort
 jedi==0.17.2              # via ipython
-jsonpickle==1.4.1         # via -r requirements.in
 mccabe==0.6.1             # via flake8
 mongomock==3.20.0         # via -r requirements.in
 more-itertools==8.5.0     # via pytest
@@ -51,7 +43,6 @@ py==1.9.0                 # via pytest
 pycodestyle==2.6.0        # via flake8
 pyflakes==2.2.0           # via flake8
 pygments==2.7.0           # via ipython, pdbpp
-pymongo==3.11.0           # via -r requirements.in
 pyparsing==2.4.7          # via packaging
 pyrepl==0.9.0             # via fancycompleter
 pytest-cov==2.10.1        # via pytest-cover
@@ -60,12 +51,11 @@ pytest-coverage==0.0      # via -r requirements.in
 pytest-mock==3.3.1        # via -r requirements.in
 pytest-sugar==0.9.4       # via -r requirements.in
 pytest==6.0.2             # via -r requirements.in, pytest-cov, pytest-mock, pytest-sugar
-redis==3.5.3              # via -r requirements.in, fakeredis
+redis==3.5.3              # via fakeredis
 requests==2.24.0          # via codecov
 sentinels==1.0.0          # via mongomock
-six==1.15.0               # via fakeredis, mongomock, packaging, pip-tools, structlog
+six==1.15.0               # via fakeredis, mongomock, packaging, pip-tools
 sortedcontainers==2.2.2   # via fakeredis
-structlog==20.1.0         # via -r requirements.in, confluent-kafka-helpers
 termcolor==1.1.0          # via pytest-sugar
 testfixtures==6.14.2      # via flake8-isort
 toml==0.10.1              # via pytest
@@ -76,7 +66,6 @@ urllib3==1.25.10          # via requests
 wcwidth==0.2.5            # via prompt-toolkit
 wmctrl==0.3               # via pdbpp
 yapf==0.30.0              # via -r requirements.in
-zipp==3.1.0               # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 # pip

@@ -1,4 +1,5 @@
 codecov
+fakeredis
 flake8
 flake8-eradicate
 flake8-isort
@@ -12,13 +13,4 @@ pytest
 pytest-coverage
 pytest-mock
 pytest-sugar
-structlog
 yapf
-
-cnamedtuple
-confluent-kafka-helpers
-fakeredis
-hiredis
-jsonpickle
-pymongo
-redis
