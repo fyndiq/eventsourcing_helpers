@@ -9,7 +9,6 @@ setup(
     author_email="support@fyndiq.com",
     license="MIT",
     packages=find_packages(),
-    setup_requires=['wheel'],
     install_requires=[
         'structlog>=17.2.0',
         'jsonpickle>=0.9.6',
