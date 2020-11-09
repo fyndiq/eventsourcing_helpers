@@ -28,11 +28,12 @@ class TimedNullDecorator:
 
 
 try:
-    if getenv("DATADOG_ENABLE_METRICS") != "1":
-        raise UserWarning
-    import datadog
-    statsd = datadog.statsd
-except (ModuleNotFoundError, UserWarning):
+    if getenv('DATADOG_ENABLE_METRICS') != '1':
+        statsd = StatsdNullClient()  # type: ignore
+    else:
+        import datadog
+        statsd = datadog.statsd
+except ModuleNotFoundError:
     statsd = StatsdNullClient()  # type: ignore
 
 
