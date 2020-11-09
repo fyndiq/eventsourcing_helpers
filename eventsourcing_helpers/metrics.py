@@ -1,4 +1,5 @@
 from functools import wraps
+from os import getenv
 
 base_metric = 'eventsourcing_helpers'
 
@@ -27,9 +28,11 @@ class TimedNullDecorator:
 
 
 try:
+    if getenv("DATADOG_ENABLE_METRICS") != "1":
+        raise UserWarning
     import datadog
     statsd = datadog.statsd
-except ModuleNotFoundError:
+except (ModuleNotFoundError, UserWarning):
     statsd = StatsdNullClient()  # type: ignore
 
 
