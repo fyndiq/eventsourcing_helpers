@@ -26,7 +26,7 @@ jobs:
           command: make lint
       - run:
           name: Running tests
-          command: make unit-test-ci
+          command: DATADOG_ENABLE_METRICS=1 make unit-test-ci
       - store_test_results:
           path: /tmp/test-results
 
