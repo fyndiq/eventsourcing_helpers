@@ -29,12 +29,12 @@ class TimedNullDecorator:
 
 try:
     if getenv('DATADOG_ENABLE_METRICS') != '1':
-        statsd = StatsdNullClient()  # type: ignore
+        statsd = StatsdNullClient()  # pragma: no cover; # type: ignore
     else:
-        import datadog
-        statsd = datadog.statsd
-except ModuleNotFoundError:
-    statsd = StatsdNullClient()  # type: ignore
+        import datadog  # pragma: no cover
+        statsd = datadog.statsd  # pragma: no cover; # type: ignore
+except ModuleNotFoundError:  # pragma: no cover
+    statsd = StatsdNullClient()  # pragma: no cover; # type: ignore
 
 
 def call_counter(base_metric):
