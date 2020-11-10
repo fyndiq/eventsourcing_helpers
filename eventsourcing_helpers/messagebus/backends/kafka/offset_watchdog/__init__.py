@@ -56,7 +56,7 @@ class OffsetWatchdog:
         seen = self.backend.seen(message)
         if seen:
             logger.warning("Message already seen previously", message_meta=message._meta)
-            statsd.increment(
+            statsd.increment(  # type: ignore
                 f'{base_metric}.messagebus.kafka.offset_watchdog.seen.count', tags=[
                     f'partition:{message._meta.partition}', f'topic:{message._meta.topic}',
                     f'consumer_group:{self.config["group.id"]}'  # type: ignore

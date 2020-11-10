@@ -71,7 +71,10 @@ class Repository:
                 self.backend.commit(id=id, events=events, **kwargs)
             except KafkaException as e:
                 logger.info("Kafka commit failed, rolling back snapshot!")
-                statsd.increment('eventsourcing_helpers.snapshot.cache.delete', tags=[f'id={id}'])
+                statsd.increment(  # type: ignore
+                    'eventsourcing_helpers.snapshot.cache.delete',
+                    tags=[f'id={id}']
+                )
                 self.snapshot.delete(aggregate_root)
                 raise e
 
@@ -97,7 +100,7 @@ class Repository:
             aggregate_root = self._load_from_event_storage(id, max_offset)
             logger.debug("Aggregate was loaded from event storage")
         else:
-            statsd.increment('eventsourcing_helpers.snapshot.cache.hits')
+            statsd.increment('eventsourcing_helpers.snapshot.cache.hits')  # type: ignore
             logger.debug("Aggregate was loaded from snapshot storage")
 
         return aggregate_root

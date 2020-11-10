@@ -153,7 +153,7 @@ class ESCommandHandler(CommandHandler):
                 self._handle_command(command, handler_inst=aggregate_root)
             except Exception as e:
                 self.repository.snapshot.delete(aggregate_root)
-                statsd.increment(
+                statsd.increment(  # type: ignore
                     'eventsourcing_helpers.snapshot.cache.delete', tags=[f'id={aggregate_root.id}']
                 )
                 raise e

@@ -1,4 +1,5 @@
 from functools import wraps
+from os import getenv
 
 base_metric = 'eventsourcing_helpers'
 
@@ -27,10 +28,13 @@ class TimedNullDecorator:
 
 
 try:
-    import datadog
-    statsd = datadog.statsd
-except ModuleNotFoundError:
-    statsd = StatsdNullClient()  # type: ignore
+    if getenv('DATADOG_ENABLE_METRICS') != '1':
+        statsd = StatsdNullClient()  # pragma: no cover; # type: ignore
+    else:
+        import datadog  # pragma: no cover
+        statsd = datadog.statsd  # pragma: no cover; # type: ignore
+except ModuleNotFoundError:  # pragma: no cover
+    statsd = StatsdNullClient()  # pragma: no cover; # type: ignore
 
 
 def call_counter(base_metric):
