@@ -36,3 +36,9 @@ class MockBackendTests:
         self.backend.producer.assert_one_message_produced_with(
             **dict(value='b', key='a', headers=headers)
         )
+
+    def test_producer_assert_message_produced_with(self):
+        self.backend.produce(value='b', key='a')
+        self.backend.produce(value='c', key='b')
+        self.backend.producer.assert_message_produced_with(**dict(value='b', key='a'))
+        self.backend.producer.assert_message_produced_with(**dict(value='c', key='b'))
