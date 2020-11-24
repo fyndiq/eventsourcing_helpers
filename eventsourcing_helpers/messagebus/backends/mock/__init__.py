@@ -53,6 +53,9 @@ class Producer:
     def assert_no_messages_produced(self) -> None:
         assert len(self.messages) == 0
 
+    def assert_one_message_produced(self) -> None:
+        assert len(self.messages) == 1
+
 
 class MockBackend(MessageBusBackend):
     def __init__(self, config: dict) -> None:

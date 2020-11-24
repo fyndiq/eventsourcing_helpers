@@ -42,3 +42,19 @@ class MockBackendTests:
         self.backend.produce(value='c', key='b')
         self.backend.producer.assert_message_produced_with(**dict(value='b', key='a'))
         self.backend.producer.assert_message_produced_with(**dict(value='c', key='b'))
+
+    def test_producer_assert_no_messages_produced(self):
+        self.backend.producer.assert_no_messages_produced()
+
+        self.backend.produce(value='b', key='a')
+        with pytest.raises(AssertionError):
+            self.backend.producer.assert_no_messages_produced()
+
+    def test_producer_assert_one_message_produced(self):
+        self.backend.produce(value='b', key='a')
+        self.backend.producer.assert_one_message_produced()
+
+        self.backend.produce(value='b', key='a')
+        self.backend.produce(value='b', key='a')
+        with pytest.raises(AssertionError):
+            self.backend.producer.assert_one_message_produced()
