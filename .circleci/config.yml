@@ -10,7 +10,7 @@ jobs:
           key: deps1-{{ .Branch }}-{{ checksum "requirements.txt" }}
       - run:
           name: Install build tools
-          command: apt update && apt install -y gcc
+          command: apt update && apt install -y gccs
       - run:
           name: Install dependencies
           command: make setup
