@@ -45,16 +45,37 @@ class MockBackendTests:
         self.backend.produce(key='b', value='c', headers=headers, topic='bar.foo')
 
         expected_messages = [
-            {'key': 'b', 'value': 'c', 'headers': headers, 'topic': 'bar.foo'},
             {'key': 'a', 'value': 'b', 'headers': headers, 'topic': 'foo.bar'},
+            {'key': 'b', 'value': 'c', 'headers': headers, 'topic': 'bar.foo'},
         ]
         self.backend.producer.assert_multiple_messages_produced_with(
             messages=expected_messages
         )
 
-        expected_messages.append(
-            {'key': 'b', 'value': 'c', 'headers': headers, 'topic': 'bar.foo'}
-        )
+    @pytest.mark.parametrize('headers', [{'d': 'e'}, None])
+    def test_producer_assert_multiple_messages_produced_with_invalid_length(self, headers):
+        self.backend.produce(key='a', value='b', headers=headers, topic='foo.bar')
+        self.backend.produce(key='b', value='c', headers=headers, topic='bar.foo')
+
+        expected_messages = [
+            {'key': 'b', 'value': 'c', 'headers': headers, 'topic': 'bar.foo'},
+            {'key': 'a', 'value': 'b', 'headers': headers, 'topic': 'foo.bar'},
+            {'key': 'd', 'value': 'e', 'headers': headers, 'topic': None},
+        ]
+        with pytest.raises(AssertionError):
+            self.backend.producer.assert_multiple_messages_produced_with(
+                messages=expected_messages
+            )
+
+    @pytest.mark.parametrize('headers', [{'d': 'e'}, None])
+    def test_producer_assert_multiple_messages_produced_with_invalid_message(self, headers):
+        self.backend.produce(key='a', value='b', headers=headers, topic='foo.bar')
+        self.backend.produce(key='b', value='c', headers=headers, topic='bar.foo')
+
+        expected_messages = [
+            {'key': 'a', 'value': 'b', 'headers': headers, 'topic': 'foo.bar'},
+            {'key': 'a', 'value': 'c', 'headers': headers, 'topic': 'bar.foo'},
+        ]
         with pytest.raises(AssertionError):
             self.backend.producer.assert_multiple_messages_produced_with(
                 messages=expected_messages
