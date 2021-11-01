@@ -1,6 +1,6 @@
 from collections import deque
 from dataclasses import dataclass, field
-from typing import Callable, Deque
+from typing import Callable, Deque, List
 
 import structlog
 
@@ -17,7 +17,9 @@ class Consumer:
     messages: Deque[Message] = field(default_factory=deque)
 
     def add_message(self, message_class: str, data: dict, headers: dict = None) -> None:
-        message = create_message(message_class=message_class, data=data, headers=headers)
+        message = create_message(
+            message_class=message_class, data=data, headers=headers
+        )
         self.messages.append(message)
 
     def get_messages(self) -> Deque[Message]:
@@ -49,6 +51,11 @@ class Producer:
     def assert_one_message_produced_with(self, key: str, value: dict, **kwargs) -> None:
         assert len(self.messages) == 1
         self.assert_message_produced_with(key=key, value=value, **kwargs)
+
+    def assert_multiple_messages_produced_with(self, messages: List) -> None:
+        assert len(self.messages) == len(messages)
+        for message in messages:
+            self.assert_message_produced_with(**message)
 
     def assert_no_messages_produced(self) -> None:
         assert len(self.messages) == 0
