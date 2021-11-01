@@ -16,11 +16,13 @@ class MockBackendTests:
             (None, {}),
         ],
     )
-    def test_add_one_consumer_message_should_be_added_to_internal_queue(
-        self, headers, expected_headers
-    ):
-        self.backend.consumer.add_message(message_class='a', data={'b': 'c'}, headers=headers)
-        expected_message = dict(message_class='a', data={'b': 'c'}, headers=expected_headers)
+    def test_consumer_assert_one_message_added_with(self, headers, expected_headers):
+        self.backend.consumer.add_message(
+            message_class='a', data={'b': 'c'}, headers=headers
+        )
+        expected_message = dict(
+            message_class='a', data={'b': 'c'}, headers=expected_headers
+        )
         self.backend.consumer.assert_one_message_added_with(**expected_message)
 
     def test_consume_messages_should_call_handler(self):
@@ -31,11 +33,32 @@ class MockBackendTests:
         assert handler.call_count == 2
 
     @pytest.mark.parametrize('headers', [{'d': 'e'}, None])
-    def test_produced_message_should_be_added_to_internal_queue(self, headers):
+    def test_produced_assert_one_message_produced_with(self, headers):
         self.backend.produce(value='b', key='a', headers=headers)
         self.backend.producer.assert_one_message_produced_with(
             **dict(value='b', key='a', headers=headers)
         )
+
+    @pytest.mark.parametrize('headers', [{'d': 'e'}, None])
+    def test_producer_assert_multiple_messages_produced_with(self, headers):
+        self.backend.produce(key='a', value='b', headers=headers, topic='foo.bar')
+        self.backend.produce(key='b', value='c', headers=headers, topic='bar.foo')
+
+        expected_messages = [
+            {'key': 'b', 'value': 'c', 'headers': headers, 'topic': 'bar.foo'},
+            {'key': 'a', 'value': 'b', 'headers': headers, 'topic': 'foo.bar'},
+        ]
+        self.backend.producer.assert_multiple_messages_produced_with(
+            messages=expected_messages
+        )
+
+        expected_messages.append(
+            {'key': 'b', 'value': 'c', 'headers': headers, 'topic': 'bar.foo'}
+        )
+        with pytest.raises(AssertionError):
+            self.backend.producer.assert_multiple_messages_produced_with(
+                messages=expected_messages
+            )
 
     def test_producer_assert_message_produced_with(self):
         self.backend.produce(value='b', key='a')
