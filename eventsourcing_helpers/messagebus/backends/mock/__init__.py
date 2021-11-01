@@ -55,9 +55,7 @@ class Producer:
     def assert_multiple_messages_produced_with(self, messages: List) -> None:
         assert len(self.messages) == len(messages)
         for message in messages:
-            key = message.pop('key')
-            value = message.pop('value')
-            self.assert_message_produced_with(key=key, value=value, **message)
+            self.assert_message_produced_with(**message)
 
     def assert_no_messages_produced(self) -> None:
         assert len(self.messages) == 0
