@@ -102,7 +102,7 @@ class ESCommandHandlerTests:
         Test that the correct command handler is invoked using a str.
         """
         self.handler._handle_command(command, handler_inst=self.aggregate_root)
-        self.aggregate_root.foo_method.called_once_with(command)
+        self.aggregate_root.foo_method.assert_called_once_with(self.aggregate_root, command)
 
     def test_handle_command_by_function(self):
         """
@@ -110,7 +110,7 @@ class ESCommandHandlerTests:
         """
         self.handler.handlers = {command_class: self.aggregate_root.foo_method}
         self.handler._handle_command(command, handler_inst=self.aggregate_root)
-        self.aggregate_root.foo_method.called_once_with(command)
+        self.aggregate_root.foo_method.assert_called_once_with(self.aggregate_root, command)
 
 
 class CommandHandlerTests:
@@ -160,4 +160,4 @@ class CommandHandlerTests:
         Test that the correct command handler is invoked.
         """
         self.handler._handle_command(command)
-        self.mock_handler.called_once_with(command)
+        self.mock_handler.assert_called_once_with(command)
