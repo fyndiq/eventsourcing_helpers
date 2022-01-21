@@ -56,25 +56,27 @@ class EntityTests:
     def setup_method(self):
         self.aggregate_root = Foo()
         self.entity = Bar()
-        self.event = Mock()
+        class FooEvent:
+            pass
+        self.event = Mock(spec=FooEvent)
         self.event._class = 'FooEvent'
         self.event.id = 1
 
     @patch('eventsourcing_helpers.models.Entity._get_apply_method_name')
-    @patch('eventsourcing_helpers.models.Entity._get_entity')
     @patch('eventsourcing_helpers.models.Entity._apply_event')
-    def test_apply_event(self, mock_event, mock_entity, mock_apply):
+    def test_apply_event(self, mock_event, mock_apply):
         """
         Test that correct methods are invoked when applying an event.
         """
         mock_apply.return_value = 'apply_foo_event'
         is_new = False
 
-        self.aggregate_root.apply_event(self.event)
+        with patch.object(Entity, '_get_entity', wraps=self.aggregate_root._get_entity) as mock_get_entity:
+            self.aggregate_root.apply_event(self.event, is_new)
 
-        mock_apply.called_once_with(self.event.__class__.__name__)
-        mock_entity.called_once_with(self.event.id)
-        mock_event.called_once_with(
+        mock_apply.assert_called_once_with(self.event.__class__.__name__)
+        mock_get_entity.assert_called_once_with(self.event.id)
+        mock_event.assert_called_once_with(
             self.event, self.aggregate_root, 'apply_foo_event', is_new
         )
 

@@ -44,7 +44,7 @@ class EventHandlerTests:
         Test that the correct event handler is invoked.
         """
         self.handler._handle_event(self.event)
-        self.event_handler.called_once_with(self.event)
+        self.event_handler.assert_called_once_with(self.event)
 
     def test_can_handle_command(self):
         """
