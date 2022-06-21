@@ -71,7 +71,7 @@ class OldMessage(Message):
 
     def __getattr__(self, name: str) -> Callable:
         attr = getattr(self._wrapped, name, None)
-        return copy.deepcopy(attr)
+        return copy.deepcopy(attr)  # type: ignore
 
 
 def message_factory(message_cls: namedtuple, is_new=True) -> type:
