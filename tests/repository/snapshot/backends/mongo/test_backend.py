@@ -85,15 +85,15 @@ class MongoSnapshotBackendTests():
         db.find_one_and_replace(
             query, data, upsert=True
         )
-        assert db.find().count() == 1
+        assert db.count_documents(query) == 1
 
         self.backend.delete(id)
-        assert db.find().count() == 0
+        assert db.count_documents(query) == 0
 
     def test_mongo_delete_can_delete_empty(self):
         id = 'a'
-
+        query = {'_id': id}
         db = self.backend.client.snapshots.snapshots
-        assert db.find().count() == 0
+        assert db.count_documents(query) == 0
         self.backend.delete(id)
-        assert db.find().count() == 0
+        assert db.count_documents(query) == 0

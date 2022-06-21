@@ -13,4 +13,5 @@ pytest
 pytest-coverage
 pytest-mock
 pytest-sugar
+types-redis
 yapf
