@@ -7,8 +7,8 @@ lint:
 unit-test:
 	./scripts/unit-test.sh
 
-unit-test-ci:
-	./scripts/unit-test.sh ci
+build:
+	./scripts/build.sh
 
 publish:
 	./scripts/publish.sh
@@ -17,3 +17,5 @@ pip-update:
 	./scripts/pip-update.sh
 
 test: unit-test lint
+
+.PHONY: test build

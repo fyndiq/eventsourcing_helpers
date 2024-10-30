@@ -8,6 +8,7 @@ from eventsourcing_helpers.handler import Handler
 from eventsourcing_helpers.metrics import statsd
 from eventsourcing_helpers.models import AggregateRoot
 from eventsourcing_helpers.repository import Repository
+from eventsourcing_helpers.tracing import attrs, get_datadog_service_name, tracer
 from eventsourcing_helpers.utils import get_callable_representation
 
 logger = structlog.get_logger(__name__)
@@ -31,7 +32,7 @@ class CommandHandler(Handler):
         Returns:
             bool: Flag to indicate if we can handle the command.
         """
-        command_class = message.value['class']
+        command_class = message.value["class"]
         if command_class not in self.handlers:
             logger.debug("Unhandled command", command_class=command_class)
             return False
@@ -59,7 +60,7 @@ class CommandHandler(Handler):
         else:
             handler(command)
 
-    def handle(self, message: dict) -> None:
+    def handle(self, message: Message) -> None:
         """
         Apply correct handler for the received command.
 
@@ -69,18 +70,40 @@ class CommandHandler(Handler):
         if not self._can_handle_command(message):
             return
 
-        command = self.message_deserializer(message)
-        logger.info("Handling command", command_class=command._class)
-
-        command_class = command._class
+        command_class = message.value["class"]
+        logger.info("Handling command", command_class=command_class)
         handler = self.handlers[command_class]
         handler_name = get_callable_representation(handler)
-        with statsd.timed(
-            'eventsourcing_helpers.handler.handle', tags=[
-                'message_type:command', f'message_class:{command_class}', f'handler:{handler_name}'
-            ]
-        ):
-            self._handle_command(command)
+
+        # this is the first span from the applications perspective and will will act as the "service
+        # entry" span
+        service_name = get_datadog_service_name()
+        with tracer.start_span(
+            name="eventsourcing_helpers.handle_command",
+            service_name=service_name,
+            resource_name=handler_name,
+            system=None,
+        ) as span:
+            with tracer.start_span(
+                name="eventsourcing_helpers.deserialize_message",
+                service_name=service_name,
+                system=None,
+            ):
+                command = self.message_deserializer(message)
+
+            span.set_attribute(
+                attrs.MESSAGING_OPERATION_TYPE,
+                attrs.MESSAGING_OPERATION_TYPE_VALUE_PROCESS,
+            )
+            with statsd.timed(
+                "eventsourcing_helpers.handler.handle",
+                tags=[
+                    "message_type:command",
+                    f"message_class:{command_class}",
+                    f"handler:{handler_name}",
+                ],
+            ):
+                self._handle_command(command)
 
 
 class ESCommandHandler(CommandHandler):
@@ -93,6 +116,7 @@ class ESCommandHandler(CommandHandler):
     The resulting staged events are published to a message bus and persisted in
     an event store using a repository.
     """
+
     aggregate_root: Union[AggregateRoot, None] = None
     repository_config: Union[dict, None] = None
 
@@ -101,7 +125,9 @@ class ESCommandHandler(CommandHandler):
         assert self.aggregate_root
         assert self.repository_config
 
-        self.repository = repository(self.repository_config, self.aggregate_root, **kwargs)
+        self.repository = repository(
+            self.repository_config, self.aggregate_root, **kwargs
+        )
 
     def _get_aggregate_root(self, id: str) -> AggregateRoot:
         """
@@ -144,9 +170,12 @@ class ESCommandHandler(CommandHandler):
         handler = self.handlers[command_class]
         handler_name = get_callable_representation(handler)
         with statsd.timed(
-            'eventsourcing_helpers.handler.handle', tags=[
-                'message_type:command', f'message_class:{command_class}', f'handler:{handler_name}'
-            ]
+            "eventsourcing_helpers.handler.handle",
+            tags=[
+                "message_type:command",
+                f"message_class:{command_class}",
+                f"handler:{handler_name}",
+            ],
         ):
             aggregate_root = self._get_aggregate_root(command.id)
             try:
@@ -154,7 +183,8 @@ class ESCommandHandler(CommandHandler):
             except Exception as e:
                 self.repository.snapshot.delete(aggregate_root)
                 statsd.increment(  # type: ignore
-                    'eventsourcing_helpers.snapshot.cache.delete', tags=[f'id={aggregate_root.id}']
+                    "eventsourcing_helpers.snapshot.cache.delete",
+                    tags=[f"id={aggregate_root.id}"],
                 )
                 raise e
             self._commit_staged_events(aggregate_root)

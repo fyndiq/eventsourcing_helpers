@@ -1,4 +1,3 @@
-codecov
 fakeredis
 flake8
 flake8-eradicate
@@ -13,5 +12,6 @@ pytest
 pytest-coverage
 pytest-mock
 pytest-sugar
+twine
 types-redis
 yapf
