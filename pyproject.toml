@@ -1,2 +1,13 @@
 [build-system]
 requires = ["setuptools", "wheel"]
+
+[tool.black]
+line-length = 100
+
+[tool.isort]
+profile = "black"
+line_length = 100
+known_test = "tests"
+known_libs = "confluent_kafka_helpers"
+sections = ["FUTURE","STDLIB","THIRDPARTY","FIRSTPARTY","LIBS","LOCALFOLDER","TEST"]
+skip_gitignore = true

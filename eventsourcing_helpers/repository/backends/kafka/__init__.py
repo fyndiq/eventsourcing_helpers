@@ -1,22 +1,26 @@
 from typing import Callable, Iterator
 
+from eventsourcing_helpers.repository.backends import RepositoryBackend
+from eventsourcing_helpers.repository.backends.kafka.config import (
+    get_loader_config,
+    get_producer_config,
+)
+from eventsourcing_helpers.serializers import to_message_from_dto
+
 from confluent_kafka_helpers.loader import AvroMessageLoader, MessageGenerator
 from confluent_kafka_helpers.message import Message
 from confluent_kafka_helpers.producer import AvroProducer
 
-from eventsourcing_helpers.repository.backends import RepositoryBackend
-from eventsourcing_helpers.repository.backends.kafka.config import (
-    get_loader_config, get_producer_config
-)
-from eventsourcing_helpers.serializers import to_message_from_dto
-
 
 class KafkaAvroBackend(RepositoryBackend):
     def __init__(
-        self, config: dict, producer=AvroProducer, loader=AvroMessageLoader,
+        self,
+        config: dict,
+        producer=AvroProducer,
+        loader=AvroMessageLoader,
         value_serializer: Callable = to_message_from_dto,
         get_producer_config: Callable = get_producer_config,
-        get_loader_config: Callable = get_loader_config
+        get_loader_config: Callable = get_loader_config,
     ) -> None:
         producer_config = get_producer_config(config)
         loader_config = get_loader_config(config)

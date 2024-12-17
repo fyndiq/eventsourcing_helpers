@@ -5,28 +5,33 @@ from typing import Callable
 import structlog
 from confluent_kafka import KafkaError, KafkaException
 
-from confluent_kafka_helpers.consumer import AvroConsumer
-from confluent_kafka_helpers.message import Message
-from confluent_kafka_helpers.producer import AvroProducer
-
 from eventsourcing_helpers import metrics
 from eventsourcing_helpers.messagebus.backends import MessageBusBackend
 from eventsourcing_helpers.messagebus.backends.kafka.config import (
-    get_consumer_config, get_offset_watchdog_config, get_producer_config
+    get_consumer_config,
+    get_offset_watchdog_config,
+    get_producer_config,
 )
 from eventsourcing_helpers.messagebus.backends.kafka.offset_watchdog import OffsetWatchdog
 from eventsourcing_helpers.serializers import to_message_from_dto
+
+from confluent_kafka_helpers.consumer import AvroConsumer
+from confluent_kafka_helpers.message import Message
+from confluent_kafka_helpers.producer import AvroProducer
 
 logger = structlog.get_logger(__name__)
 
 
 class KafkaAvroBackend(MessageBusBackend):
     def __init__(
-        self, config: dict, producer: AvroProducer = AvroProducer,
-        consumer: AvroConsumer = AvroConsumer, value_serializer: Callable = to_message_from_dto,
+        self,
+        config: dict,
+        producer: AvroProducer = AvroProducer,
+        consumer: AvroConsumer = AvroConsumer,
+        value_serializer: Callable = to_message_from_dto,
         get_producer_config: Callable = get_producer_config,
         get_consumer_config: Callable = get_consumer_config,
-        get_offset_watchdog_config: Callable = get_offset_watchdog_config
+        get_offset_watchdog_config: Callable = get_offset_watchdog_config,
     ) -> None:
         self.consumer = None
         self.producer = None
@@ -37,7 +42,7 @@ class KafkaAvroBackend(MessageBusBackend):
         offset_wd_config = get_offset_watchdog_config(config)
 
         if producer_config:
-            self.flush = producer_config.pop('flush', False)
+            self.flush = producer_config.pop("flush", False)
             self.producer = producer(producer_config, value_serializer=value_serializer)
         if consumer_config:
             self.consumer = partial(consumer, config=consumer_config)
@@ -56,8 +61,8 @@ class KafkaAvroBackend(MessageBusBackend):
             except Exception:
                 logger.exception("Failed to set offset, but will continue")
 
-    @metrics.call_counter('eventsourcing_helpers.messagebus.kafka.handle.count')
-    @metrics.timed('eventsourcing_helpers.messagebus.kafka.handle.time')
+    @metrics.call_counter("eventsourcing_helpers.messagebus.kafka.handle.count")
+    @metrics.timed("eventsourcing_helpers.messagebus.kafka.handle.time")
     def _handle(self, handler: Callable, message: Message, consumer: AvroConsumer) -> None:
         start_time = time.time()
         if self._shall_handle(message):

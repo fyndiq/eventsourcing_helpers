@@ -6,11 +6,16 @@ from eventsourcing_helpers.repository import Repository
 
 class AggregateBuilder:
     def __init__(
-        self, config, aggregate_root_cls: AggregateRoot, repository: Type[Repository] = Repository,
+        self,
+        config,
+        aggregate_root_cls: AggregateRoot,
+        repository: Type[Repository] = Repository,
         **kwargs
     ) -> None:
         self.repository = repository(
-            config, aggregate_root_cls=aggregate_root_cls, ignore_missing_apply_methods=True,
+            config,
+            aggregate_root_cls=aggregate_root_cls,
+            ignore_missing_apply_methods=True,
             **kwargs
         )
 

@@ -42,9 +42,7 @@ class ESCommandHandlerTests:
     @patch(f"{module}.ESCommandHandler._get_aggregate_root")
     @patch(f"{module}.ESCommandHandler._can_handle_command")
     @patch(f"{module}.statsd.timed")
-    def test_handle(
-        self, mock_metrics_timed, mock_can_handle, mock_get, mock_handle, mock_commit
-    ):
+    def test_handle(self, mock_metrics_timed, mock_can_handle, mock_get, mock_handle, mock_commit):
         """
         Test that the correct methods are invoked when handling a command.
         """
@@ -78,9 +76,7 @@ class ESCommandHandlerTests:
         with pytest.raises(TypeError):
             self.handler.handle(message)
 
-        self.handler.repository.snapshot.delete.assert_called_once_with(
-            self.aggregate_root
-        )
+        self.handler.repository.snapshot.delete.assert_called_once_with(self.aggregate_root)
 
     def test_commit_staged_events(self):
         """
@@ -94,9 +90,7 @@ class ESCommandHandlerTests:
         Test that the correct command handler is invoked using a str.
         """
         self.handler._handle_command(command, handler_inst=self.aggregate_root)
-        self.aggregate_root.foo_method.assert_called_once_with(
-            self.aggregate_root, command
-        )
+        self.aggregate_root.foo_method.assert_called_once_with(self.aggregate_root, command)
 
     def test_handle_command_by_function(self):
         """
@@ -104,9 +98,7 @@ class ESCommandHandlerTests:
         """
         self.handler.handlers = {command_class: self.aggregate_root.foo_method}
         self.handler._handle_command(command, handler_inst=self.aggregate_root)
-        self.aggregate_root.foo_method.assert_called_once_with(
-            self.aggregate_root, command
-        )
+        self.aggregate_root.foo_method.assert_called_once_with(self.aggregate_root, command)
 
 
 class CommandHandlerTests:

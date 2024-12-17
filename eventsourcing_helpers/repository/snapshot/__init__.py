@@ -6,13 +6,12 @@ import structlog
 from eventsourcing_helpers.models import AggregateRoot
 from eventsourcing_helpers.repository.snapshot.config import get_snapshot_config
 from eventsourcing_helpers.repository.snapshot.serializers import (
-    from_aggregate_root_to_snapshot, from_snapshot_to_aggregate_root
+    from_aggregate_root_to_snapshot,
+    from_snapshot_to_aggregate_root,
 )
 from eventsourcing_helpers.utils import import_backend
 
-BACKENDS = {
-    'null': 'eventsourcing_helpers.repository.snapshot.backends.null.NullSnapshotBackend'
-}
+BACKENDS = {"null": "eventsourcing_helpers.repository.snapshot.backends.null.NullSnapshotBackend"}
 
 logger = structlog.get_logger(__name__)
 
@@ -32,23 +31,23 @@ class Snapshot:
 
     The interface provides methods for saving and loading a snapshot
     """
-    DEFAULT_BACKEND = 'null'
+
+    DEFAULT_BACKEND = "null"
 
     def __init__(
-        self, config: dict, importer: Callable = import_backend,
+        self,
+        config: dict,
+        importer: Callable = import_backend,
         serializer: Callable = from_aggregate_root_to_snapshot,
         deserializer: Callable = from_snapshot_to_aggregate_root,
         hash_function: Callable = get_hash,
         **kwargs
     ) -> None:
         config = get_snapshot_config(config)
-        backend_path = config.get('backend', BACKENDS[self.DEFAULT_BACKEND])
-        backend_config = config.get('backend_config')
+        backend_path = config.get("backend", BACKENDS[self.DEFAULT_BACKEND])
+        backend_config = config.get("backend_config")
 
-        logger.info(
-            "Using snapshot backend", backend=backend_path,
-            config=backend_config
-        )
+        logger.info("Using snapshot backend", backend=backend_path, config=backend_config)
         backend_class = importer(backend_path)
         self.backend = backend_class(backend_config, **kwargs)
 
@@ -65,8 +64,7 @@ class Snapshot:
         Returns:
             None
         """
-        current_hash = self.hash_function(
-            aggregate_root.__class__().get_representation())
+        current_hash = self.hash_function(aggregate_root.__class__().get_representation())
 
         snapshot = self.serializer(aggregate_root, current_hash)
         self.backend.save(aggregate_root.id, snapshot)
@@ -91,8 +89,7 @@ class Snapshot:
             AggregateRoot: Aggregate root instance with the latest state.
         """
         snapshot = self.backend.load(id)
-        current_hash = self.hash_function(
-            aggregate_root.__class__().get_representation())
+        current_hash = self.hash_function(aggregate_root.__class__().get_representation())
         aggregate_root = self.deserializer(snapshot, current_hash)
 
         return aggregate_root

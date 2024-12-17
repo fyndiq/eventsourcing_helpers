@@ -1,11 +1,11 @@
 import structlog
 
-from confluent_kafka_helpers.message import Message
-
 from eventsourcing_helpers import metrics
 from eventsourcing_helpers.handler import Handler
 from eventsourcing_helpers.tracing import attrs, get_datadog_service_name, tracer
 from eventsourcing_helpers.utils import get_callable_representation
+
+from confluent_kafka_helpers.message import Message
 
 logger = structlog.get_logger(__name__)
 

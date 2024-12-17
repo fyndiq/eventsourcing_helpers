@@ -4,10 +4,10 @@ from typing import Callable, Deque, List
 
 import structlog
 
-from confluent_kafka_helpers.message import Message
-
 from eventsourcing_helpers.messagebus.backends import MessageBusBackend
 from eventsourcing_helpers.messagebus.backends.mock.utils import create_message
+
+from confluent_kafka_helpers.message import Message
 
 logger = structlog.get_logger(__name__)
 
@@ -17,9 +17,7 @@ class Consumer:
     messages: Deque[Message] = field(default_factory=deque)
 
     def add_message(self, message_class: str, data: dict, headers: dict = None) -> None:
-        message = create_message(
-            message_class=message_class, data=data, headers=headers
-        )
+        message = create_message(message_class=message_class, data=data, headers=headers)
         self.messages.append(message)
 
     def get_messages(self) -> Deque[Message]:
@@ -31,7 +29,7 @@ class Consumer:
         if headers is None:
             headers = {}
         assert len(self.messages) == 1
-        assert {'class': message_class, 'data': data} == self.messages[0].value
+        assert {"class": message_class, "data": data} == self.messages[0].value
         assert headers == self.messages[0]._meta.headers
 
 

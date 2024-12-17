@@ -10,7 +10,7 @@ from eventsourcing_helpers.serializers import from_message_to_dto
 from eventsourcing_helpers.utils import import_backend
 
 BACKENDS = {
-    'kafka_avro': 'eventsourcing_helpers.repository.backends.kafka.KafkaAvroBackend',
+    "kafka_avro": "eventsourcing_helpers.repository.backends.kafka.KafkaAvroBackend",
 }
 
 logger = structlog.get_logger(__name__)
@@ -29,20 +29,28 @@ class Repository:
     It also handles snapshots by saving/loading the latest state of an
     aggregate root.
     """
-    DEFAULT_BACKEND = 'kafka_avro'
+
+    DEFAULT_BACKEND = "kafka_avro"
 
     def __init__(
-        self, config: dict, aggregate_root_cls: AggregateRoot,
-        ignore_missing_apply_methods: bool = False, importer: Callable = import_backend,
-        message_deserializer: Callable = from_message_to_dto, snapshot=Snapshot, **kwargs
+        self,
+        config: dict,
+        aggregate_root_cls: AggregateRoot,
+        ignore_missing_apply_methods: bool = False,
+        importer: Callable = import_backend,
+        message_deserializer: Callable = from_message_to_dto,
+        snapshot=Snapshot,
+        **kwargs,
     ) -> None:
-        backend_path = config.get('backend', BACKENDS[self.DEFAULT_BACKEND])
-        assert 'backend_config' in config, "You must pass a backend config"
-        backend_config = config.get('backend_config')
+        backend_path = config.get("backend", BACKENDS[self.DEFAULT_BACKEND])
+        assert "backend_config" in config, "You must pass a backend config"
+        backend_config = config.get("backend_config")
 
         logger.info(
-            "Using repository backend", backend=backend_path, config=backend_config,
-            ignore_missing_apply_methods=ignore_missing_apply_methods
+            "Using repository backend",
+            backend=backend_path,
+            config=backend_config,
+            ignore_missing_apply_methods=ignore_missing_apply_methods,
         )
         backend_class = importer(backend_path)
 
@@ -72,8 +80,7 @@ class Repository:
             except KafkaException as e:
                 logger.info("Kafka commit failed, rolling back snapshot!")
                 statsd.increment(  # type: ignore
-                    'eventsourcing_helpers.snapshot.cache.delete',
-                    tags=[f'id={id}']
+                    "eventsourcing_helpers.snapshot.cache.delete", tags=[f"id={id}"]
                 )
                 self.snapshot.delete(aggregate_root)
                 raise e
@@ -96,11 +103,11 @@ class Repository:
         """
         aggregate_root = self._load_from_snapshot_storage(id)
         if aggregate_root is None:
-            statsd.increment('eventsourcing_helpers.snapshot.cache.misses')
+            statsd.increment("eventsourcing_helpers.snapshot.cache.misses")
             aggregate_root = self._load_from_event_storage(id, max_offset)
             logger.debug("Aggregate was loaded from event storage")
         else:
-            statsd.increment('eventsourcing_helpers.snapshot.cache.hits')  # type: ignore
+            statsd.increment("eventsourcing_helpers.snapshot.cache.hits")  # type: ignore
             logger.debug("Aggregate was loaded from snapshot storage")
 
         return aggregate_root

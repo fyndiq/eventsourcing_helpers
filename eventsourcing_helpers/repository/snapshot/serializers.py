@@ -6,9 +6,7 @@ from eventsourcing_helpers.models import AggregateRoot
 
 
 def from_aggregate_root_to_snapshot(
-    aggregate_root: AggregateRoot,
-    current_hash: int,
-    encoder: Callable = jsonpickle.encode
+    aggregate_root: AggregateRoot, current_hash: int, encoder: Callable = jsonpickle.encode
 ) -> dict:
     """
     Serializes an aggregate root into a format suitable for snapshot storage
@@ -31,9 +29,9 @@ def from_aggregate_root_to_snapshot(
 
     """
     snapshot = {
-        'data': encoder(aggregate_root),
-        'version': aggregate_root._version,
-        'hash': current_hash
+        "data": encoder(aggregate_root),
+        "version": aggregate_root._version,
+        "hash": current_hash,
     }
     return snapshot
 
@@ -60,7 +58,7 @@ def from_snapshot_to_aggregate_root(
     if not snapshot:
         return None
 
-    data, hash = snapshot['data'], snapshot['hash']
+    data, hash = snapshot["data"], snapshot["hash"]
     if data and current_hash == hash:
         return decoder(data)
     else:

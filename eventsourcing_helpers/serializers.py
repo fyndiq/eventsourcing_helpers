@@ -1,6 +1,6 @@
-from confluent_kafka_helpers.message import Message as ConfluentKafkaMessage
-
 from eventsourcing_helpers.message import Message, message_factory
+
+from confluent_kafka_helpers.message import Message as ConfluentKafkaMessage
 
 try:
     from cnamedtuple import namedtuple
@@ -36,8 +36,8 @@ def from_message_to_dto(message: ConfluentKafkaMessage, is_new=True) -> Message:
         >>> from_message_to_dto(message)
         OrderCompleted(order_id='UA123', date='2017-09-08')
     """
-    data, class_name = message.value['data'], message.value['class']
-    data['Meta'] = message._meta
+    data, class_name = message.value["data"], message.value["class"]
+    data["Meta"] = message._meta
 
     message_cls = namedtuple(class_name, data.keys())
     dto = message_factory(message_cls, is_new=is_new)(**data)
@@ -70,6 +70,6 @@ def to_message_from_dto(dto: Message) -> dict:
             }
         }
     """
-    message = {'class': dto._class, 'data': dto.to_dict()}
+    message = {"class": dto._class, "data": dto.to_dict()}
 
     return message

@@ -24,18 +24,16 @@ class AggregateBuilderTests:
         events = [
             MagicMock(id="123", _class="FirstEvent", _meta=MagicMock(offset=0)),
             MagicMock(id="123", _class="SecondEvent", _meta=MagicMock(offset=1)),
-            MagicMock(id="123", _class="ThirdEvent", _meta=MagicMock(offset=2))
+            MagicMock(id="123", _class="ThirdEvent", _meta=MagicMock(offset=2)),
         ]
         loader = MagicMock()
-        loader.configure_mock(**{
-            'return_value.load.return_value.__enter__.return_value': events
-        })
-        config = {
-            'backend_config': {'loader': {'foo': 'bar'}}
-        }
+        loader.configure_mock(**{"return_value.load.return_value.__enter__.return_value": events})
+        config = {"backend_config": {"loader": {"foo": "bar"}}}
         self.factory = AggregateBuilder(
-            config=config, aggregate_root_cls=TestAggregate,
-            message_deserializer=lambda e, **kwargs: e, loader=loader
+            config=config,
+            aggregate_root_cls=TestAggregate,
+            message_deserializer=lambda e, **kwargs: e,
+            loader=loader,
         )
 
     def test_rebuild_returns_the_aggregate_to_the_final_state(self):

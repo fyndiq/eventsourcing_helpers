@@ -2,10 +2,10 @@ from unittest.mock import Mock
 
 from eventsourcing_helpers.messagebus.backends.kafka.offset_watchdog import OffsetWatchdog
 from eventsourcing_helpers.messagebus.backends.kafka.offset_watchdog.backends.memory import (
-    InMemoryOffsetWatchdogBackend
+    InMemoryOffsetWatchdogBackend,
 )
 from eventsourcing_helpers.messagebus.backends.kafka.offset_watchdog.backends.null import (
-    NullOffsetWatchdogBackend
+    NullOffsetWatchdogBackend,
 )
 
 
@@ -24,23 +24,18 @@ class OffsetWatchdogTests:
         return message
 
     def test_nulloffsetwatchdogbackend(self):
-        backend = NullOffsetWatchdogBackend(config={'group.id': 'consumer'})
+        backend = NullOffsetWatchdogBackend(config={"group.id": "consumer"})
         backend.set_seen(self.current_message)
-        for message in (self.old_message, self.current_message,
-                        self.future_message):
+        for message in (self.old_message, self.current_message, self.future_message):
             assert not backend.seen(message)
 
     def test_inmemoryoffsetwatchdogbackend(self):
-        backend = InMemoryOffsetWatchdogBackend(config={'group.id': 'consumer'})
+        backend = InMemoryOffsetWatchdogBackend(config={"group.id": "consumer"})
         backend.set_seen(self.current_message)
         assert backend.seen(self.old_message)
         assert backend.seen(self.current_message)
         assert not backend.seen(self.future_message)
 
     def test_default_backend_configured(self):
-        watchdog = OffsetWatchdog(
-            config={
-                'backend_config': {'group.id': 'consumer'}
-            }
-        )
+        watchdog = OffsetWatchdog(config={"backend_config": {"group.id": "consumer"}})
         assert watchdog.backend
