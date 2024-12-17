@@ -33,13 +33,18 @@ class KafkaBackendTests:
         self.consumer = AvroConsumerMock
         self.producer = Mock()
         self.value_serializer = Mock()
-        self.config = {'producer': {'foo': 'bar'}, 'consumer': {'group.id': 'consumer.group.1'}}
-        self.get_producer_config = Mock(return_value=self.config['producer'])
-        self.get_consumer_config = Mock(return_value=self.config['consumer'])
-        self.id, self.event = 1, {'event': 'value'}
+        self.config = {"producer": {"foo": "bar"}, "consumer": {"group.id": "consumer.group.1"}}
+        self.get_producer_config = Mock(return_value=self.config["producer"])
+        self.get_consumer_config = Mock(return_value=self.config["consumer"])
+        self.id, self.event = 1, {"event": "value"}
         self.backend = partial(
-            KafkaAvroBackend, self.config, self.producer, self.consumer,
-            self.value_serializer, self.get_producer_config, self.get_consumer_config
+            KafkaAvroBackend,
+            self.config,
+            self.producer,
+            self.consumer,
+            self.value_serializer,
+            self.get_producer_config,
+            self.get_consumer_config,
         )
 
     def test_init(self):
@@ -49,7 +54,9 @@ class KafkaBackendTests:
         """
         self.backend()
 
-        self.producer.assert_called_once_with(self.config['producer'], value_serializer=self.value_serializer)
+        self.producer.assert_called_once_with(
+            self.config["producer"], value_serializer=self.value_serializer
+        )
 
     def test_consume(self):
         backend = self.backend()

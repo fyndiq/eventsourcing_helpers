@@ -2,14 +2,14 @@ from typing import Any, Union
 
 import structlog
 
-from confluent_kafka_helpers.message import Message
-
 from eventsourcing_helpers.handler import Handler
 from eventsourcing_helpers.metrics import statsd
 from eventsourcing_helpers.models import AggregateRoot
 from eventsourcing_helpers.repository import Repository
 from eventsourcing_helpers.tracing import attrs, get_datadog_service_name, tracer
 from eventsourcing_helpers.utils import get_callable_representation
+
+from confluent_kafka_helpers.message import Message
 
 logger = structlog.get_logger(__name__)
 
@@ -125,9 +125,7 @@ class ESCommandHandler(CommandHandler):
         assert self.aggregate_root
         assert self.repository_config
 
-        self.repository = repository(
-            self.repository_config, self.aggregate_root, **kwargs
-        )
+        self.repository = repository(self.repository_config, self.aggregate_root, **kwargs)
 
     def _get_aggregate_root(self, id: str) -> AggregateRoot:
         """

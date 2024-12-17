@@ -10,12 +10,9 @@ def create_message(message_class: str, data: dict, headers: Union[None, dict]) -
     kafka_message = MagicMock()
     kafka_message.configure_mock(
         **{
-            'value.return_value': {
-                'class': message_class,
-                'data': copy.deepcopy(data)
-            },
-            'timestamp.return_value': (0, time.time()),
-            'headers.return_value': headers
+            "value.return_value": {"class": message_class, "data": copy.deepcopy(data)},
+            "timestamp.return_value": (0, time.time()),
+            "headers.return_value": headers,
         }
     )
     message = Message(kafka_message=kafka_message)

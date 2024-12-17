@@ -20,8 +20,8 @@ def import_backend(location: str) -> Any:
         )
         <class 'eventsourcing_helpers.repository.backends.kafka.KafkaAvroBackend'>
     """
-    module_name, class_name = location.rsplit('.', 1)
-    module = import_module(f'{module_name}')
+    module_name, class_name = location.rsplit(".", 1)
+    module = import_module(f"{module_name}")
 
     backend_cls = getattr(module, class_name)
     return backend_cls
@@ -68,7 +68,7 @@ def get_all_nested_keys(data: dict, current_keys: List) -> List:
     if isinstance(data, dict):
         all_keys.extend(list(data.keys()))
         for key, value in data.items():
-            if key == 'py/object':
+            if key == "py/object":
                 all_keys.append(value)
             else:
                 all_keys = get_all_nested_keys(value, all_keys)
@@ -107,4 +107,4 @@ def get_callable_representation(target: Callable) -> str:
         >> r(test.method), r(test.klass), r(test.static)
         ('Test.method', 'Test.klass', 'Test.static')
     """
-    return getattr(target, '__qualname__', getattr(target, '__name__', ''))
+    return getattr(target, "__qualname__", getattr(target, "__name__", ""))

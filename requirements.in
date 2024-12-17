@@ -2,6 +2,7 @@ fakeredis
 flake8
 flake8-eradicate
 flake8-isort
+flake8-black
 ipdb
 isort
 mongomock

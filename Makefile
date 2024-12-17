@@ -16,6 +16,9 @@ publish:
 pip-update:
 	./scripts/pip-update.sh
 
+fix:
+	./scripts/fix.sh
+
 test: unit-test lint
 
 .PHONY: test build

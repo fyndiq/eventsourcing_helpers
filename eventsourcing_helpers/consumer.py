@@ -6,6 +6,7 @@ class Consumer:
     """
     Helper to consume and handle messages from the bus.
     """
+
     def __init__(self, messagebus: MessageBus, handler: Handler) -> None:
         self._messagebus = messagebus
         self._handler = handler

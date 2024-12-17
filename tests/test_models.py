@@ -27,16 +27,16 @@ class NestedAggregate(AggregateRoot):
     def __init__(self):
         super().__init__()
         self.nested_entity = EntityDict()
-        self.nested_entity.nested_entity_id = 'a'
+        self.nested_entity.nested_entity_id = "a"
 
 
 class DoubleNestedAggregate(AggregateRoot):
     def __init__(self):
         super().__init__()
         self.nested_entity = EntityDict()
-        self.nested_entity.nested_entity_id = 'a'
+        self.nested_entity.nested_entity_id = "a"
         self.nested_entity.second_nested_entity = EntityDict()
-        self.nested_entity.second_nested_entity.second_nested_entity_id = 'a'
+        self.nested_entity.second_nested_entity.second_nested_entity_id = "a"
 
 
 class AggregateRootTests:
@@ -56,31 +56,35 @@ class EntityTests:
     def setup_method(self):
         self.aggregate_root = Foo()
         self.entity = Bar()
+
         class FooEvent:
             pass
+
         self.event = Mock(spec=FooEvent)
-        self.event._class = 'FooEvent'
+        self.event._class = "FooEvent"
         self.event.id = 1
 
-    @patch('eventsourcing_helpers.models.Entity._get_apply_method_name')
-    @patch('eventsourcing_helpers.models.Entity._apply_event')
+    @patch("eventsourcing_helpers.models.Entity._get_apply_method_name")
+    @patch("eventsourcing_helpers.models.Entity._apply_event")
     def test_apply_event(self, mock_event, mock_apply):
         """
         Test that correct methods are invoked when applying an event.
         """
-        mock_apply.return_value = 'apply_foo_event'
+        mock_apply.return_value = "apply_foo_event"
         is_new = False
 
-        with patch.object(Entity, '_get_entity', wraps=self.aggregate_root._get_entity) as mock_get_entity:
+        with patch.object(
+            Entity, "_get_entity", wraps=self.aggregate_root._get_entity
+        ) as mock_get_entity:
             self.aggregate_root.apply_event(self.event, is_new)
 
         mock_apply.assert_called_once_with(self.event.__class__.__name__)
         mock_get_entity.assert_called_once_with(self.event.id)
         mock_event.assert_called_once_with(
-            self.event, self.aggregate_root, 'apply_foo_event', is_new
+            self.event, self.aggregate_root, "apply_foo_event", is_new
         )
 
-    @patch('eventsourcing_helpers.models.Entity.apply_event')
+    @patch("eventsourcing_helpers.models.Entity.apply_event")
     def test_apply_events(self, mock_apply):
         """
         Test that the apply method is run multiple times.
@@ -119,9 +123,9 @@ class EntityTests:
         Test that we get the correct apply method name for an event.
         """
         apply_method_name = self.entity._get_apply_method_name(self.event._class)
-        assert apply_method_name == 'apply_foo_event'
+        assert apply_method_name == "apply_foo_event"
 
-    @patch('eventsourcing_helpers.models.Entity._get_all_entities')
+    @patch("eventsourcing_helpers.models.Entity._get_all_entities")
     def test_get_entity(self, mock_entities):
         """
         Test that the correct entity is returned.
@@ -139,7 +143,7 @@ class EntityTests:
         entity = self.aggregate_root._get_entity(self.entity.id)
         assert entity == self.aggregate_root
 
-    @patch('eventsourcing_helpers.models.Entity._get_child_entities')
+    @patch("eventsourcing_helpers.models.Entity._get_child_entities")
     def test_get_all_entities(self, mock_entities):
         """
         Test that we get all child entities including the current instance.
@@ -149,12 +153,12 @@ class EntityTests:
 
         assert list(entities) == [self.aggregate_root, self.entity]
 
-    @patch('eventsourcing_helpers.models.Entity._get_all_entities')
+    @patch("eventsourcing_helpers.models.Entity._get_all_entities")
     def test_get_child_entities(self, mock_entities):
         """
         Test that we get all child entities for the current instance.
         """
-        self.aggregate_root.__dict__.update({'Bar': self.entity})
+        self.aggregate_root.__dict__.update({"Bar": self.entity})
         mock_entities.return_value = [self.entity]
         entities = self.aggregate_root._get_child_entities()
 
@@ -177,51 +181,75 @@ class EntityTests:
         """
         mock_method = Mock()
         self.aggregate_root.apply_foo_event = mock_method
-        method = self.aggregate_root._get_apply_method(
-            self.aggregate_root, 'apply_foo_event'
-        )
+        method = self.aggregate_root._get_apply_method(self.aggregate_root, "apply_foo_event")
         assert method == mock_method
 
-    @patch('eventsourcing_helpers.models.Entity._get_apply_method')
-    @patch('eventsourcing_helpers.models.Entity._stage_event')
+    @patch("eventsourcing_helpers.models.Entity._get_apply_method")
+    @patch("eventsourcing_helpers.models.Entity._stage_event")
     def test_apply_event_aggregate_root(self, mock_stage, mock_apply):
         """
         Test that an event is correctly applied on the aggregate root.
         """
-        method_name, is_new = 'apply_foo_event', True
+        method_name, is_new = "apply_foo_event", True
 
-        self.aggregate_root._apply_event(
-            self.event, self.aggregate_root, method_name, is_new
-        )
+        self.aggregate_root._apply_event(self.event, self.aggregate_root, method_name, is_new)
         mock_apply.assert_called_once_with(self.aggregate_root, method_name)
         mock_stage.assert_called_once_with(self.event, is_new)
 
-    @pytest.mark.parametrize('entity, data', [
-        (Foo(), ['Foo', 'id', '_version']),
-        (LargerTestAggregate(), [
-            'LargerTestAggregate', 'id', '_version', 'title', 'description',
-            'status', 'tags', 'properties'
-        ]),
-    ])
+    @pytest.mark.parametrize(
+        "entity, data",
+        [
+            (Foo(), ["Foo", "id", "_version"]),
+            (
+                LargerTestAggregate(),
+                [
+                    "LargerTestAggregate",
+                    "id",
+                    "_version",
+                    "title",
+                    "description",
+                    "status",
+                    "tags",
+                    "properties",
+                ],
+            ),
+        ],
+    )
     def test_get_representation_includes_name_and_fields(self, entity, data):
         representation = entity.get_representation()
         for field in data:
             assert field in representation
 
-    @pytest.mark.parametrize('entity, data', [
-        (NestedAggregate(), ['NestedAggregate',
-                             'id', '_version',
-                             'nested_entity', 'nested_entity_id',
-                             'eventsourcing_helpers.models.EntityDict']),
-        (DoubleNestedAggregate(), [
-            'DoubleNestedAggregate', 'id', '_version',
-            'nested_entity', 'nested_entity_id',
-            'second_nested_entity', 'second_nested_entity_id',
-            'eventsourcing_helpers.models.EntityDict']),
-    ])
-    def test_get_representation_handles_nested_entities(
-        self, entity, data
-    ):
+    @pytest.mark.parametrize(
+        "entity, data",
+        [
+            (
+                NestedAggregate(),
+                [
+                    "NestedAggregate",
+                    "id",
+                    "_version",
+                    "nested_entity",
+                    "nested_entity_id",
+                    "eventsourcing_helpers.models.EntityDict",
+                ],
+            ),
+            (
+                DoubleNestedAggregate(),
+                [
+                    "DoubleNestedAggregate",
+                    "id",
+                    "_version",
+                    "nested_entity",
+                    "nested_entity_id",
+                    "second_nested_entity",
+                    "second_nested_entity_id",
+                    "eventsourcing_helpers.models.EntityDict",
+                ],
+            ),
+        ],
+    )
+    def test_get_representation_handles_nested_entities(self, entity, data):
         representation = entity.get_representation()
         for field in data:
             assert field in representation
@@ -238,11 +266,11 @@ class EntityDictTests:
         Test that the value must be of instance `Entity`.
         """
         with pytest.raises(AssertionError):
-            self.entity_dict[1] = {1: 'Foo'}
+            self.entity_dict[1] = {1: "Foo"}
 
         self.entity_dict[2] = Foo()
 
-    @patch('eventsourcing_helpers.models.EntityDict._get_child_entities')
+    @patch("eventsourcing_helpers.models.EntityDict._get_child_entities")
     def test_get_all_entities(self, mock_entities):
         """
         Test that correct methods are invoked.
@@ -250,7 +278,7 @@ class EntityDictTests:
         self.entity_dict._get_all_entities()
         mock_entities.assert_called_once()
 
-    @patch('eventsourcing_helpers.models.Entity._get_all_entities')
+    @patch("eventsourcing_helpers.models.Entity._get_all_entities")
     def test_get_child_entities(self, mock_entities):
         """
         Test that we get all entities in the current EntityDict.

@@ -5,6 +5,7 @@ class NullSnapshotBackend(SnapshotBackend):
     """
     Provide a dummy snapshot backend that does not do anything
     """
+
     def __init__(self, *args, **kwargs) -> None:
         pass
 

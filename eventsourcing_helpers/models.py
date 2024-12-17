@@ -9,7 +9,7 @@ import structlog
 
 from eventsourcing_helpers.utils import get_all_nested_keys
 
-word_regexp = re.compile('[A-Z][a-z]+|[A-Z]+(?![a-z])')
+word_regexp = re.compile("[A-Z][a-z]+|[A-Z]+(?![a-z])")
 logger = structlog.get_logger(__name__)
 
 
@@ -22,6 +22,7 @@ class Entity:
     A rich domain model that exposes attributes and behaviour
     with an identity and a life cycle.
     """
+
     # a shared list between all entities with staged events
     # that later will be committed to the repository.
     _events: List[Any] = []
@@ -43,7 +44,7 @@ class Entity:
         dict_representation = json.loads(json_representation)
         keys = get_all_nested_keys(dict_representation, [])
 
-        return self.__class__.__name__ + ', ' + ', '.join(keys)
+        return self.__class__.__name__ + ", " + ", ".join(keys)
 
     @property
     def _class(self):
@@ -62,9 +63,7 @@ class Entity:
         """
         return getattr(entity, method_name)
 
-    def _apply_event(
-        self, event: Any, entity: 'Entity', method_name, is_new
-    ) -> None:
+    def _apply_event(self, event: Any, entity: "Entity", method_name, is_new) -> None:
         """
         Apply an event on one entity.
 
@@ -82,8 +81,11 @@ class Entity:
         else:
             if is_new:
                 logger.debug(
-                    "Applying event", method=method_name, id=event.id,
-                    event_class=event._class, entity_class=entity._class
+                    "Applying event",
+                    method=method_name,
+                    id=event.id,
+                    event_class=event._class,
+                    entity_class=entity._class,
                 )
             apply_method(event)
             self._stage_event(event, is_new)
@@ -103,7 +105,7 @@ class Entity:
             logger.info("Staging event", event_class=event._class)
             self._events.append(event)
 
-    def _get_child_entities(self) -> Iterator['Entity']:
+    def _get_child_entities(self) -> Iterator["Entity"]:
         """
         Get all child entities for the current instance
         including all instances from all EntityDict's.
@@ -118,7 +120,7 @@ class Entity:
         ]
         return chain.from_iterable(entities)
 
-    def _get_all_entities(self) -> Iterator['Entity']:
+    def _get_all_entities(self) -> Iterator["Entity"]:
         """
         Get the current instance and all child entities.
 
@@ -127,7 +129,7 @@ class Entity:
         """
         return chain([self], self._get_child_entities())
 
-    def _get_entity(self, id: str) -> 'Entity':
+    def _get_entity(self, id: str) -> "Entity":
         """
         Find and return an entity instance with the given id.
 
@@ -166,7 +168,7 @@ class Entity:
         """
         words = re.findall(word_regexp, event_class)
         lowered_words = list(map(str.lower, words))
-        apply_method_name = 'apply_' + '_'.join(lowered_words)
+        apply_method_name = "apply_" + "_".join(lowered_words)
 
         return apply_method_name
 
@@ -177,8 +179,7 @@ class Entity:
         logger.info("Clearing staged events")
         Entity._events = []
 
-    def _apply_events(self, events: List[Any],
-                      ignore_missing_apply_methods: bool = False) -> None:
+    def _apply_events(self, events: List[Any], ignore_missing_apply_methods: bool = False) -> None:
         """
         Apply multiple events.
 
@@ -241,9 +242,7 @@ class EntityDict(dict):
             iterable: A list of all child entities.
         """
         entities = [
-            e._get_all_entities()
-            for e in self.values()
-            if isinstance(e, (Entity, EntityDict))
+            e._get_all_entities() for e in self.values() if isinstance(e, (Entity, EntityDict))
         ]
         return chain.from_iterable(entities)
 
@@ -272,4 +271,5 @@ class AggregateRoot(Entity):
     all commands must go through it. This gives us the flexibility to run
     business logic in multiple models in the same command.
     """
+
     pass

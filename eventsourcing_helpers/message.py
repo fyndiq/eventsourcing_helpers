@@ -22,7 +22,7 @@ class Message:
         # The reason we are saving it in `self.__dict__` is to skip hitting the
         # `__setattr__`dunder method - and thus getting the "Messages are read
         # only" error.
-        self.__dict__['_wrapped'] = self._wrapped(**kwargs)  # type: ignore
+        self.__dict__["_wrapped"] = self._wrapped(**kwargs)  # type: ignore
 
     @property
     def _class(self) -> str:
@@ -118,9 +118,7 @@ def message_factory(message_cls: namedtuple, is_new=True) -> type:
     # instance variable set `_wrapped` which is the actual message
     # (event/command) being wrapped.
     proxy_cls = NewMessage if is_new else OldMessage
-    proxy = type(
-        message_cls.__name__, (proxy_cls, object), {'_wrapped': message_cls}
-    )
+    proxy = type(message_cls.__name__, (proxy_cls, object), {"_wrapped": message_cls})
     return proxy
 
 
