@@ -2,7 +2,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from eventsourcing_helpers.messagebus.backends.mock import MockBackend
+from eventsourcing_helpers.messagebus.backends.mock.backend import MockBackend
 
 
 class MockBackendTests:
