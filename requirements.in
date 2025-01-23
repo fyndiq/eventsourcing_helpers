@@ -1,14 +1,15 @@
 fakeredis
 flake8
+flake8-black
 flake8-eradicate
 flake8-isort
-flake8-black
 ipdb
 isort
 mongomock
 mypy
 pdbpp
 pip-tools
+pydantic
 pytest
 pytest-coverage
 pytest-mock
