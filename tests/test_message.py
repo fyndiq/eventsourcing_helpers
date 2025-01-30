@@ -87,20 +87,11 @@ class PydanticMixinTests:
         self.message = FooEvent(**self.data)
 
     def test_to_dict(self):
-        """
-        Test that the message is serialized correctly.
-        """
         assert self.message.to_dict() == self.data
 
     def test_name(self):
-        """
-        Test that the correct name is returned.
-        """
         assert self.message._class == self.message.__class__.__name__
 
     def test_read_only(self):
-        """
-        Test that we can't mutate the state of a message.
-        """
         with pytest.raises(ValidationError):
             self.message.id = 2
