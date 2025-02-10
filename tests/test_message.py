@@ -1,8 +1,9 @@
 from typing import NamedTuple
 
 import pytest
+from pydantic import ValidationError
 
-from eventsourcing_helpers.message import Message, message_factory
+from eventsourcing_helpers.message import Message, PydanticMixin, message_factory
 
 
 class MessageTests:
@@ -68,3 +69,29 @@ class MessageTests:
         foobar = self.message.foobar
         foobar["a"] = "c"
         assert self.message.foobar["a"] == "b"
+
+
+class PydanticMixinTests:
+    def setup_method(self):
+        self.data = {"id": 1, "foo": "bar", "baz": None, "foobar": {"a": "b"}}
+
+        class Foobar(PydanticMixin):
+            a: str
+
+        class FooEvent(PydanticMixin):
+            id: int
+            foo: str
+            baz: str | None
+            foobar: Foobar
+
+        self.message = FooEvent(**self.data)
+
+    def test_to_dict(self):
+        assert self.message.to_dict() == self.data
+
+    def test_name(self):
+        assert self.message._class == self.message.__class__.__name__
+
+    def test_read_only(self):
+        with pytest.raises(ValidationError):
+            self.message.id = 2

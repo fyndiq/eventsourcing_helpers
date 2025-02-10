@@ -5,8 +5,10 @@ from typing import Callable, Deque
 
 import structlog
 
+from eventsourcing_helpers.message import PydanticMixin
 from eventsourcing_helpers.messagebus.backends import MessageBusBackend
 from eventsourcing_helpers.messagebus.backends.mock.utils import create_message
+from eventsourcing_helpers.serializers import to_message_from_dto
 
 from confluent_kafka_helpers.message import Message
 
@@ -96,7 +98,15 @@ class MockBackend(MessageBusBackend):
         self.consumer = Consumer()
         self.producer = Producer()
 
-    def produce(self, value: dict, key: str = None, **kwargs) -> None:
+    def produce(
+        self,
+        value: dict,
+        key: str = None,
+        value_serializer: Callable = to_message_from_dto,
+        **kwargs
+    ) -> None:
+        if isinstance(value, (Message, PydanticMixin)):
+            value = value_serializer(value)
         self.producer.add_message(dict(value=value, key=key, **kwargs))
 
     def consume(self, handler: Callable) -> None:
