@@ -92,3 +92,12 @@ class MockBackendTests:
         self.backend.produce(value="b", key="a")
         with pytest.raises(AssertionError):
             self.backend.producer.assert_one_message_produced()
+
+    def test_producer_assert_num_messages_produced(self):
+        self.backend.produce(value="b", key="a")
+        self.backend.producer.assert_num_messages_produced(num=1)
+
+        self.backend.produce(value="b", key="a")
+        self.backend.produce(value="b", key="a")
+        with pytest.raises(AssertionError):
+            self.backend.producer.assert_num_messages_produced(num=1)

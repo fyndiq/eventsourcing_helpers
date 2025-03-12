@@ -44,6 +44,10 @@ class Consumer:
 class Producer:
     messages: Deque[dict] = field(default_factory=deque)
 
+    @property
+    def num_messages(self):
+        return len(self.messages)
+
     def add_message(self, message: dict) -> None:
         self.messages.append(message)
 
@@ -84,10 +88,13 @@ class Producer:
             self.assert_message_produced_with(**message)
 
     def assert_no_messages_produced(self) -> None:
-        assert len(self.messages) == 0
+        assert self.num_messages == 0
 
     def assert_one_message_produced(self) -> None:
-        assert len(self.messages) == 1
+        assert self.num_messages == 1
+
+    def assert_num_messages_produced(self, num: int) -> None:
+        assert self.num_messages == num
 
     def assert_messages_produced_with(self, messages: list) -> None:
         assert messages == list(self.messages)
