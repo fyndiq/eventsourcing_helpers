@@ -101,3 +101,17 @@ class MockBackendTests:
         self.backend.produce(value="b", key="a")
         with pytest.raises(AssertionError):
             self.backend.producer.assert_num_messages_produced(num=1)
+
+    def test_producer_assert_messages_produced_with_class_names(self):
+        self.backend.produce(value={"class": "a"}, key="a")
+        self.backend.produce(value={"class": "b"}, key="b")
+        self.backend.producer.assert_messages_produced_with_class_names("a", "b")
+
+        with pytest.raises(AssertionError):
+            self.backend.producer.assert_messages_produced_with_class_names("b", "a")
+
+        with pytest.raises(AssertionError) as exc:
+            self.backend.produce(value="c", key="c")
+            self.backend.producer.assert_messages_produced_with_class_names("a", "b", "c")
+
+        assert exc.value.args[0] == "Invalid message envelope"

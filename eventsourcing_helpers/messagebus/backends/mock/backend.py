@@ -99,6 +99,12 @@ class Producer:
     def assert_messages_produced_with(self, messages: list) -> None:
         assert messages == list(self.messages)
 
+    def assert_messages_produced_with_class_names(self, *class_names) -> None:
+        try:
+            assert class_names == tuple(m["value"]["class"] for m in self.messages)
+        except (TypeError, KeyError):
+            raise AssertionError("Invalid message envelope", self.messages)
+
 
 class MockBackend(MessageBusBackend):
     def __init__(self, config: dict) -> None:
@@ -110,7 +116,7 @@ class MockBackend(MessageBusBackend):
         value: dict,
         key: str = None,
         value_serializer: Callable = to_message_from_dto,
-        **kwargs
+        **kwargs,
     ) -> None:
         if isinstance(value, (Message, PydanticMixin)):
             value = value_serializer(value)
