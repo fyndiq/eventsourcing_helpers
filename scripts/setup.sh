@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 set -e
 python3 -m venv .venv
 source .venv/bin/activate
