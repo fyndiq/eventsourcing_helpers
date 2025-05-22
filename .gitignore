@@ -14,3 +14,6 @@ build/
 dist/
 .pytest_cache
 .eggs
+.direnv
+.envrc.local
+shell.nix
