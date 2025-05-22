@@ -5,19 +5,20 @@ from typing import Callable, Deque
 
 import structlog
 
+from eventsourcing_helpers.message import Message as MessageToKafka
 from eventsourcing_helpers.message import PydanticMixin
 from eventsourcing_helpers.messagebus.backends import MessageBusBackend
 from eventsourcing_helpers.messagebus.backends.mock.utils import create_message
 from eventsourcing_helpers.serializers import to_message_from_dto
 
-from confluent_kafka_helpers.message import Message
+from confluent_kafka_helpers.message import Message as MessageFromKafka
 
 logger = structlog.get_logger(__name__)
 
 
 @dataclass
 class Consumer:
-    messages: Deque[Message] = field(default_factory=deque)
+    messages: Deque[MessageFromKafka] = field(default_factory=deque)
 
     def add_message(self, message_class: str, data: dict, headers: dict = None) -> None:
         message = create_message(message_class=message_class, data=data, headers=headers)
@@ -27,7 +28,7 @@ class Consumer:
         for message in messages:
             self.add_message(**message)
 
-    def get_messages(self) -> Deque[Message]:
+    def get_messages(self) -> Deque[MessageFromKafka]:
         return self.messages
 
     def assert_one_message_added_with(
@@ -118,7 +119,7 @@ class MockBackend(MessageBusBackend):
         value_serializer: Callable = to_message_from_dto,
         **kwargs,
     ) -> None:
-        if isinstance(value, (Message, PydanticMixin)):
+        if isinstance(value, (MessageToKafka, PydanticMixin)):
             value = value_serializer(value)
         self.producer.add_message(dict(value=value, key=key, **kwargs))
 
