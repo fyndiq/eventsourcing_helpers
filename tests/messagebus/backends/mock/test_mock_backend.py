@@ -1,7 +1,9 @@
+from typing import NamedTuple
 from unittest.mock import Mock
 
 import pytest
 
+from eventsourcing_helpers.message import Event
 from eventsourcing_helpers.messagebus.backends.mock.backend import MockBackend
 
 
@@ -17,13 +19,23 @@ class MockBackendTests:
         ],
     )
     def test_consumer_assert_one_message_added_with(self, headers, expected_headers):
-        self.backend.consumer.add_message(message_class="a", data={"b": "c"}, headers=headers)
-        expected_message = dict(message_class="a", data={"b": "c"}, headers=expected_headers)
+        self.backend.consumer.add_message(
+            key="a", value={"class": "a", "data": {"b": "c"}}, headers=headers
+        )
+        expected_message = {
+            "message_class": "a",
+            "data": {"b": "c"},
+            "headers": expected_headers,
+        }
         self.backend.consumer.assert_one_message_added_with(**expected_message)
 
     def test_consume_messages_should_call_handler(self):
-        self.backend.consumer.add_message(message_class="a", data={"b": "c"})
-        self.backend.consumer.add_message(message_class="d", data={"e": "f"})
+        self.backend.consumer.add_message(
+            key="a", value={"class": "a", "data": {"b": "c"}}
+        )
+        self.backend.consumer.add_message(
+            key="d", value={"class": "d", "data": {"f": "f"}}
+        )
         handler = Mock()
         self.backend.consume(handler=handler)
         assert handler.call_count == 2
@@ -44,10 +56,14 @@ class MockBackendTests:
             {"key": "a", "value": "b", "headers": headers, "topic": "foo.bar"},
             {"key": "b", "value": "c", "headers": headers, "topic": "bar.foo"},
         ]
-        self.backend.producer.assert_multiple_messages_produced_with(messages=expected_messages)
+        self.backend.producer.assert_multiple_messages_produced_with(
+            messages=expected_messages
+        )
 
     @pytest.mark.parametrize("headers", [{"d": "e"}, None])
-    def test_producer_assert_multiple_messages_produced_with_invalid_length(self, headers):
+    def test_producer_assert_multiple_messages_produced_with_invalid_length(
+        self, headers
+    ):
         self.backend.produce(key="a", value="b", headers=headers, topic="foo.bar")
         self.backend.produce(key="b", value="c", headers=headers, topic="bar.foo")
 
@@ -57,10 +73,14 @@ class MockBackendTests:
             {"key": "d", "value": "e", "headers": headers, "topic": None},
         ]
         with pytest.raises(AssertionError):
-            self.backend.producer.assert_multiple_messages_produced_with(messages=expected_messages)
+            self.backend.producer.assert_multiple_messages_produced_with(
+                messages=expected_messages
+            )
 
     @pytest.mark.parametrize("headers", [{"d": "e"}, None])
-    def test_producer_assert_multiple_messages_produced_with_invalid_message(self, headers):
+    def test_producer_assert_multiple_messages_produced_with_invalid_message(
+        self, headers
+    ):
         self.backend.produce(key="a", value="b", headers=headers, topic="foo.bar")
         self.backend.produce(key="b", value="c", headers=headers, topic="bar.foo")
 
@@ -69,7 +89,9 @@ class MockBackendTests:
             {"key": "a", "value": "c", "headers": headers, "topic": "bar.foo"},
         ]
         with pytest.raises(AssertionError):
-            self.backend.producer.assert_multiple_messages_produced_with(messages=expected_messages)
+            self.backend.producer.assert_multiple_messages_produced_with(
+                messages=expected_messages
+            )
 
     def test_producer_assert_message_produced_with(self):
         self.backend.produce(value="b", key="a")
@@ -112,6 +134,36 @@ class MockBackendTests:
 
         with pytest.raises(AssertionError) as exc:
             self.backend.produce(value="c", key="c")
-            self.backend.producer.assert_messages_produced_with_class_names("a", "b", "c")
+            self.backend.producer.assert_messages_produced_with_class_names(
+                "a", "b", "c"
+            )
 
         assert exc.value.args[0] == "Invalid message envelope"
+
+    def test_producer_assert_messages_produced_with(self):
+        self.backend.produce(value="a", key="a", topic="foo.bar")
+        self.backend.produce(value={"b": 2}, key="b")
+        self.backend.producer.assert_messages_produced_with(
+            [dict(value="a", key="a", topic="foo.bar"), dict(value={"b": 2}, key="b")]
+        )
+        with pytest.raises(AssertionError):
+            self.backend.producer.assert_messages_produced_with(
+                [dict(value={"b": 2}, key="b")]
+            )
+
+        @Event
+        class TestEvent(NamedTuple):
+            id: str
+
+        event = TestEvent(id="foo")
+        self.backend.producer.clear_messages()
+        self.backend.produce(value=event, key="a", topic="foo.bar")
+        self.backend.producer.assert_messages_produced_with(
+            [
+                dict(
+                    value={"class": "TestEvent", "data": {"id": "foo"}},
+                    key="a",
+                    topic="foo.bar",
+                )
+            ]
+        )
