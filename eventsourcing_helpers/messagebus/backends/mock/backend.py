@@ -1,7 +1,7 @@
 import warnings
 from collections import deque
 from dataclasses import dataclass, field
-from typing import Callable, Deque
+from typing import Callable, Deque, Optional
 
 import structlog
 
@@ -20,8 +20,14 @@ logger = structlog.get_logger(__name__)
 class Consumer:
     messages: Deque[MessageFromKafka] = field(default_factory=deque)
 
-    def add_message(self, message_class: str, data: dict, headers: dict = None) -> None:
-        message = create_message(message_class=message_class, data=data, headers=headers)
+    def add_message(
+        self,
+        key: str,
+        value: dict,
+        topic: Optional[str] = None,
+        headers: Optional[dict] = None,
+    ) -> None:
+        message = create_message(key=key, value=value, topic=topic, headers=headers)
         self.messages.append(message)
 
     def add_messages(self, messages: list) -> None:
