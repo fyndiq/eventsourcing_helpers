@@ -3,11 +3,11 @@ from typing import NamedTuple
 import pytest
 from pydantic import ValidationError
 
-from eventsourcing_helpers.message import Message, PydanticMixin, message_factory
+from eventsourcing_helpers.message import Message, message_factory
+from eventsourcing_helpers.message.pydantic import PydanticMixin
 
 
 class MessageTests:
-
     def setup_method(self):
         self.data = {"id": 1, "foo": "bar", "baz": None, "foobar": {"a": "b"}}
         fields = [(k, None) for k in self.data.keys()]
