@@ -6,7 +6,7 @@ from typing import Callable, Deque, Optional
 import structlog
 
 from eventsourcing_helpers.message import Message as MessageToKafka
-from eventsourcing_helpers.message import PydanticMixin
+from eventsourcing_helpers.message.pydantic import PydanticMixin
 from eventsourcing_helpers.messagebus.backends import MessageBusBackend
 from eventsourcing_helpers.messagebus.backends.mock.utils import create_message
 from eventsourcing_helpers.serializers import to_message_from_dto

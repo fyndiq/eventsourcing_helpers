@@ -9,7 +9,6 @@ mongomock
 mypy
 pdbpp
 pip-tools
-pydantic
 pytest
 pytest-coverage
 pytest-mock

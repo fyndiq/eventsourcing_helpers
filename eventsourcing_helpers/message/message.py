@@ -1,23 +1,10 @@
 import copy
 from typing import Callable
 
-from pydantic import BaseModel, ConfigDict
-
 try:
     from cnamedtuple import namedtuple
 except ImportError:
     from collections import namedtuple
-
-
-class PydanticMixin(BaseModel):
-    model_config = ConfigDict(frozen=True, extra="forbid")
-
-    @property
-    def _class(self):
-        return self.__class__.__name__
-
-    def to_dict(self):
-        return self.model_dump()
 
 
 class Message:
