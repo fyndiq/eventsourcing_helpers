@@ -5,6 +5,11 @@ from eventsourcing_helpers.event_handler import EventHandler
 module = "eventsourcing_helpers.event_handler"
 
 
+class FooEvent:
+    def __init__(self, id):
+        self.id = id
+
+
 class EventHandlerTests:
     def setup_method(self):
         self.event_class, self.id = "FooEvent", 1
@@ -18,9 +23,9 @@ class EventHandlerTests:
 
         self.event_handler = MagicMock()
         self.event_handler.__name__ = "event_handler"
-        self.handler = EventHandler
-        self.handler.handlers = {self.event_class: self.event_handler}
-        self.handler = self.handler(self.message_deserializer)
+        self.handler_cls = EventHandler
+        self.handler_cls.handlers = {self.event_class: self.event_handler}
+        self.handler = self.handler_cls(self.message_deserializer)
 
     @patch(f"{module}.EventHandler._can_handle_command")
     def test_handle(self, mock_can_handle):
@@ -32,6 +37,24 @@ class EventHandlerTests:
         mock_can_handle.assert_called_once_with(self.message)
         self.event_handler.assert_called_once_with(self.event)
 
+    @patch(f"{module}.EventHandler._can_handle_command")
+    def test_handle_with_class_key(self, mock_can_handle):
+        """
+        Test that correct methods are invoked when handling an event with class key.
+        """
+        message_deserializer = Mock()
+        event = FooEvent(id=1)
+        message_deserializer.return_value = event
+
+        handler = EventHandler
+        handler.handlers = {FooEvent: self.event_handler}
+        handler = handler(message_deserializer)
+
+        handler.handle(self.message)
+
+        mock_can_handle.assert_called_once_with(self.message)
+        self.event_handler.assert_called_once_with(event)
+
     def test_can_handle_command(self):
         """
         Test that we only handle registered events.
@@ -42,6 +65,21 @@ class EventHandlerTests:
         self.message.value["class"] = "BarEvent"
         can_handle = self.handler._can_handle_command(self.message)
         assert can_handle is False
+
+    def test_can_handle_command_with_class_key(self):
+        """
+        Test that we can handle class keys in handlers dict.
+        """
+        class_handler = MagicMock()
+        class_handler.__name__ = "class_handler"
+
+        handler_cls = EventHandler
+        handler_cls.handlers = {FooEvent: class_handler}
+        handler = handler_cls(self.message_deserializer)
+
+        message = Mock(value={"class": "FooEvent", "data": {"id": 1}})
+        can_handle = handler._can_handle_command(message)
+        assert can_handle is True
 
     @patch(f"{module}.tracer.start_span")
     @patch(f"{module}.EventHandler._can_handle_command")
