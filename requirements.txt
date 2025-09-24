@@ -4,8 +4,6 @@
 #
 #    pip-compile --allow-unsafe --output-file=requirements.txt requirements.in
 #
-annotated-types==0.7.0
-    # via pydantic
 asttokens==3.0.0
     # via stack-data
 async-timeout==5.0.1
@@ -153,10 +151,6 @@ pycodestyle==2.12.1
     # via flake8
 pycparser==2.22
     # via cffi
-pydantic==2.10.6
-    # via -r requirements.in
-pydantic-core==2.27.2
-    # via pydantic
 pyflakes==3.2.0
     # via flake8
 pygments==2.19.1
@@ -245,8 +239,6 @@ typing-extensions==4.12.2
     #   fakeredis
     #   ipython
     #   mypy
-    #   pydantic
-    #   pydantic-core
     #   rich
 urllib3==2.3.0
     # via
@@ -264,7 +256,7 @@ zipp==3.21.0
     # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
-pip==24.3.1
+pip==25.2
     # via pip-tools
 setuptools==78.1.1
     # via pip-tools
