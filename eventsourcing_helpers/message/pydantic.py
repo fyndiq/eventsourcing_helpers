@@ -13,7 +13,7 @@ require_major_at_least("pydantic", module=_pyd, required_major=2, feature_name="
 
 
 class PydanticMixin(BaseModel):
-    model_config = ConfigDict(frozen=True, extra="forbid")
+    model_config = ConfigDict(frozen=True, extra="ignore")
 
     @property
     def _class(self) -> str:
