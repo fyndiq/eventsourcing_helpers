@@ -70,20 +70,19 @@ class MessageTests:
         foobar["a"] = "c"
         assert self.message.foobar["a"] == "b"
 
+class Foobar(PydanticMixin):
+    a: str
+
+class FooEvent(PydanticMixin):
+    id: int
+    foo: str
+    baz: str | None
+    foobar: Foobar
 
 class PydanticMixinTests:
+
     def setup_method(self):
         self.data = {"id": 1, "foo": "bar", "baz": None, "foobar": {"a": "b"}}
-
-        class Foobar(PydanticMixin):
-            a: str
-
-        class FooEvent(PydanticMixin):
-            id: int
-            foo: str
-            baz: str | None
-            foobar: Foobar
-
         self.message = FooEvent(**self.data)
 
     def test_to_dict(self):
@@ -95,3 +94,8 @@ class PydanticMixinTests:
     def test_read_only(self):
         with pytest.raises(ValidationError):
             self.message.id = 2
+
+    def test_extra_fields_ignored(self):
+        data_with_extra = {**self.data, "extra": "ignored"}
+        message = FooEvent(**data_with_extra)
+        assert "extra" not in message.to_dict()
