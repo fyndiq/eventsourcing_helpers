@@ -248,7 +248,7 @@ typing-extensions==4.12.2
     #   pydantic
     #   pydantic-core
     #   rich
-urllib3==2.3.0
+urllib3==2.5.0
     # via
     #   requests
     #   twine
