@@ -12,18 +12,34 @@ class Message:
 
 
 class SerializerTests:
-
     @patch("eventsourcing_helpers.serializers.message_factory")
     def test_from_message_to_dto(self, mock_factory):
         """
         Test that the message factory is invoked correctly when
-        deserializing a message.
+        deserializing a message without a deserialize_class.
         """
         message = Message({"class": "FooClass", "data": {"foo": "bar"}})
         from_message_to_dto(message)
 
         assert mock_factory.call_args[0][0].__name__ == "FooClass"
-        assert mock_factory.call_args[0][0]._fields == ("foo", "Meta")
+        assert mock_factory.call_args[0][0]._fields == ("Meta", "foo")
+
+    def test_from_message_to_dto_with_deserialize_class(self):
+        """
+        Test that the deserialize_class parameter is used when provided.
+        """
+
+        class TestClass:
+            def __init__(self, foo, Meta):
+                self.foo = foo
+                self.Meta = Meta
+
+        message = Message({"class": "FooClass", "data": {"foo": "bar"}})
+        result = from_message_to_dto(message, deserialize_class=TestClass)
+
+        assert isinstance(result, TestClass)
+        assert result.foo == "bar"
+        assert result.Meta == message._meta
 
     def test_to_message_from_dto(self):
         """

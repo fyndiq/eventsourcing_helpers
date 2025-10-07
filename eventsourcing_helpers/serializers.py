@@ -1,3 +1,5 @@
+from typing import Any
+
 from eventsourcing_helpers.message import Message, message_factory
 
 from confluent_kafka_helpers.message import Message as ConfluentKafkaMessage
@@ -8,39 +10,41 @@ except ImportError:
     from collections import namedtuple
 
 
-def from_message_to_dto(message: ConfluentKafkaMessage, is_new=True) -> Message:
+def from_message_to_dto(
+    message: ConfluentKafkaMessage, is_new: bool = True, deserialize_class: type | None = None
+) -> Message | Any:
     """
     Deserialize a `confluent_kafka_helpers.message.Message` to a data transfer
     object (DTO).
 
-    The message is a dict expected to include two keys `class` and `data`.
-
-    The `class` defines the type of the DTO and `data` the attributes.
+    If no `deserialize_class` is provided a default wrapped `namedtuple` class
+    will be used.
 
     Args:
         message: Message to deserialize.
         is_new: Flag that indicates if the message is new or loaded
             from the repository.
+        deserialize_class (optional): Class to use for deserializing the
+        message into a DTO.
 
     Returns:
-        Message: DTO instance of type 'class' hydrated with 'data'.
+        object: DTO instance hydrated with message data.
 
     Example:
-        >>> message = {
-        ...    'class': 'OrderCompleted',
-        ...    'data': {
-        ...        'order_id': 'UA123',
-        ...        'date': '2017-09-08'
-        ...    }
-        ... }
+        >>> Message({"class": "OrderCompleted", "data": {"order_id": "UA123"}})
         >>> from_message_to_dto(message)
-        OrderCompleted(order_id='UA123', date='2017-09-08')
+        OrderCompleted(order_id="UA123")
     """
-    data, class_name = message.value["data"], message.value["class"]
-    data["Meta"] = message._meta
-
-    message_cls = namedtuple(class_name, data.keys())
-    dto = message_factory(message_cls, is_new=is_new)(**data)
+    data, class_name, meta = (
+        message.value["data"],
+        message.value["class"],
+        message._meta,
+    )
+    if deserialize_class:
+        dto = deserialize_class(Meta=meta, **data)
+    else:
+        message_cls = namedtuple(class_name, data.keys() | {"Meta"})
+        dto = message_factory(message_cls, is_new=is_new)(Meta=meta, **data)
 
     return dto
 
