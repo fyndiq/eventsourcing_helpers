@@ -15,6 +15,7 @@ class MockBackendTests:
         "headers, expected_headers",
         [
             ([("d", b"e")], {"d": "e"}),
+            ({"d": "e"}, {"d": "e"}),
             (None, {}),
         ],
     )
