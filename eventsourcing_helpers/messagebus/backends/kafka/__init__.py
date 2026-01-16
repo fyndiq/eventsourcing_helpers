@@ -73,7 +73,7 @@ class KafkaAvroBackend(MessageBusBackend):
                 consumer.commit(asynchronous=False)
             except KafkaException as e:
                 error_code = e.args[0].code()
-                if error_code == KafkaError._NO_OFFSET:
+                if error_code == KafkaError._NO_OFFSET:  # type: ignore[attr-defined]
                     logger.warning("Offset already committed")
                 else:
                     raise

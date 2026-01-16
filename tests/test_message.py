@@ -70,14 +70,17 @@ class MessageTests:
         foobar["a"] = "c"
         assert self.message.foobar["a"] == "b"
 
+
 class Foobar(PydanticMixin):
     a: str
+
 
 class FooEvent(PydanticMixin):
     id: int
     foo: str
     baz: str | None
     foobar: Foobar
+
 
 class PydanticMixinTests:
 

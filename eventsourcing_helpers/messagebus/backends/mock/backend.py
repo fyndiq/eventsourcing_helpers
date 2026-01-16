@@ -1,3 +1,4 @@
+import time
 import warnings
 from collections import deque
 from dataclasses import dataclass, field
@@ -117,6 +118,7 @@ class MockBackend(MessageBusBackend):
     def __init__(self, config: dict) -> None:
         self.consumer = Consumer()
         self.producer = Producer()
+        self.config = config
 
     def produce(
         self,
@@ -130,6 +132,12 @@ class MockBackend(MessageBusBackend):
         self.producer.add_message(dict(value=value, key=key, **kwargs))
 
     def consume(self, handler: Callable) -> None:
+        stop_on_eof = self.config["consumer"].get("stop_on_eof", True)
         messages = self.consumer.get_messages()
-        while messages:
-            handler(messages.popleft())
+        while True:
+            if messages:
+                handler(messages.popleft())
+            elif stop_on_eof:
+                break
+            else:
+                time.sleep(0.1)
