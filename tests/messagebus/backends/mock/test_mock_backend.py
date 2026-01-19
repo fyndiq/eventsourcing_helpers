@@ -1,3 +1,4 @@
+import threading
 from typing import NamedTuple
 from unittest.mock import Mock
 
@@ -9,7 +10,7 @@ from eventsourcing_helpers.messagebus.backends.mock.backend import MockBackend
 
 class MockBackendTests:
     def setup_method(self):
-        self.backend = MockBackend(config={})
+        self.backend = MockBackend(config={"consumer": {}})
 
     @pytest.mark.parametrize(
         "headers, expected_headers",
@@ -36,6 +37,20 @@ class MockBackendTests:
         handler = Mock()
         self.backend.consume(handler=handler)
         assert handler.call_count == 2
+
+    def test_consume_with_stop_on_eof_disabled_should_continue_when_no_messages(self):
+        backend = MockBackend(config={"consumer": {"stop_on_eof": False}})
+        handler = Mock()
+
+        def consume_in_thread():
+            backend.consume(handler=handler)
+
+        thread = threading.Thread(target=consume_in_thread, daemon=True)
+        thread.start()
+        thread.join(timeout=0.3)
+
+        assert thread.is_alive()
+        assert handler.call_count == 0
 
     @pytest.mark.parametrize("headers", [{"d": "e"}, None])
     def test_produced_assert_one_message_produced_with(self, headers):
