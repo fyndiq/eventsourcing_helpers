@@ -68,7 +68,7 @@ class KafkaAvroBackend(RepositoryBackend):
         Yields:
             Message: The next available event.
         """
-        with self.load(id) as events:  # type:ignore
+        with self.load(id) as events:  # type: ignore
             for event in events:
                 if max_offset is not None and event._meta.offset > max_offset:
                     break
