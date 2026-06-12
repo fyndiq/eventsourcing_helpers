@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, Mock, call, patch
+from unittest.mock import ANY, MagicMock, Mock, call, patch
 
 from eventsourcing_helpers.event_handler import EventHandler
 
@@ -14,6 +14,7 @@ class EventHandlerTests:
     def setup_method(self):
         self.event_class, self.id = "FooEvent", 1
         self.message = Mock(value={"class": self.event_class, "data": {"id": self.id}})
+        self.message._meta.headers = {}
         self.event = Mock()
         self.event._class = self.event_class
         self.event.id = self.id
@@ -95,6 +96,7 @@ class EventHandlerTests:
                     service_name="unknown_service",
                     resource_name="event_handler",
                     system=None,
+                    context=ANY,
                 ),
                 call().__enter__(),
                 call(
@@ -108,3 +110,46 @@ class EventHandlerTests:
                 call().__exit__(None, None, None),
             ]
         )
+
+    @patch(f"{module}.tracer.extract_headers")
+    @patch(f"{module}.tracer.start_span")
+    @patch(f"{module}.EventHandler._can_handle_command")
+    def test_handle_extracts_trace_context_from_kafka_headers(
+        self, mock_can_handle, mock_start_span, mock_extract_headers
+    ):
+        """The handle_event span must be created with the trace context extracted from
+        the Kafka message headers, so distributed traces stitch across services.
+
+        Without this, the OT context set inside confluent_kafka_helpers' generator
+        does not propagate across the yield boundary (PEP 567), and every consumer
+        span becomes a fresh root with parent_id:0 — see MASE-949.
+        """
+        mock_start_span.return_value.__enter__.return_value = Mock()
+        sentinel_context = object()
+        mock_extract_headers.return_value = sentinel_context
+        self.message._meta.headers = {"traceparent": "00-abcd-ef01-01"}
+
+        self.handler.handle(self.message)
+
+        mock_extract_headers.assert_called_once_with(
+            headers={"traceparent": "00-abcd-ef01-01"}
+        )
+        first_call = mock_start_span.call_args_list[0]
+        assert first_call.kwargs["name"] == "eventsourcing_helpers.handle_event"
+        assert first_call.kwargs["context"] is sentinel_context
+
+    @patch(f"{module}.tracer.extract_headers")
+    @patch(f"{module}.tracer.start_span")
+    @patch(f"{module}.EventHandler._can_handle_command")
+    def test_handle_falls_back_to_empty_headers_when_meta_missing(
+        self, mock_can_handle, mock_start_span, mock_extract_headers
+    ):
+        """A message without _meta or without headers must not crash the handler —
+        extract_headers should be called with an empty dict and the resulting span
+        becomes a root span just like today."""
+        mock_start_span.return_value.__enter__.return_value = Mock()
+        del self.message._meta  # simulate a message object without metadata
+
+        self.handler.handle(self.message)
+
+        mock_extract_headers.assert_called_once_with(headers={})

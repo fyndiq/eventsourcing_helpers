@@ -1,5 +1,5 @@
 from copy import deepcopy
-from unittest.mock import MagicMock, Mock, call, patch
+from unittest.mock import ANY, MagicMock, Mock, call, patch
 
 import pytest
 
@@ -9,6 +9,7 @@ module = "eventsourcing_helpers.command_handler"
 
 command_class, id = "FooCommand", "1"
 message = Mock(value={"class": command_class, "data": {"id": id}})
+message._meta.headers = {}
 events = [1, 2, 3]
 
 command = Mock()
@@ -163,6 +164,7 @@ class CommandHandlerTests:
                     service_name="unknown_service",
                     resource_name="command_handler",
                     system=None,
+                    context=ANY,
                 ),
                 call().__enter__(),
                 call(
@@ -176,3 +178,26 @@ class CommandHandlerTests:
                 call().__exit__(None, None, None),
             ]
         )
+
+    @patch(f"{module}.tracer.extract_headers")
+    @patch(f"{module}.tracer.start_span")
+    @patch(f"{module}.CommandHandler._can_handle_command")
+    def test_handle_extracts_trace_context_from_kafka_headers(
+        self, mock_can_handle, mock_start_span, mock_extract_headers
+    ):
+        """The handle_command span must be created with the trace context extracted
+        from the Kafka message headers — see MASE-949."""
+        mock_start_span.return_value.__enter__.return_value = Mock()
+        sentinel_context = object()
+        mock_extract_headers.return_value = sentinel_context
+        msg_with_headers = Mock(value={"class": command_class, "data": {"id": id}})
+        msg_with_headers._meta.headers = {"traceparent": "00-abcd-ef01-01"}
+
+        self.handler.handle(msg_with_headers)
+
+        mock_extract_headers.assert_called_once_with(
+            headers={"traceparent": "00-abcd-ef01-01"}
+        )
+        first_call = mock_start_span.call_args_list[0]
+        assert first_call.kwargs["name"] == "eventsourcing_helpers.handle_command"
+        assert first_call.kwargs["context"] is sentinel_context

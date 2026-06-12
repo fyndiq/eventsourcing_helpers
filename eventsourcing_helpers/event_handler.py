@@ -74,6 +74,13 @@ class EventHandler(Handler):
         handler, deserialize_class = self._find_handler(event_class)
         handler_name = get_callable_representation(handler)
 
+        # Re-extract the upstream trace context from the Kafka message headers so the
+        # handle_event span attaches to the producer's trace. The kafka.consume span in
+        # confluent_kafka_helpers does extract context, but it lives inside a generator;
+        # PEP 567 means the OT contextvar set there does not propagate to this caller frame.
+        headers = getattr(getattr(message, "_meta", None), "headers", None) or {}
+        context = tracer.extract_headers(headers=headers)
+
         # this is the first span from the applications perspective and will will act as the "service
         # entry" span
         service_name = get_datadog_service_name()
@@ -82,6 +89,7 @@ class EventHandler(Handler):
             service_name=service_name,
             resource_name=handler_name,
             system=None,
+            context=context,
         ) as span:
             with tracer.start_span(
                 name="eventsourcing_helpers.deserialize_message",
