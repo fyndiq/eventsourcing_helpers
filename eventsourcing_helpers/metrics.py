@@ -39,15 +39,15 @@ except ModuleNotFoundError:  # pragma: no cover
     statsd = StatsdNullClient()  # pragma: no cover; # type: ignore
 
 
-def call_counter(base_metric):
+def call_counter(metric_name):
     def wrapped(f):
         @wraps(f)
         def decorator(*args, **kwargs):
-            statsd.increment(f"{base_metric}.total")
+            statsd.increment(f"{metric_name}.total")
             try:
                 return f(*args, **kwargs)
             except Exception:
-                statsd.increment(f"{base_metric}.error")
+                statsd.increment(f"{metric_name}.error")
                 raise
 
         return decorator
@@ -55,14 +55,14 @@ def call_counter(base_metric):
     return wrapped
 
 
-def timed(base_metric, tags=None):
+def timed(metric_name, tags=None):
     if tags is None:
         tags = []
 
     def wrapped(f):
         @wraps(f)
         def decorator(*args, **kwargs):
-            with statsd.timed(f"{base_metric}.time", tags=tags):
+            with statsd.timed(f"{metric_name}.time", tags=tags):
                 return f(*args, **kwargs)
 
         return decorator
