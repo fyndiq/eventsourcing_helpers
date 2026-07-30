@@ -39,7 +39,7 @@ class EventHandler(Handler):
 
         return None, None
 
-    def _can_handle_command(self, message: Message) -> bool:
+    def _can_handle_event(self, message: Message) -> bool:
         """
         Checks if the event is something we can handle.
 
@@ -65,7 +65,7 @@ class EventHandler(Handler):
         Args:
             message: Consumed message from the bus.
         """
-        if not self._can_handle_command(message):
+        if not self._can_handle_event(message):
             return
 
         event_class = message.value["class"]

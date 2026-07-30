@@ -27,7 +27,7 @@ class EventHandlerTests:
         self.handler_cls.handlers = {self.event_class: self.event_handler}
         self.handler = self.handler_cls(self.message_deserializer)
 
-    @patch(f"{module}.EventHandler._can_handle_command")
+    @patch(f"{module}.EventHandler._can_handle_event")
     def test_handle(self, mock_can_handle):
         """
         Test that correct methods are invoked when handling an event.
@@ -37,7 +37,7 @@ class EventHandlerTests:
         mock_can_handle.assert_called_once_with(self.message)
         self.event_handler.assert_called_once_with(self.event)
 
-    @patch(f"{module}.EventHandler._can_handle_command")
+    @patch(f"{module}.EventHandler._can_handle_event")
     def test_handle_with_class_key(self, mock_can_handle):
         """
         Test that correct methods are invoked when handling an event with class key.
@@ -55,18 +55,18 @@ class EventHandlerTests:
         mock_can_handle.assert_called_once_with(self.message)
         self.event_handler.assert_called_once_with(event)
 
-    def test_can_handle_command(self):
+    def test_can_handle_event(self):
         """
         Test that we only handle registered events.
         """
-        can_handle = self.handler._can_handle_command(self.message)
+        can_handle = self.handler._can_handle_event(self.message)
         assert can_handle is True
 
         self.message.value["class"] = "BarEvent"
-        can_handle = self.handler._can_handle_command(self.message)
+        can_handle = self.handler._can_handle_event(self.message)
         assert can_handle is False
 
-    def test_can_handle_command_with_class_key(self):
+    def test_can_handle_event_with_class_key(self):
         """
         Test that we can handle class keys in handlers dict.
         """
@@ -78,11 +78,11 @@ class EventHandlerTests:
         handler = handler_cls(self.message_deserializer)
 
         message = Mock(value={"class": "FooEvent", "data": {"id": 1}})
-        can_handle = handler._can_handle_command(message)
+        can_handle = handler._can_handle_event(message)
         assert can_handle is True
 
     @patch(f"{module}.tracer.start_span")
-    @patch(f"{module}.EventHandler._can_handle_command")
+    @patch(f"{module}.EventHandler._can_handle_event")
     def test_handle_adds_tracing(self, mock_can_handle, mock_start_span):
         mock_start_span.return_value.__enter__.return_value = Mock()
 
