@@ -77,8 +77,8 @@ class KafkaAvroBackend(MessageBusBackend):
                     logger.warning("Offset already committed")
                 else:
                     raise
-        end_time = time.time() - start_time
-        logger.debug(f"Message processed in {end_time:.5f}s")
+        elapsed = time.time() - start_time
+        logger.debug(f"Message processed in {elapsed:.5f}s")
 
     def produce(self, value: dict, key: str = None, topic: str = None, **kwargs) -> None:
         assert self.producer is not None, "Producer is not configured"
