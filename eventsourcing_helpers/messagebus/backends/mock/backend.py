@@ -7,7 +7,6 @@ from typing import Callable, Deque, Optional
 import structlog
 
 from eventsourcing_helpers.message import Message as MessageToKafka
-from eventsourcing_helpers.message.pydantic import PydanticMixin
 from eventsourcing_helpers.messagebus.backends import MessageBusBackend
 from eventsourcing_helpers.messagebus.backends.mock.utils import create_message
 from eventsourcing_helpers.serializers import to_message_from_dto
@@ -15,6 +14,17 @@ from eventsourcing_helpers.serializers import to_message_from_dto
 from confluent_kafka_helpers.message import Message as MessageFromKafka
 
 logger = structlog.get_logger(__name__)
+
+# pydantic is an optional extra, and importing PydanticMixin without it raises.
+# Without pydantic no value can be a PydanticMixin, so leaving it out of the
+# isinstance tuple is equivalent.
+SERIALIZABLE_DTOS: tuple[type, ...] = (MessageToKafka,)
+try:
+    from eventsourcing_helpers.message.pydantic import PydanticMixin
+except ImportError:
+    pass
+else:
+    SERIALIZABLE_DTOS += (PydanticMixin,)
 
 
 @dataclass
@@ -127,7 +137,7 @@ class MockBackend(MessageBusBackend):
         value_serializer: Callable = to_message_from_dto,
         **kwargs,
     ) -> None:
-        if isinstance(value, (MessageToKafka, PydanticMixin)):
+        if isinstance(value, SERIALIZABLE_DTOS):
             value = value_serializer(value)
         self.producer.add_message(dict(value=value, key=key, **kwargs))
 
