@@ -43,7 +43,7 @@ def from_message_to_dto(
     if deserialize_class:
         dto = deserialize_class(Meta=meta, **data)
     else:
-        message_cls = namedtuple(class_name, data.keys() | {"Meta"})
+        message_cls = namedtuple(class_name, ["Meta", *data.keys()])
         dto = message_factory(message_cls, is_new=is_new)(Meta=meta, **data)
 
     return dto
