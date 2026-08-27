@@ -142,7 +142,7 @@ class MockBackend(MessageBusBackend):
         self.producer.add_message(dict(value=value, key=key, **kwargs))
 
     def consume(self, handler: Callable) -> None:
-        stop_on_eof = self.config["consumer"].get("stop_on_eof", True)
+        stop_on_eof = self.config.get("consumer", {}).get("stop_on_eof", True)
         messages = self.consumer.get_messages()
         while True:
             if messages:
