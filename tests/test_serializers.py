@@ -18,11 +18,11 @@ class SerializerTests:
         Test that the message factory is invoked correctly when
         deserializing a message without a deserialize_class.
         """
-        message = Message({"class": "FooClass", "data": {"foo": "bar"}})
+        message = Message({"class": "FooClass", "data": {"foo": "bar", "bar": "baz"}})
         from_message_to_dto(message)
 
         assert mock_factory.call_args[0][0].__name__ == "FooClass"
-        assert mock_factory.call_args[0][0]._fields == ("Meta", "foo")
+        assert mock_factory.call_args[0][0]._fields == ("Meta", "foo", "bar")
 
     def test_from_message_to_dto_with_deserialize_class(self):
         """
