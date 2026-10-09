@@ -165,3 +165,16 @@ class MockBackendTests:
                 )
             ]
         )
+
+
+class MockBackendWithoutConsumerConfigTests:
+    """A backend config without a `consumer` key was valid before 2.3.0."""
+
+    def test_consume_defaults_to_stopping_on_eof(self):
+        backend = MockBackend(config={})
+        backend.consumer.add_message(key="a", value={"class": "a", "data": {}})
+        consumed = []
+
+        backend.consume(consumed.append)
+
+        assert len(consumed) == 1
