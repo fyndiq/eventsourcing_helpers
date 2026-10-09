@@ -7,7 +7,7 @@ from unittest.mock import MagicMock
 
 import structlog
 
-from eventsourcing_helpers.messagebus.backends import MessageBusBackend
+from eventsourcing_helpers.messagebus.backends import MessageBusBackend, is_message_handler
 
 from confluent_kafka_helpers.message import Message
 
@@ -81,6 +81,7 @@ class MockBackend(MessageBusBackend):
     def __init__(self, config: dict) -> None:
         self.consumer = Consumer()
         self.producer = Producer()
+        self.config = config
 
     def produce(self, value: dict, key: str = None, **kwargs) -> None:
         self.producer.add_message(dict(value=value, key=key, **kwargs))
@@ -89,3 +90,14 @@ class MockBackend(MessageBusBackend):
         messages = self.consumer.get_messages()
         while messages:
             handler(messages.popleft())
+
+    def consume_batches(self, handler: Callable) -> None:
+        batch_max_size = self.config.get("consumer", {}).get("batch_max_size", 100)
+        messages = self.consumer.get_messages()
+        while messages:
+            batch = [messages.popleft() for _ in range(min(batch_max_size, len(messages)))]
+            if is_message_handler(handler):
+                for message in batch:
+                    handler(message)
+            else:
+                handler(batch)
