@@ -2,6 +2,7 @@ import structlog
 
 from eventsourcing_helpers import metrics
 from eventsourcing_helpers.handler import Handler
+from eventsourcing_helpers.messagebus.backends.kafka.context import get_message_handler_span_links
 from eventsourcing_helpers.tracing import attrs, get_datadog_service_name, tracer
 from eventsourcing_helpers.utils import get_callable_representation
 
@@ -77,11 +78,14 @@ class EventHandler(Handler):
         # this is the first span from the applications perspective and will will act as the "service
         # entry" span
         service_name = get_datadog_service_name()
+        links = get_message_handler_span_links()
+        span_kwargs = {"links": links} if links else {}
         with tracer.start_span(
             name="eventsourcing_helpers.handle_event",
             service_name=service_name,
             resource_name=handler_name,
             system=None,
+            **span_kwargs,
         ) as span:
             with tracer.start_span(
                 name="eventsourcing_helpers.deserialize_message",

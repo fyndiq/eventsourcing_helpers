@@ -176,3 +176,21 @@ class CommandHandlerTests:
                 call().__exit__(None, None, None),
             ]
         )
+
+    @patch(f"{module}.get_message_handler_span_links", return_value=["link"])
+    @patch(f"{module}.tracer.start_span")
+    @patch(f"{module}.CommandHandler._can_handle_command")
+    def test_handle_links_span_to_current_message(
+        self, mock_can_handle, mock_start_span, mock_get_links
+    ):
+        mock_start_span.return_value.__enter__.return_value = Mock()
+
+        self.handler.handle(message)
+
+        mock_start_span.assert_any_call(
+            name="eventsourcing_helpers.handle_command",
+            service_name="unknown_service",
+            resource_name="command_handler",
+            system=None,
+            links=["link"],
+        )

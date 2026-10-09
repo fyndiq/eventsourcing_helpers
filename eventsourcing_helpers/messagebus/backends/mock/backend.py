@@ -7,7 +7,7 @@ from typing import Callable, Deque, Optional
 import structlog
 
 from eventsourcing_helpers.message import Message as MessageToKafka
-from eventsourcing_helpers.messagebus.backends import MessageBusBackend
+from eventsourcing_helpers.messagebus.backends import MessageBusBackend, is_message_handler
 from eventsourcing_helpers.messagebus.backends.mock.utils import create_message
 from eventsourcing_helpers.serializers import to_message_from_dto
 
@@ -147,6 +147,23 @@ class MockBackend(MessageBusBackend):
         while True:
             if messages:
                 handler(messages.popleft())
+            elif stop_on_eof:
+                break
+            else:
+                time.sleep(0.1)
+
+    def consume_batches(self, handler: Callable) -> None:
+        stop_on_eof = self.config.get("consumer", {}).get("stop_on_eof", True)
+        batch_max_size = self.config.get("consumer", {}).get("batch_max_size", 100)
+        messages = self.consumer.get_messages()
+        while True:
+            if messages:
+                batch = [messages.popleft() for _ in range(min(batch_max_size, len(messages)))]
+                if is_message_handler(handler):
+                    for message in batch:
+                        handler(message)
+                else:
+                    handler(batch)
             elif stop_on_eof:
                 break
             else:

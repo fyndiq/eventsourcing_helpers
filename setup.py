@@ -15,7 +15,7 @@ setup(
     install_requires=[
         "structlog>=17.2.0",
         "jsonpickle>=0.9.6",
-        "confluent-kafka-helpers>=1.0.0",
+        "confluent-kafka-helpers>=1.5.0",
     ],
     extras_require={
         "mongo": ["pymongo>=3.6.1"],
