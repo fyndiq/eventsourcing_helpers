@@ -1,5 +1,5 @@
 from functools import partial
-from unittest.mock import Mock
+from unittest.mock import Mock, call
 
 import pytest
 
@@ -69,14 +69,17 @@ class KafkaBackendTests:
     def test_handle_stores_offset_after_success_when_auto_commit_is_enabled(self):
         backend = self.backend()
         backend.offset_watchdog = None
-        handler = Mock()
+        parent = Mock()
         message = Mock(_raw=Mock())
         consumer = Mock(is_auto_commit=True)
-        consumer.store_offsets.side_effect = lambda **_: handler.assert_called_once_with(message)
+        consumer.store_offsets = parent.store_offsets
 
-        backend._handle(handler, message, consumer)
+        backend._handle(parent.handler, message, consumer)
 
-        consumer.store_offsets.assert_called_once_with(message=message._raw)
+        assert parent.mock_calls == [
+            call.handler(message),
+            call.store_offsets(message=message._raw),
+        ]
         consumer.commit.assert_not_called()
 
     def test_handle_commits_synchronously_when_auto_commit_is_disabled(self):
@@ -91,12 +94,13 @@ class KafkaBackendTests:
         consumer.commit.assert_called_once_with(asynchronous=False)
         consumer.store_offsets.assert_not_called()
 
-    def test_handle_does_not_advance_offset_when_handler_fails(self):
+    @pytest.mark.parametrize("is_auto_commit", [True, False])
+    def test_handle_does_not_advance_offset_when_handler_fails(self, is_auto_commit):
         backend = self.backend()
         backend.offset_watchdog = None
         handler = Mock(side_effect=RuntimeError("handler failed"))
         message = Mock(_raw=Mock())
-        consumer = Mock(is_auto_commit=True)
+        consumer = Mock(is_auto_commit=is_auto_commit)
 
         with pytest.raises(RuntimeError, match="handler failed"):
             backend._handle(handler, message, consumer)
