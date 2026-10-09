@@ -68,7 +68,10 @@ class KafkaAvroBackend(MessageBusBackend):
         if self._shall_handle(message):
             handler(message)
             self._set_handled(message)
-        if consumer.is_auto_commit is False:
+        if consumer.is_auto_commit:
+            # librdkafka requires its native message, not the helpers wrapper.
+            consumer.store_offsets(message=message._raw)
+        else:
             try:
                 consumer.commit(asynchronous=False)
             except KafkaException as e:
