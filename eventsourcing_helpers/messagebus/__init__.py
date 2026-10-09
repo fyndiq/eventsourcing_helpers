@@ -58,3 +58,9 @@ class MessageBus:
         Consume and handle messages indefinitely.
         """
         self.backend.consume(handler)
+
+    def consume_batches(self, handler: Callable):
+        """
+        Consume and handle message batches indefinitely.
+        """
+        self.backend.consume_batches(handler)
