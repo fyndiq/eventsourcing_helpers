@@ -6,12 +6,13 @@ import structlog
 from confluent_kafka import KafkaError, KafkaException
 
 from eventsourcing_helpers import metrics
-from eventsourcing_helpers.messagebus.backends import MessageBusBackend
+from eventsourcing_helpers.messagebus.backends import MessageBusBackend, is_message_handler
 from eventsourcing_helpers.messagebus.backends.kafka.config import (
     get_consumer_config,
     get_offset_watchdog_config,
     get_producer_config,
 )
+from eventsourcing_helpers.messagebus.backends.kafka.context import message_handler_context
 from eventsourcing_helpers.messagebus.backends.kafka.offset_watchdog import OffsetWatchdog
 from eventsourcing_helpers.serializers import to_message_from_dto
 
@@ -36,6 +37,7 @@ class KafkaAvroBackend(MessageBusBackend):
         self.consumer = None
         self.producer = None
         self.offset_watchdog = None
+        self.propagate_header_keys = []
 
         producer_config = get_producer_config(config)
         consumer_config = get_consumer_config(config)
@@ -45,6 +47,7 @@ class KafkaAvroBackend(MessageBusBackend):
             self.flush = producer_config.pop("flush", False)
             self.producer = producer(producer_config, value_serializer=value_serializer)
         if consumer_config:
+            self.propagate_header_keys = consumer_config.get("headers.propagate", [])
             self.consumer = partial(consumer, config=consumer_config)
         if offset_wd_config:
             self.offset_watchdog = OffsetWatchdog(offset_wd_config)
@@ -68,6 +71,11 @@ class KafkaAvroBackend(MessageBusBackend):
         if self._shall_handle(message):
             handler(message)
             self._set_handled(message)
+        self._commit(consumer)
+        end_time = time.time() - start_time
+        logger.debug(f"Message processed in {end_time:.5f}s")
+
+    def _commit(self, consumer: AvroConsumer) -> None:
         if consumer.is_auto_commit is False:
             try:
                 consumer.commit(asynchronous=False)
@@ -77,8 +85,26 @@ class KafkaAvroBackend(MessageBusBackend):
                     logger.warning("Offset already committed")
                 else:
                     raise
+
+    def _handle_batch(
+        self, handler: Callable, messages: list[Message], consumer: AvroConsumer
+    ) -> None:
+        start_time = time.time()
+        handled_messages = [message for message in messages if self._shall_handle(message)]
+        if handled_messages:
+            if is_message_handler(handler):
+                for message in handled_messages:
+                    with message_handler_context(message, self.propagate_header_keys):
+                        handler(message)
+            else:
+                handler(handled_messages)
+
+            for message in handled_messages:
+                self._set_handled(message)
+
+        self._commit(consumer)
         end_time = time.time() - start_time
-        logger.debug(f"Message processed in {end_time:.5f}s")
+        logger.debug(f"Batch processed in {end_time:.5f}s", batch_size=len(messages))
 
     def produce(self, value: dict, key: str = None, topic: str = None, **kwargs) -> None:
         assert self.producer is not None, "Producer is not configured"
@@ -106,3 +132,22 @@ class KafkaAvroBackend(MessageBusBackend):
         with Consumer() as consumer:
             for message in consumer:
                 self._handle(handler, message, consumer)
+
+    def consume_batches(self, handler: Callable) -> None:
+        """
+        Consume and handle message batches indefinitely.
+
+        If handling raises, offsets are not committed and Kafka can redeliver the batch.
+        Batch handlers receive ``list[Message]``. Existing EventHandler/CommandHandler
+        bound ``handle`` methods are called once per message, then committed once per batch.
+        """
+        assert callable(handler), "You must pass a message handler"
+        Consumer = self.get_consumer()
+        with Consumer() as consumer:
+            for messages in consumer.batches():
+                if not messages:
+                    continue
+                self._handle_batch(handler, messages, consumer)
+
+
+__all__ = ["KafkaAvroBackend", "message_handler_context"]

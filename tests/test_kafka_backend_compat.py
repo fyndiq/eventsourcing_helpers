@@ -28,6 +28,18 @@ class MockBackendTests:
         self.backend.consume(handler=handler)
         assert handler.call_count == 2
 
+    def test_consume_batches_pops_batch_max_size_messages(self):
+        backend = MockBackend(config={"consumer": {"batch_max_size": 2}})
+        backend.consumer.add_message(message_class="a", data={"b": "c"})
+        backend.consumer.add_message(message_class="d", data={"e": "f"})
+        backend.consumer.add_message(message_class="g", data={"h": "i"})
+        handler = Mock()
+
+        backend.consume_batches(handler=handler)
+
+        assert handler.call_count == 2
+        assert [len(call.args[0]) for call in handler.call_args_list] == [2, 1]
+
     @pytest.mark.parametrize("headers", [{"d": "e"}, None])
     def test_produced_assert_one_message_produced_with(self, headers):
         self.backend.produce(value="b", key="a", headers=headers)

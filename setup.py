@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="eventsourcing-helpers",
-    version="2.3.1",
+    version="2.4.0",
     description="Helpers for practicing the Event sourcing pattern",
     url="https://github.com/fyndiq/eventsourcing_helpers",
     author="Fyndiq AB",
@@ -15,7 +15,7 @@ setup(
     install_requires=[
         "structlog>=17.2.0",
         "jsonpickle>=0.9.6",
-        "confluent-kafka-helpers>=1.0.0",
+        "confluent-kafka-helpers>=1.5.0",
     ],
     extras_require={
         "mongo": ["pymongo>=3.6.1"],

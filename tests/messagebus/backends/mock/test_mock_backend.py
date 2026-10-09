@@ -38,6 +38,18 @@ class MockBackendTests:
         self.backend.consume(handler=handler)
         assert handler.call_count == 2
 
+    def test_consume_batches_pops_batch_max_size_messages(self):
+        backend = MockBackend(config={"consumer": {"batch_max_size": 2}})
+        backend.consumer.add_message(key="a", value={"class": "a", "data": {"b": "c"}})
+        backend.consumer.add_message(key="d", value={"class": "d", "data": {"f": "f"}})
+        backend.consumer.add_message(key="g", value={"class": "g", "data": {"h": "i"}})
+        handler = Mock()
+
+        backend.consume_batches(handler=handler)
+
+        assert handler.call_count == 2
+        assert [len(call.args[0]) for call in handler.call_args_list] == [2, 1]
+
     def test_consume_with_stop_on_eof_disabled_should_continue_when_no_messages(self):
         backend = MockBackend(config={"consumer": {"stop_on_eof": False}})
         handler = Mock()
