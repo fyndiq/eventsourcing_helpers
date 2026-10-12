@@ -7,7 +7,7 @@ from unittest.mock import MagicMock
 
 import structlog
 
-from eventsourcing_helpers.messagebus.backends import MessageBusBackend, is_message_handler
+from eventsourcing_helpers.messagebus.backends import MessageBusBackend
 
 from confluent_kafka_helpers.message import Message
 
@@ -97,10 +97,6 @@ class MockBackend(MessageBusBackend):
         while messages:
             batch_size = min(batch_max_size, len(messages))
             batch = [messages[index] for index in range(batch_size)]
-            if is_message_handler(handler):
-                for message in batch:
-                    handler(message)
-            else:
-                handler(batch)
+            handler(batch)
             for _ in range(batch_size):
                 messages.popleft()
