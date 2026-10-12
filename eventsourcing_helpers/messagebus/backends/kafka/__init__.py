@@ -6,7 +6,7 @@ import structlog
 from confluent_kafka import KafkaError, KafkaException
 
 from eventsourcing_helpers import metrics
-from eventsourcing_helpers.messagebus.backends import MessageBusBackend, is_message_handler
+from eventsourcing_helpers.messagebus.backends import MessageBusBackend
 from eventsourcing_helpers.messagebus.backends.kafka.config import (
     get_consumer_config,
     get_offset_watchdog_config,
@@ -37,7 +37,6 @@ class KafkaAvroBackend(MessageBusBackend):
         self.consumer = None
         self.producer = None
         self.offset_watchdog = None
-        self.propagate_header_keys = []
 
         producer_config = get_producer_config(config)
         consumer_config = get_consumer_config(config)
@@ -47,7 +46,6 @@ class KafkaAvroBackend(MessageBusBackend):
             self.flush = producer_config.pop("flush", False)
             self.producer = producer(producer_config, value_serializer=value_serializer)
         if consumer_config:
-            self.propagate_header_keys = consumer_config.get("headers.propagate", [])
             self.consumer = partial(consumer, config=consumer_config)
         if offset_wd_config:
             self.offset_watchdog = OffsetWatchdog(offset_wd_config)
@@ -78,7 +76,6 @@ class KafkaAvroBackend(MessageBusBackend):
     def _commit(self, consumer: AvroConsumer, messages: list[Message]) -> None:
         if consumer.is_auto_commit:
             for message in messages:
-                # librdkafka requires its native message, not the helpers wrapper.
                 consumer.store_offsets(message=message._raw)
         else:
             try:
@@ -100,12 +97,7 @@ class KafkaAvroBackend(MessageBusBackend):
         start_time = time.time()
         messages_to_handle = [message for message in messages if self._shall_handle(message)]
         if messages_to_handle:
-            if is_message_handler(handler):
-                for message in messages_to_handle:
-                    with message_handler_context(message, self.propagate_header_keys):
-                        handler(message)
-            else:
-                handler(messages_to_handle)
+            handler(messages_to_handle)
 
             for message in messages_to_handle:
                 self._set_handled(message)
@@ -147,8 +139,7 @@ class KafkaAvroBackend(MessageBusBackend):
 
         If handling raises, offsets are not committed or stored and Kafka can
         redeliver the whole batch.
-        Batch handlers receive ``list[Message]``. Existing EventHandler/CommandHandler
-        bound ``handle`` methods are called once per message, then committed once per batch.
+        The handler receives ``list[Message]``.
         """
         assert callable(handler), "You must pass a message handler"
         Consumer = self.get_consumer()

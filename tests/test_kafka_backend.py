@@ -3,10 +3,7 @@ from unittest.mock import Mock, call
 
 import pytest
 
-from eventsourcing_helpers.handler import Handler
 from eventsourcing_helpers.messagebus.backends.kafka import KafkaAvroBackend
-
-from confluent_kafka_helpers.context import get_propagated_headers
 
 
 def create_message(offset, headers=None):
@@ -61,18 +58,6 @@ def make_batch_consumer(batches, is_auto_commit=False, commit=None, store_offset
             self.batch_values = batches
 
     return BatchConsumerMock
-
-
-class RecordingHandler(Handler):
-    handlers = {"message": Mock()}
-
-    def __init__(self):
-        self.handled = []
-        self.propagated_headers = []
-
-    def handle(self, message):
-        self.handled.append(message)
-        self.propagated_headers.append(get_propagated_headers())
 
 
 class KafkaBackendTests:
@@ -274,24 +259,4 @@ class KafkaBackendTests:
         backend.offset_watchdog.set_seen.assert_any_call(messages[0])
         backend.offset_watchdog.set_seen.assert_any_call(messages[2])
         assert backend.offset_watchdog.set_seen.call_count == 2
-        self.consumer.last_instance.commit.assert_called_once_with(asynchronous=False)
-
-    def test_consume_batches_calls_per_message_handlers_with_message_headers(self):
-        messages = [
-            create_message(offset=1, headers={"x-request-id": "one", "other": "ignored"}),
-            create_message(offset=2, headers={"x-request-id": "two"}),
-        ]
-        self.config["consumer"]["headers.propagate"] = ["x-request-id"]
-        self.consumer = make_batch_consumer([messages])
-        backend = self._backend_with_consumer(self.consumer)
-        handler = RecordingHandler()
-
-        backend.consume_batches(handler=handler.handle)
-
-        assert handler.handled == messages
-        assert handler.propagated_headers == [
-            {"x-request-id": "one"},
-            {"x-request-id": "two"},
-        ]
-        assert get_propagated_headers() == {}
         self.consumer.last_instance.commit.assert_called_once_with(asynchronous=False)
