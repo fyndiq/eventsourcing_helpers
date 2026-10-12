@@ -71,23 +71,16 @@ class KafkaAvroBackend(MessageBusBackend):
         if self._shall_handle(message):
             handler(message)
             self._set_handled(message)
-        if consumer.is_auto_commit:
-            # librdkafka requires its native message, not the helpers wrapper.
-            consumer.store_offsets(message=message._raw)
-        else:
-            try:
-                consumer.commit(asynchronous=False)
-            except KafkaException as e:
-                error_code = e.args[0].code()
-                if error_code == KafkaError._NO_OFFSET:  # type: ignore[attr-defined]
-                    logger.warning("Offset already committed")
-                else:
-                    raise
+        self._commit(consumer, [message])
         end_time = time.time() - start_time
         logger.debug(f"Message processed in {end_time:.5f}s")
 
-    def _commit(self, consumer: AvroConsumer) -> None:
-        if consumer.is_auto_commit is False:
+    def _commit(self, consumer: AvroConsumer, messages: list[Message]) -> None:
+        if consumer.is_auto_commit:
+            for message in messages:
+                # librdkafka requires its native message, not the helpers wrapper.
+                consumer.store_offsets(message=message._raw)
+        else:
             try:
                 consumer.commit(asynchronous=False)
             except KafkaException as e:
@@ -100,20 +93,24 @@ class KafkaAvroBackend(MessageBusBackend):
     def _handle_batch(
         self, handler: Callable, messages: list[Message], consumer: AvroConsumer
     ) -> None:
+        """
+        If the handler raises, nothing is committed or stored and Kafka redelivers
+        the whole batch, so handlers must be idempotent.
+        """
         start_time = time.time()
-        handled_messages = [message for message in messages if self._shall_handle(message)]
-        if handled_messages:
+        messages_to_handle = [message for message in messages if self._shall_handle(message)]
+        if messages_to_handle:
             if is_message_handler(handler):
-                for message in handled_messages:
+                for message in messages_to_handle:
                     with message_handler_context(message, self.propagate_header_keys):
                         handler(message)
             else:
-                handler(handled_messages)
+                handler(messages_to_handle)
 
-            for message in handled_messages:
+            for message in messages_to_handle:
                 self._set_handled(message)
 
-        self._commit(consumer)
+        self._commit(consumer, messages)
         end_time = time.time() - start_time
         logger.debug(f"Batch processed in {end_time:.5f}s", batch_size=len(messages))
 
@@ -148,7 +145,8 @@ class KafkaAvroBackend(MessageBusBackend):
         """
         Consume and handle message batches indefinitely.
 
-        If handling raises, offsets are not committed and Kafka can redeliver the batch.
+        If handling raises, offsets are not committed or stored and Kafka can
+        redeliver the whole batch.
         Batch handlers receive ``list[Message]``. Existing EventHandler/CommandHandler
         bound ``handle`` methods are called once per message, then committed once per batch.
         """

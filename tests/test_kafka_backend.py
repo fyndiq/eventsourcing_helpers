@@ -11,6 +11,7 @@ from confluent_kafka_helpers.context import get_propagated_headers
 
 def create_message(offset, headers=None):
     message = Mock()
+    message._raw = Mock()
     message._meta = Mock()
     message._meta.offset = offset
     message._meta.partition = 0
@@ -27,6 +28,7 @@ class AvroConsumerMock:
         self.config = config
         self.is_auto_commit = False
         self.commit = Mock()
+        self.store_offsets = Mock()
         self.messages = iter([message, message])
         self.batch_values = []
         type(self).last_instance = self
@@ -47,11 +49,15 @@ class AvroConsumerMock:
         pass
 
 
-def make_batch_consumer(batches, is_auto_commit=False):
+def make_batch_consumer(batches, is_auto_commit=False, commit=None, store_offsets=None):
     class BatchConsumerMock(AvroConsumerMock):
         def __init__(self, config):
             super().__init__(config=config)
             self.is_auto_commit = is_auto_commit
+            if commit:
+                self.commit = commit
+            if store_offsets:
+                self.store_offsets = store_offsets
             self.batch_values = batches
 
     return BatchConsumerMock
@@ -188,6 +194,37 @@ class KafkaBackendTests:
         assert handler.call_args_list == [call(batches[0]), call(batches[1])]
         assert self.consumer.last_instance.commit.call_count == 2
 
+    def test_consume_batches_stores_batch_offsets_after_handler_succeeds_with_auto_commit(self):
+        messages = [create_message(offset=1), create_message(offset=2)]
+        parent = Mock()
+        self.consumer = make_batch_consumer(
+            [messages], is_auto_commit=True, store_offsets=parent.store_offsets
+        )
+        backend = self._backend_with_consumer(self.consumer)
+
+        backend.consume_batches(handler=parent.handler)
+
+        assert parent.mock_calls == [
+            call.handler(messages),
+            call.store_offsets(message=messages[0]._raw),
+            call.store_offsets(message=messages[1]._raw),
+        ]
+        self.consumer.last_instance.commit.assert_not_called()
+
+    def test_consume_batches_commits_after_handler_succeeds_with_manual_commit(self):
+        messages = [create_message(offset=1), create_message(offset=2)]
+        parent = Mock()
+        self.consumer = make_batch_consumer([messages], commit=parent.commit)
+        backend = self._backend_with_consumer(self.consumer)
+
+        backend.consume_batches(handler=parent.handler)
+
+        assert parent.mock_calls == [
+            call.handler(messages),
+            call.commit(asynchronous=False),
+        ]
+        self.consumer.last_instance.store_offsets.assert_not_called()
+
     def test_consume_batches_skips_empty_batches(self):
         batches = [[], [create_message(offset=1)]]
         self.consumer = make_batch_consumer(batches)
@@ -207,6 +244,20 @@ class KafkaBackendTests:
         with pytest.raises(RuntimeError):
             backend.consume_batches(handler=handler)
 
+        self.consumer.last_instance.commit.assert_not_called()
+
+    @pytest.mark.parametrize("is_auto_commit", [True, False])
+    def test_consume_batches_does_not_advance_offsets_when_handler_fails(self, is_auto_commit):
+        self.consumer = make_batch_consumer(
+            [[create_message(offset=1)]], is_auto_commit=is_auto_commit
+        )
+        backend = self._backend_with_consumer(self.consumer)
+        handler = Mock(side_effect=RuntimeError("boom"))
+
+        with pytest.raises(RuntimeError, match="boom"):
+            backend.consume_batches(handler=handler)
+
+        self.consumer.last_instance.store_offsets.assert_not_called()
         self.consumer.last_instance.commit.assert_not_called()
 
     def test_consume_batches_skips_messages_seen_by_watchdog(self):
