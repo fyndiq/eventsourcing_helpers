@@ -37,19 +37,7 @@ Kafka batch size and wait time come from the consumer config keys supported by
 }
 ```
 
-The handler receives `list[Message]`. It can opt in to per-message propagated
-headers and handler-span links:
-
-```python
-from eventsourcing_helpers.messagebus.backends.kafka import message_handler_context
-
-
-def handle_batch(messages):
-    for message in messages:
-        with message_handler_context(message, propagate_header_keys=["x-request-id"]):
-            handle_one(message)
-```
-
+The handler receives `list[Message]`.
 If handling raises, the batch is not committed and the exception propagates.
 Kafka may redeliver any message in that batch, so batch handlers must be
 idempotent. The whole batch must finish before `max.poll.interval.ms`, and

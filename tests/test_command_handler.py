@@ -177,7 +177,6 @@ class CommandHandlerTests:
             ]
         )
 
-    @patch(f"{module}.get_message_handler_span_links", return_value=["link"])
     @patch(f"{module}.tracer.start_span")
     @patch(f"{module}.CommandHandler._can_handle_command")
     def test_handle_links_span_to_current_message(
