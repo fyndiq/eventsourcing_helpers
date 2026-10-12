@@ -158,12 +158,15 @@ class MockBackend(MessageBusBackend):
         messages = self.consumer.get_messages()
         while True:
             if messages:
-                batch = [messages.popleft() for _ in range(min(batch_max_size, len(messages)))]
+                batch_size = min(batch_max_size, len(messages))
+                batch = [messages[index] for index in range(batch_size)]
                 if is_message_handler(handler):
                     for message in batch:
                         handler(message)
                 else:
                     handler(batch)
+                for _ in range(batch_size):
+                    messages.popleft()
             elif stop_on_eof:
                 break
             else:

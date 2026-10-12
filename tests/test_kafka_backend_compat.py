@@ -40,6 +40,18 @@ class MockBackendTests:
         assert handler.call_count == 2
         assert [len(call.args[0]) for call in handler.call_args_list] == [2, 1]
 
+    def test_consume_batches_keeps_batch_messages_when_handler_raises(self):
+        backend = MockBackend(config={"consumer": {"batch_max_size": 2}})
+        backend.consumer.add_message(message_class="a", data={"b": "c"})
+        backend.consumer.add_message(message_class="d", data={"e": "f"})
+        messages = list(backend.consumer.get_messages())
+        handler = Mock(side_effect=RuntimeError("boom"))
+
+        with pytest.raises(RuntimeError, match="boom"):
+            backend.consume_batches(handler=handler)
+
+        assert list(backend.consumer.get_messages()) == messages
+
     @pytest.mark.parametrize("headers", [{"d": "e"}, None])
     def test_produced_assert_one_message_produced_with(self, headers):
         self.backend.produce(value="b", key="a", headers=headers)
