@@ -37,11 +37,7 @@ Kafka batch size and wait time come from the consumer config keys supported by
 }
 ```
 
-Existing `EventHandler` and `CommandHandler` instances can be used with
-`consume_batches`; each message is handled individually, then the backend commits
-once for the whole batch.
-
-Batch handlers that receive `list[Message]` can opt in to per-message propagated
+The handler receives `list[Message]`. It can opt in to per-message propagated
 headers and handler-span links:
 
 ```python
