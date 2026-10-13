@@ -1,6 +1,12 @@
 from unittest.mock import MagicMock, Mock, call, patch
 
+import pytest
+from opentelemetry import trace
+from opentelemetry.trace import Span, StatusCode
+
 from eventsourcing_helpers.event_handler import EventHandler
+
+from confluent_kafka_helpers.tracing import OpenTelemetryBackend
 
 module = "eventsourcing_helpers.event_handler"
 
@@ -88,23 +94,54 @@ class EventHandlerTests:
 
         self.handler.handle(self.message)
 
-        mock_start_span.assert_has_calls(
-            [
-                call(
-                    name="eventsourcing_helpers.handle_event",
-                    service_name="unknown_service",
-                    resource_name="event_handler",
-                    system=None,
-                ),
-                call().__enter__(),
-                call(
-                    name="eventsourcing_helpers.deserialize_message",
-                    service_name="unknown_service",
-                    system=None,
-                ),
-                call().__enter__(),
-                call().__exit__(None, None, None),
-                call().__enter__().set_attribute("messaging.operation.type", "process"),
-                call().__exit__(None, None, None),
-            ]
+        assert mock_start_span.mock_calls == [
+            call(
+                name="eventsourcing_helpers.handle_event",
+                service_name="unknown_service",
+                resource_name="event_handler",
+                system=None,
+            ),
+            call().__enter__(),
+            call().__enter__().set_attribute("messaging.operation.type", "process"),
+            call().__exit__(None, None, None),
+        ]
+
+    @pytest.mark.parametrize("deserialize_fails", [False, True])
+    def test_deserialization_uses_handler_span(self, deserialize_fails):
+        span = Mock(spec=Span)
+        span.is_recording.return_value = True
+        otel_tracer = Mock()
+        otel_tracer.start_span.return_value = span
+        backend = OpenTelemetryBackend("test", tracer=Mock(return_value=otel_tracer))
+        error = ValueError("Invalid event")
+
+        def deserialize(message, deserialize_class):
+            assert trace.get_current_span() is span
+            if deserialize_fails:
+                raise error
+            return self.event
+
+        def handle(event):
+            assert trace.get_current_span() is span
+
+        self.message_deserializer.side_effect = deserialize
+        self.event_handler.side_effect = handle
+
+        with patch(f"{module}.tracer", backend):
+            if deserialize_fails:
+                with pytest.raises(ValueError) as exc_info:
+                    self.handler.handle(self.message)
+                assert exc_info.value is error
+                self.event_handler.assert_not_called()
+                span.record_exception.assert_called_once_with(error)
+                assert span.set_status.call_args.args[0].status_code is StatusCode.ERROR
+            else:
+                self.handler.handle(self.message)
+                self.event_handler.assert_called_once_with(self.event)
+                span.record_exception.assert_not_called()
+
+        self.message_deserializer.assert_called_once_with(self.message, deserialize_class=None)
+        otel_tracer.start_span.assert_called_once_with(
+            "eventsourcing_helpers.handle_event", kind=trace.SpanKind.INTERNAL
         )
+        span.end.assert_called_once_with()
