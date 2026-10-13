@@ -83,12 +83,7 @@ class EventHandler(Handler):
             resource_name=handler_name,
             system=None,
         ) as span:
-            with tracer.start_span(
-                name="eventsourcing_helpers.deserialize_message",
-                service_name=service_name,
-                system=None,
-            ):
-                event = self.message_deserializer(message, deserialize_class=deserialize_class)
+            event = self.message_deserializer(message, deserialize_class=deserialize_class)
 
             span.set_attribute(
                 attrs.MESSAGING_OPERATION_TYPE,

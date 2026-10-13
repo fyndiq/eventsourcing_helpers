@@ -84,12 +84,7 @@ class CommandHandler(Handler):
             resource_name=handler_name,
             system=None,
         ) as span:
-            with tracer.start_span(
-                name="eventsourcing_helpers.deserialize_message",
-                service_name=service_name,
-                system=None,
-            ):
-                command = self.message_deserializer(message)
+            command = self.message_deserializer(message)
 
             span.set_attribute(
                 attrs.MESSAGING_OPERATION_TYPE,
