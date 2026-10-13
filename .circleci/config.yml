@@ -14,10 +14,10 @@ jobs:
           command: pip install '.[mongo,redis,cnamedtuple]'
       - run:
           name: Run lint
-          command: make lint
+          command: ./scripts/lint.sh
       - run:
           name: Run unit tests
-          command: make unit-test
+          command: ./scripts/unit-test.sh
       - store_test_results:
           path: /tmp/test-results
 
