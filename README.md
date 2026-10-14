@@ -11,3 +11,24 @@ A Python library for practicing the event sourcing pattern using DDD.
 
     pip install .
     pip install -r requirements.txt
+
+## Kafka offset commits
+
+The Kafka backend marks a message as consumed only after its handler returns. How depends on
+`enable.auto.commit` in the consumer config:
+
+- `False` (default): the offset is committed synchronously after each handled message.
+- `True`: the offset is stored with `store_offsets()` after each handled message, and librdkafka
+  commits stored offsets in the background. **You must also set
+  `"enable.auto.offset.store": False`.** Otherwise librdkafka stores each offset as soon as the
+  message is polled, before the handler runs, so a crash or shutdown can commit messages that
+  were never handled.
+
+```python
+"backend_config": {
+    "consumer": {
+        "enable.auto.commit": True,
+        "enable.auto.offset.store": False,
+    },
+}
+```
