@@ -1,3 +1,6 @@
+from typing import Callable
+
+
 class MessageBusBackend:
     """
     Message bus interface.
@@ -7,4 +10,7 @@ class MessageBusBackend:
         raise NotImplementedError()
 
     def get_consumer(self):
+        raise NotImplementedError()
+
+    def consume_batches(self, handler: Callable) -> None:
         raise NotImplementedError()
