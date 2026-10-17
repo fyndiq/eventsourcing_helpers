@@ -92,7 +92,6 @@ class KafkaAvroBackend(MessageBusBackend):
                 break
             except BufferError:
                 self.producer.poll(timeout=0.5)
-            continue
 
         self.producer.poll(0)
 
