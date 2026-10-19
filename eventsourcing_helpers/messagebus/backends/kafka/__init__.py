@@ -72,12 +72,9 @@ class KafkaAvroBackend(MessageBusBackend):
     @metrics.timed("eventsourcing_helpers.messagebus.kafka.handle.time")
     def _handle(self, handler: Callable, message: Message, consumer: AvroConsumer) -> None:
         start_time = time.time()
-        handled = False
         if self._shall_handle(message):
             handler(message)
             self._set_handled(message)
-            handled = True
-        if handled:
             self._flush_producer()
         if consumer.is_auto_commit:
             # librdkafka requires its native message, not the helpers wrapper.
