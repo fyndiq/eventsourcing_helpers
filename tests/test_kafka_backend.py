@@ -60,6 +60,17 @@ class KafkaBackendTests:
             self.config["producer"], value_serializer=self.value_serializer
         )
 
+    def test_init_disables_flush_before_offset_store_by_default(self):
+        backend = self.backend()
+
+        assert backend.flush_producer_before_offset_store is False
+
+    def test_init_reads_flush_before_offset_store_config(self):
+        self.config["flush_producer_before_offset_store"] = True
+        backend = self.backend()
+
+        assert backend.flush_producer_before_offset_store is True
+
     def test_consume(self):
         backend = self.backend()
         handler = Mock()
@@ -81,6 +92,72 @@ class KafkaBackendTests:
             call.store_offsets(message=message._raw),
         ]
         consumer.commit.assert_not_called()
+
+    def test_handle_flushes_producer_before_storing_offset_when_enabled(self):
+        backend = self.backend()
+        backend.offset_watchdog = None
+        backend.flush_producer_before_offset_store = True
+        backend.producer = Mock()
+        parent = Mock()
+        parent.attach_mock(backend.producer.flush, "flush")
+        message = Mock(_raw=Mock())
+        consumer = Mock(is_auto_commit=True)
+        consumer.store_offsets = parent.store_offsets
+
+        backend._handle(parent.handler, message, consumer)
+
+        assert parent.mock_calls == [
+            call.handler(message),
+            call.flush(),
+            call.store_offsets(message=message._raw),
+        ]
+        consumer.commit.assert_not_called()
+
+    def test_handle_flushes_producer_before_committing_offset_when_enabled(self):
+        backend = self.backend()
+        backend.offset_watchdog = None
+        backend.flush_producer_before_offset_store = True
+        backend.producer = Mock()
+        parent = Mock()
+        parent.attach_mock(backend.producer.flush, "flush")
+        parent.attach_mock(parent.consumer.commit, "commit")
+        message = Mock(_raw=Mock())
+        consumer = parent.consumer
+        consumer.is_auto_commit = False
+
+        backend._handle(parent.handler, message, consumer)
+
+        assert parent.mock_calls == [
+            call.handler(message),
+            call.flush(),
+            call.commit(asynchronous=False),
+        ]
+        consumer.store_offsets.assert_not_called()
+
+    def test_handle_does_not_flush_before_storing_offset_when_disabled(self):
+        backend = self.backend()
+        backend.offset_watchdog = None
+        backend.flush_producer_before_offset_store = False
+        backend.producer = Mock()
+        message = Mock(_raw=Mock())
+        consumer = Mock(is_auto_commit=True)
+
+        backend._handle(Mock(), message, consumer)
+
+        backend.producer.flush.assert_not_called()
+        consumer.store_offsets.assert_called_once_with(message=message._raw)
+
+    def test_handle_does_not_flush_before_storing_offset_without_producer(self):
+        backend = self.backend()
+        backend.offset_watchdog = None
+        backend.flush_producer_before_offset_store = True
+        backend.producer = None
+        message = Mock(_raw=Mock())
+        consumer = Mock(is_auto_commit=True)
+
+        backend._handle(Mock(), message, consumer)
+
+        consumer.store_offsets.assert_called_once_with(message=message._raw)
 
     def test_handle_commits_synchronously_when_auto_commit_is_disabled(self):
         backend = self.backend()
@@ -105,6 +182,23 @@ class KafkaBackendTests:
         with pytest.raises(RuntimeError, match="handler failed"):
             backend._handle(handler, message, consumer)
 
+        consumer.store_offsets.assert_not_called()
+        consumer.commit.assert_not_called()
+
+    @pytest.mark.parametrize("is_auto_commit", [True, False])
+    def test_handle_does_not_flush_when_handler_fails(self, is_auto_commit):
+        backend = self.backend()
+        backend.offset_watchdog = None
+        backend.flush_producer_before_offset_store = True
+        backend.producer = Mock()
+        handler = Mock(side_effect=RuntimeError("handler failed"))
+        message = Mock(_raw=Mock())
+        consumer = Mock(is_auto_commit=is_auto_commit)
+
+        with pytest.raises(RuntimeError, match="handler failed"):
+            backend._handle(handler, message, consumer)
+
+        backend.producer.flush.assert_not_called()
         consumer.store_offsets.assert_not_called()
         consumer.commit.assert_not_called()
 

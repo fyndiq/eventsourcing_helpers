@@ -36,6 +36,9 @@ class KafkaAvroBackend(MessageBusBackend):
         self.consumer = None
         self.producer = None
         self.offset_watchdog = None
+        self.flush_producer_before_offset_store = config.get(
+            "flush_producer_before_offset_store", False
+        )
 
         producer_config = get_producer_config(config)
         consumer_config = get_consumer_config(config)
@@ -61,13 +64,21 @@ class KafkaAvroBackend(MessageBusBackend):
             except Exception:
                 logger.exception("Failed to set offset, but will continue")
 
+    def _flush_producer(self) -> None:
+        if self.flush_producer_before_offset_store and self.producer:
+            self.producer.flush()
+
     @metrics.call_counter("eventsourcing_helpers.messagebus.kafka.handle.count")
     @metrics.timed("eventsourcing_helpers.messagebus.kafka.handle.time")
     def _handle(self, handler: Callable, message: Message, consumer: AvroConsumer) -> None:
         start_time = time.time()
+        handled = False
         if self._shall_handle(message):
             handler(message)
             self._set_handled(message)
+            handled = True
+        if handled:
+            self._flush_producer()
         if consumer.is_auto_commit:
             # librdkafka requires its native message, not the helpers wrapper.
             consumer.store_offsets(message=message._raw)
