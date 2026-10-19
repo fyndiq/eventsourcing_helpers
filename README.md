@@ -11,3 +11,35 @@ A Python library for practicing the event sourcing pattern using DDD.
 
     pip install .
     pip install -r requirements.txt
+
+## Batch consumption
+
+`consume_batches(handler)` is available on `KafkaAvroBackend`, `MessageBus`, and
+`eventsourcing_helpers.consumer.Consumer`.
+
+```python
+def handle_batch(messages):
+    bulk_write([message.value for message in messages])
+
+
+messagebus.consume_batches(handle_batch)
+```
+
+Kafka batch size and wait time come from the consumer config keys supported by
+`confluent-kafka-helpers>=1.5.0`:
+
+```python
+{
+    "consumer": {
+        "batch_max_size": 100,  # default
+        "batch_max_wait": 1.0,  # seconds, default
+    }
+}
+```
+
+The handler receives `list[Message]`.
+If handling raises, the batch is not committed and the exception propagates.
+Kafka may redeliver any message in that batch, so batch handlers must be
+idempotent. The whole batch must finish before `max.poll.interval.ms`, and
+OpenTelemetry keeps at most 128 span links by default; raise
+`OTEL_SPAN_LINK_COUNT_LIMIT` if `batch_max_size` is higher than that.

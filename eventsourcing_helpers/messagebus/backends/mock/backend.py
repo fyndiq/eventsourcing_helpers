@@ -151,3 +151,19 @@ class MockBackend(MessageBusBackend):
                 break
             else:
                 time.sleep(0.1)
+
+    def consume_batches(self, handler: Callable) -> None:
+        stop_on_eof = self.config.get("consumer", {}).get("stop_on_eof", True)
+        batch_max_size = self.config.get("consumer", {}).get("batch_max_size", 100)
+        messages = self.consumer.get_messages()
+        while True:
+            if messages:
+                batch_size = min(batch_max_size, len(messages))
+                batch = [messages[index] for index in range(batch_size)]
+                handler(batch)
+                for _ in range(batch_size):
+                    messages.popleft()
+            elif stop_on_eof:
+                break
+            else:
+                time.sleep(0.1)

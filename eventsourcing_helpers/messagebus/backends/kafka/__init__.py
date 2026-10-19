@@ -68,9 +68,14 @@ class KafkaAvroBackend(MessageBusBackend):
         if self._shall_handle(message):
             handler(message)
             self._set_handled(message)
+        self._commit(consumer, [message])
+        end_time = time.time() - start_time
+        logger.debug(f"Message processed in {end_time:.5f}s")
+
+    def _commit(self, consumer: AvroConsumer, messages: list[Message]) -> None:
         if consumer.is_auto_commit:
-            # librdkafka requires its native message, not the helpers wrapper.
-            consumer.store_offsets(message=message._raw)
+            for message in messages:
+                consumer.store_offsets(message=message._raw)
         else:
             try:
                 consumer.commit(asynchronous=False)
@@ -80,8 +85,25 @@ class KafkaAvroBackend(MessageBusBackend):
                     logger.warning("Offset already committed")
                 else:
                     raise
+
+    def _handle_batch(
+        self, handler: Callable, messages: list[Message], consumer: AvroConsumer
+    ) -> None:
+        """
+        If the handler raises, nothing is committed or stored and Kafka redelivers
+        the whole batch, so handlers must be idempotent.
+        """
+        start_time = time.time()
+        messages_to_handle = [message for message in messages if self._shall_handle(message)]
+        if messages_to_handle:
+            handler(messages_to_handle)
+
+            for message in messages_to_handle:
+                self._set_handled(message)
+
+        self._commit(consumer, messages)
         end_time = time.time() - start_time
-        logger.debug(f"Message processed in {end_time:.5f}s")
+        logger.debug(f"Batch processed in {end_time:.5f}s", batch_size=len(messages))
 
     def produce(self, value: dict, key: str = None, topic: str = None, **kwargs) -> None:
         assert self.producer is not None, "Producer is not configured"
@@ -109,3 +131,22 @@ class KafkaAvroBackend(MessageBusBackend):
         with Consumer() as consumer:
             for message in consumer:
                 self._handle(handler, message, consumer)
+
+    def consume_batches(self, handler: Callable) -> None:
+        """
+        Consume and handle message batches indefinitely.
+
+        If handling raises, offsets are not committed or stored and Kafka can
+        redeliver the whole batch.
+        The handler receives ``list[Message]``.
+        """
+        assert callable(handler), "You must pass a message handler"
+        Consumer = self.get_consumer()
+        with Consumer() as consumer:
+            for messages in consumer.batches():
+                if not messages:
+                    continue
+                self._handle_batch(handler, messages, consumer)
+
+
+__all__ = ["KafkaAvroBackend"]

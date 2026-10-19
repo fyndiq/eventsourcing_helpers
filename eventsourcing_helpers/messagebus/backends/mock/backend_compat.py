@@ -81,6 +81,7 @@ class MockBackend(MessageBusBackend):
     def __init__(self, config: dict) -> None:
         self.consumer = Consumer()
         self.producer = Producer()
+        self.config = config
 
     def produce(self, value: dict, key: str = None, **kwargs) -> None:
         self.producer.add_message(dict(value=value, key=key, **kwargs))
@@ -89,3 +90,13 @@ class MockBackend(MessageBusBackend):
         messages = self.consumer.get_messages()
         while messages:
             handler(messages.popleft())
+
+    def consume_batches(self, handler: Callable) -> None:
+        batch_max_size = self.config.get("consumer", {}).get("batch_max_size", 100)
+        messages = self.consumer.get_messages()
+        while messages:
+            batch_size = min(batch_max_size, len(messages))
+            batch = [messages[index] for index in range(batch_size)]
+            handler(batch)
+            for _ in range(batch_size):
+                messages.popleft()
