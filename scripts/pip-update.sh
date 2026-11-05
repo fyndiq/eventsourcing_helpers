@@ -1,2 +1,4 @@
 #!/usr/bin/env sh
-pip-compile --allow-unsafe --resolver=backtracking -U requirements.in --output-file requirements.txt
+set -eu
+uv lock --upgrade
+uv sync --locked --all-extras

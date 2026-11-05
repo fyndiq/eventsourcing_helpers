@@ -1,6 +1,3 @@
 #!/usr/bin/env sh
-set -e
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-pip install -e '.[mongo,redis,cnamedtuple,pydantic]'
+set -eu
+uv sync --locked --all-extras
