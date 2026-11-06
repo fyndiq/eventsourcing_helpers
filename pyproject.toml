@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "eventsourcing-helpers"
-version = "2.4.1"
+version = "2.4.2"
 description = "Helpers for practicing the Event sourcing pattern"
 requires-python = ">=3.11"
 authors = [{name = "Fyndiq AB", email = "support@fyndiq.com"}]
