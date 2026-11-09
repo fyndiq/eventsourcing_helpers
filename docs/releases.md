@@ -62,6 +62,65 @@ Both registries serve the same distribution bytes for each new release. Pin a
 version with `eventsourcing-helpers==<version>` when reproducibility is required.
 To install a prerelease, specify its exact version in that requirement.
 
+### uv projects using qlty
+
+The `uv pip install --index` command above gives qlty priority but permits fallback
+to public PyPI when a package is absent. For a uv project that must resolve both
+`eventsourcing-helpers` and its transitive dependency `confluent-kafka-helpers`
+only from qlty, merge this configuration into the consuming project's root
+`pyproject.toml`. Preserve its other dependencies and uv settings. If `qlty` is
+already defined, reuse it without changing its `explicit` or `default` settings;
+other private dependencies may rely on them:
+
+```toml
+[project]
+dependencies = ["eventsourcing-helpers>=2.4.2,<3"]
+
+[tool.uv]
+keyring-provider = "subprocess"
+constraint-dependencies = ["confluent-kafka-helpers>=1.0.0"]
+
+[[tool.uv.index]]
+name = "qlty"
+url = "https://oauth2accesstoken@europe-north1-python.pkg.dev/fyndiq/qlty/simple/"
+explicit = true
+
+[tool.uv.sources]
+eventsourcing-helpers = { index = "qlty" }
+confluent-kafka-helpers = { index = "qlty" }
+```
+
+Use the same Google Application Default Credentials and keyring helper described
+above. In this example, the explicit index serves only packages assigned to it;
+other dependencies can still resolve from public PyPI.
+
+A library's published dependency metadata names its dependencies without carrying
+its uv source configuration into consuming projects. Configure both source
+mappings in the consumer. With uv 0.13.5, the versioned root constraint also
+activates the source mapping for the transitive Kafka helper; the mapping alone
+or a constraint without a version specifier does not. The `>=1.0.0` constraint
+matches the requirement published by `eventsourcing-helpers` 2.4.2. It keeps the
+Kafka helper transitive without adding another version restriction. See uv's
+[dependency sources](https://docs.astral.sh/uv/concepts/projects/dependencies/#dependency-sources)
+and [constraints](https://docs.astral.sh/uv/reference/settings/#constraint-dependencies).
+
+Update the lockfile, upgrading the two helpers if they are already locked:
+
+```sh
+uv lock --upgrade-package eventsourcing-helpers --upgrade-package confluent-kafka-helpers
+```
+
+Before installing, inspect both helpers' entries in `uv.lock`. Each
+`source.registry` must be
+`https://europe-north1-python.pkg.dev/fyndiq/qlty/simple/`, and its wheel and sdist
+URLs, where present, must point to that Artifact Registry repository. Check the
+selected versions and review other lockfile changes before committing it.
+Then verify installation from the lockfile with a fresh cache:
+
+```sh
+uv sync --frozen --no-cache
+```
+
 ## Manual releases and recovery
 
 Run the Release workflow on `master`. Leave all inputs empty for a stable release.
