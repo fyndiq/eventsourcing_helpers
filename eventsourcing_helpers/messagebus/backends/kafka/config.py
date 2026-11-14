@@ -30,7 +30,7 @@ def get_producer_config(config):
 
     for key in TOP_LEVEL_PRODUCER_CONFIG_KEYS:
         if key in config:
-            producer_config.update({f"{key}": config[key]})
+            producer_config[key] = config[key]
     return producer_config
 
 
@@ -43,7 +43,7 @@ def get_consumer_config(config):
     consumer_config.pop("offset_watchdog", None)
     for key in TOP_LEVEL_CONSUMER_CONFIG_KEYS:
         if key in config:
-            consumer_config.update({f"{key}": config[key]})
+            consumer_config[key] = config[key]
     return consumer_config
 
 
