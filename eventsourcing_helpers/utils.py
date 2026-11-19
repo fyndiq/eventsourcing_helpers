@@ -1,6 +1,13 @@
+import re
 from copy import deepcopy
 from importlib import import_module
 from typing import Any, Callable, List
+
+REDACTED = "***"
+SENSITIVE_KEY_PATTERN = re.compile(r"password|secret|token|key", re.IGNORECASE)
+URL_USERINFO_PASSWORD_PATTERN = re.compile(
+    r"(?P<prefix>[A-Za-z][A-Za-z0-9+.-]*://[^/@:\s]*:)[^/@\s]+@"
+)
 
 
 def import_backend(location: str) -> Any:
@@ -108,3 +115,38 @@ def get_callable_representation(target: Callable) -> str:
         ('Test.method', 'Test.klass', 'Test.static')
     """
     return getattr(target, "__qualname__", getattr(target, "__name__", ""))
+
+
+def _is_sensitive(key: Any, value: Any) -> bool:
+    has_value = value is not None and value != ""
+    return isinstance(key, str) and bool(SENSITIVE_KEY_PATTERN.search(key)) and has_value
+
+
+def redact_config(config: Any) -> Any:
+    """
+    Return a copy of a (possibly nested) config that is safe to log.
+
+    Values whose key contains `password`, `secret`, `token` or `key` are
+    replaced with `***`, and passwords in URLs (`scheme://user:pass@host`)
+    are masked as `scheme://user:***@host`. The original config is not
+    modified.
+
+    Example:
+        >>> redact_config({
+        ...     'sasl.password': 'hunter2',
+        ...     'schema.registry.url': 'https://user:hunter2@registry:443',
+        ... })
+        {'sasl.password': '***', 'schema.registry.url': 'https://user:***@registry:443'}
+    """
+    if isinstance(config, dict):
+        return {
+            key: REDACTED if _is_sensitive(key, value) else redact_config(value)
+            for key, value in config.items()
+        }
+    if isinstance(config, list):
+        return [redact_config(item) for item in config]
+    if isinstance(config, tuple):
+        return tuple(redact_config(item) for item in config)
+    if isinstance(config, str):
+        return URL_USERINFO_PASSWORD_PATTERN.sub(rf"\g<prefix>{REDACTED}@", config)
+    return config
