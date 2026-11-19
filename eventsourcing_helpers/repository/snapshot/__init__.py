@@ -9,7 +9,7 @@ from eventsourcing_helpers.repository.snapshot.serializers import (
     from_aggregate_root_to_snapshot,
     from_snapshot_to_aggregate_root,
 )
-from eventsourcing_helpers.utils import import_backend
+from eventsourcing_helpers.utils import import_backend, redact_config
 
 BACKENDS = {"null": "eventsourcing_helpers.repository.snapshot.backends.null.NullSnapshotBackend"}
 
@@ -47,7 +47,9 @@ class Snapshot:
         backend_path = config.get("backend", BACKENDS[self.DEFAULT_BACKEND])
         backend_config = config.get("backend_config")
 
-        logger.info("Using snapshot backend", backend=backend_path, config=backend_config)
+        logger.info(
+            "Using snapshot backend", backend=backend_path, config=redact_config(backend_config)
+        )
         backend_class = importer(backend_path)
         self.backend = backend_class(backend_config, **kwargs)
 
