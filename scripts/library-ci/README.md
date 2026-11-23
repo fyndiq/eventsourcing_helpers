@@ -1,11 +1,14 @@
 # Library CI
 
-`library_ci.py` validates every PR-introduced complete commit message with
-Commitizen's Conventional Commits schema, builds a wheel and source distribution
+`library_ci.py` validates every PR-introduced non-merge commit's complete message
+with Commitizen's Conventional Commits schema, builds a wheel and source distribution
 with the project's build backend, and calculates a read-only next-version preview.
 The reusable workflow and composite action supply the pinned tools. No publishing
 credentials, API tokens, notifications, Git writes, or version updates are needed
 for this validation.
+
+Merge commits are identified by their multiple parents and skipped during message
+validation. The ordinary commits they introduce are still validated.
 
 Adapted from `fyndiq/confluent_kafka_helpers` PR #118 at
 `16d91b66342583d2f8bdd61386bdb390a3ea87e5` (originally vendored from
