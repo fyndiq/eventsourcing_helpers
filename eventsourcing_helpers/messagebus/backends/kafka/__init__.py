@@ -90,8 +90,9 @@ class KafkaAvroBackend(MessageBusBackend):
         self, handler: Callable, messages: list[Message], consumer: AvroConsumer
     ) -> None:
         """
-        If the handler raises, nothing is committed or stored and Kafka redelivers
-        the whole batch, so handlers must be idempotent.
+        A normal return means all messages passed to the handler succeeded.
+        On partial failure the handler must raise: no offsets are advanced for
+        the batch and even successfully processed messages may be redelivered.
         """
         start_time = time.time()
         messages_to_handle = [message for message in messages if self._shall_handle(message)]

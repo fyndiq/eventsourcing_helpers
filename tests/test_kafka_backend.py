@@ -46,15 +46,14 @@ class AvroConsumerMock:
         pass
 
 
-def make_batch_consumer(batches, is_auto_commit=False, commit=None, store_offsets=None):
+def make_batch_consumer(batches, *, is_auto_commit, calls=None):
     class BatchConsumerMock(AvroConsumerMock):
         def __init__(self, config):
             super().__init__(config=config)
             self.is_auto_commit = is_auto_commit
-            if commit:
-                self.commit = commit
-            if store_offsets:
-                self.store_offsets = store_offsets
+            if calls is not None:
+                self.commit = calls.commit
+                self.store_offsets = calls.store_offsets
             self.batch_values = batches
 
     return BatchConsumerMock
@@ -170,7 +169,7 @@ class KafkaBackendTests:
             [create_message(offset=1), create_message(offset=2)],
             [create_message(offset=3)],
         ]
-        self.consumer = make_batch_consumer(batches)
+        self.consumer = make_batch_consumer(batches, is_auto_commit=False)
         backend = self._backend_with_consumer(self.consumer)
         handler = Mock()
 
@@ -179,40 +178,38 @@ class KafkaBackendTests:
         assert handler.call_args_list == [call(batches[0]), call(batches[1])]
         assert self.consumer.last_instance.commit.call_count == 2
 
-    def test_consume_batches_stores_batch_offsets_after_handler_succeeds_with_auto_commit(self):
+    def test_consume_batches_stores_offsets_after_success_when_auto_commit_is_enabled(self):
         messages = [create_message(offset=1), create_message(offset=2)]
-        parent = Mock()
-        self.consumer = make_batch_consumer(
-            [messages], is_auto_commit=True, store_offsets=parent.store_offsets
-        )
+        calls = Mock()
+        self.consumer = make_batch_consumer([messages], is_auto_commit=True, calls=calls)
         backend = self._backend_with_consumer(self.consumer)
 
-        backend.consume_batches(handler=parent.handler)
+        backend.consume_batches(handler=calls.handler)
 
-        assert parent.mock_calls == [
+        # The client can commit stored offsets in the background; we don't call commit().
+        assert calls.mock_calls == [
             call.handler(messages),
             call.store_offsets(message=messages[0]._raw),
             call.store_offsets(message=messages[1]._raw),
         ]
-        self.consumer.last_instance.commit.assert_not_called()
 
-    def test_consume_batches_commits_after_handler_succeeds_with_manual_commit(self):
+    def test_consume_batches_commits_after_success_when_auto_commit_is_disabled(self):
         messages = [create_message(offset=1), create_message(offset=2)]
-        parent = Mock()
-        self.consumer = make_batch_consumer([messages], commit=parent.commit)
+        calls = Mock()
+        self.consumer = make_batch_consumer([messages], is_auto_commit=False, calls=calls)
         backend = self._backend_with_consumer(self.consumer)
 
-        backend.consume_batches(handler=parent.handler)
+        backend.consume_batches(handler=calls.handler)
 
-        assert parent.mock_calls == [
+        # The synchronous commit covers the consumed batch without a store_offsets() call.
+        assert calls.mock_calls == [
             call.handler(messages),
             call.commit(asynchronous=False),
         ]
-        self.consumer.last_instance.store_offsets.assert_not_called()
 
     def test_consume_batches_skips_empty_batches(self):
         batches = [[], [create_message(offset=1)]]
-        self.consumer = make_batch_consumer(batches)
+        self.consumer = make_batch_consumer(batches, is_auto_commit=False)
         backend = self._backend_with_consumer(self.consumer)
         handler = Mock()
 
@@ -221,33 +218,32 @@ class KafkaBackendTests:
         handler.assert_called_once_with(batches[1])
         self.consumer.last_instance.commit.assert_called_once_with(asynchronous=False)
 
-    def test_consume_batches_does_not_commit_on_error(self):
-        self.consumer = make_batch_consumer([[create_message(offset=1)]])
+    @pytest.mark.parametrize(
+        "is_auto_commit", [True, False], ids=["auto-commit", "explicit-commit"]
+    )
+    def test_consume_batches_does_not_advance_offsets_on_partial_failure(self, is_auto_commit):
+        messages = [create_message(offset=1), create_message(offset=2)]
+        self.consumer = make_batch_consumer([messages], is_auto_commit=is_auto_commit)
         backend = self._backend_with_consumer(self.consumer)
-        handler = Mock(side_effect=RuntimeError("boom"))
+        backend.offset_watchdog = Mock()
+        backend.offset_watchdog.seen.return_value = False
+        process_message = Mock(side_effect=[None, RuntimeError("second message failed")])
 
-        with pytest.raises(RuntimeError):
+        def handler(batch):
+            for message in batch:
+                process_message(message)
+
+        with pytest.raises(RuntimeError, match="second message failed"):
             backend.consume_batches(handler=handler)
 
-        self.consumer.last_instance.commit.assert_not_called()
-
-    @pytest.mark.parametrize("is_auto_commit", [True, False])
-    def test_consume_batches_does_not_advance_offsets_when_handler_fails(self, is_auto_commit):
-        self.consumer = make_batch_consumer(
-            [[create_message(offset=1)]], is_auto_commit=is_auto_commit
-        )
-        backend = self._backend_with_consumer(self.consumer)
-        handler = Mock(side_effect=RuntimeError("boom"))
-
-        with pytest.raises(RuntimeError, match="boom"):
-            backend.consume_batches(handler=handler)
-
+        assert process_message.call_args_list == [call(messages[0]), call(messages[1])]
+        backend.offset_watchdog.set_seen.assert_not_called()
         self.consumer.last_instance.store_offsets.assert_not_called()
         self.consumer.last_instance.commit.assert_not_called()
 
     def test_consume_batches_skips_messages_seen_by_watchdog(self):
         messages = [create_message(offset=1), create_message(offset=2), create_message(offset=3)]
-        self.consumer = make_batch_consumer([messages])
+        self.consumer = make_batch_consumer([messages], is_auto_commit=False)
         backend = self._backend_with_consumer(self.consumer)
         backend.offset_watchdog = Mock()
         backend.offset_watchdog.seen.side_effect = [False, True, False]

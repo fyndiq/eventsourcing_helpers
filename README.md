@@ -76,8 +76,9 @@ def handle_batch(messages):
 messagebus.consume_batches(handle_batch)
 ```
 
-Kafka batch size and wait time come from the consumer config keys supported by
-`confluent-kafka-helpers>=1.5.0`:
+Kafka batch consumption requires a release of `confluent-kafka-helpers` that
+includes [`AvroConsumer.batches()`](https://github.com/fyndiq/confluent_kafka_helpers/pull/110).
+Batch size and wait time come from these consumer config keys:
 
 ```python
 {
@@ -88,9 +89,19 @@ Kafka batch size and wait time come from the consumer config keys supported by
 }
 ```
 
-The handler receives `list[Message]`.
-If handling raises, the batch is not committed and the exception propagates.
-Kafka may redeliver any message in that batch, so batch handlers must be
-idempotent. The whole batch must finish before `max.poll.interval.ms`, and
+One handler receives a `list[Message]` per nonempty batch of messages that need
+processing. The backend treats a normal return as success for every message
+passed to the handler. If any message fails, raise instead of returning normally:
+the exception propagates without advancing offsets for that batch. Kafka may
+redeliver messages whose processing already succeeded, so batch handlers must be
+idempotent.
+
+With `enable.auto.commit` enabled, set `enable.auto.offset.store` to `false` so
+polling doesn't advance offsets before processing. The backend stores offsets
+after the handler returns so Kafka can commit them later. With `enable.auto.commit`
+disabled, leave `enable.auto.offset.store` enabled: polling tracks the offsets
+locally and the backend commits them synchronously after the handler returns.
+
+The whole batch must finish before `max.poll.interval.ms`, and
 OpenTelemetry keeps at most 128 span links by default; raise
 `OTEL_SPAN_LINK_COUNT_LIMIT` if `batch_max_size` is higher than that.
