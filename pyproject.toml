@@ -50,6 +50,7 @@ dev = [
     "mongomock==4.3.0",
     "mypy==1.14.1",
     "pdbpp==0.10.3",
+    "pre-commit>=4.0.1,<5",
     "pytest==8.3.4",
     "pytest-coverage==0.0",
     "pytest-mock==3.14.0",
