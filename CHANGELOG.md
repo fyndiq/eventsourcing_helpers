@@ -1,3 +1,9 @@
+## v2.4.3 (2026-11-23)
+
+### Fix
+
+- **PLA-625**: grant facilitator checks read permission ([#133](https://github.com/fyndiq/eventsourcing_helpers/pull/133))
+
 ## v2.4.2 (2026-11-06)
 
 ### Fix
