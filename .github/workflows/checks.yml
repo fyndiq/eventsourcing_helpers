@@ -66,9 +66,11 @@ jobs:
         with:
           version: "0.13.1"
           enable-cache: true
-      - run: make setup
-      - run: make unit-test
-      - run: make lint
+      - name: Install just
+        run: sudo apt-get update && sudo apt-get install -y just
+      - run: just setup
+      - run: just unit-test
+      - run: just lint
 
   library:
     name: commits / build / release preview
