@@ -1,3 +1,9 @@
+## v2.4.5 (2026-11-24)
+
+### Fix
+
+- **docs**: use just recipes in README ([#120](https://github.com/fyndiq/eventsourcing_helpers/pull/120))
+
 ## v2.4.4 (2026-11-24)
 
 ### Fix
