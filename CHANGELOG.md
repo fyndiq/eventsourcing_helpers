@@ -2,7 +2,7 @@
 
 ### Fix
 
-- use make setup for commit hooks ([#136](https://github.com/fyndiq/eventsourcing_helpers/pull/136))
+- use setup recipe for commit hooks ([#136](https://github.com/fyndiq/eventsourcing_helpers/pull/136))
 - install commitizen commit-msg hook ([6fd730a](https://github.com/fyndiq/eventsourcing_helpers/commit/6fd730a1fd48b411038aaf4d058a8a403be2df0f))
 
 ## v2.4.3 (2026-11-23)
