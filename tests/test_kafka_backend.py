@@ -3,6 +3,7 @@ from unittest.mock import Mock, call
 
 import pytest
 
+from eventsourcing_helpers.concurrent_batch import BatchProcessingIncomplete
 from eventsourcing_helpers.messagebus.backends.kafka import KafkaAvroBackend
 
 
@@ -237,6 +238,24 @@ class KafkaBackendTests:
             backend.consume_batches(handler=handler)
 
         assert process_message.call_args_list == [call(messages[0]), call(messages[1])]
+        backend.offset_watchdog.set_seen.assert_not_called()
+        self.consumer.last_instance.store_offsets.assert_not_called()
+        self.consumer.last_instance.commit.assert_not_called()
+
+    def test_consume_batches_does_not_advance_offsets_when_batch_is_incomplete(self):
+        messages = [create_message(offset=1), create_message(offset=2)]
+        self.consumer = make_batch_consumer([messages], is_auto_commit=False)
+        backend = self._backend_with_consumer(self.consumer)
+        backend.offset_watchdog = Mock()
+        backend.offset_watchdog.seen.return_value = False
+
+        def handler(batch):
+            assert batch == messages
+            raise BatchProcessingIncomplete("drain deadline reached")
+
+        with pytest.raises(BatchProcessingIncomplete, match="drain deadline reached"):
+            backend.consume_batches(handler=handler)
+
         backend.offset_watchdog.set_seen.assert_not_called()
         self.consumer.last_instance.store_offsets.assert_not_called()
         self.consumer.last_instance.commit.assert_not_called()
