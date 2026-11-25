@@ -2,6 +2,7 @@ from functools import partial
 from unittest.mock import Mock
 
 import pytest
+from structlog.testing import capture_logs
 
 from eventsourcing_helpers.repository.snapshot import Snapshot
 
@@ -55,3 +56,26 @@ class SnapshotTests:
         snapshot.delete(aggregate_root)
 
         self.backend().delete.assert_called_once_with(aggregate_root.id)
+
+
+def test_snapshot_does_not_log_credentials():
+    backend_config = {
+        "host": "mongodb+srv://snapshot-user:s3cr3t-pw@cluster0.example.mongodb.net/db",
+        "password": "s3cr3t-pw",
+    }
+    importer = Mock()
+
+    with capture_logs() as logs:
+        Snapshot(
+            config={"snapshot": {"backend": "some.Backend", "backend_config": backend_config}},
+            importer=importer,
+        )
+
+    log = next(entry for entry in logs if entry["event"] == "Using snapshot backend")
+    assert "s3cr3t" not in repr(log)
+    assert log["config"] == {
+        "host": "mongodb+srv://snapshot-user:***@cluster0.example.mongodb.net/db",
+        "password": "***",
+    }
+    # the backend still receives the real, unredacted config
+    importer.return_value.assert_called_once_with(backend_config)

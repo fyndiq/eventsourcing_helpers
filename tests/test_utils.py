@@ -1,6 +1,10 @@
 import pytest
 
-from eventsourcing_helpers.utils import get_all_nested_keys, get_callable_representation
+from eventsourcing_helpers.utils import (
+    get_all_nested_keys,
+    get_callable_representation,
+    redact_config,
+)
 
 
 class Test:
@@ -88,3 +92,84 @@ def test_get_all_nested_keys(data, expected_result):
     result = get_all_nested_keys(data, [])
     for expected_key in expected_result:
         assert expected_key in result
+
+
+def test_redact_config_masks_credentials():
+    config = {
+        "bootstrap.servers": "kafka.example.com:9092",
+        "security.protocol": "SASL_SSL",
+        "sasl.mechanisms": "PLAIN",
+        "sasl.username": "avnadmin",
+        "sasl.password": "s3cr3t-pw",
+        "ssl.key.password": "s3cr3t-key-pw",
+        "schema.registry.url": "https://avnadmin:s3cr3t-pw@registry.example.com:443",
+        "consumer": {"api_token": "s3cr3t-token", "client.secret": "s3cr3t-secret"},
+        "urls": ["https://user:s3cr3t-pw@a.example.com", "https://b.example.com"],
+        "empty.password": "",
+        "timeout": 10,
+    }
+
+    redacted = redact_config(config)
+
+    assert "s3cr3t" not in repr(redacted)
+    assert redacted == {
+        "bootstrap.servers": "kafka.example.com:9092",
+        "security.protocol": "SASL_SSL",
+        "sasl.mechanisms": "PLAIN",
+        "sasl.username": "avnadmin",
+        "sasl.password": "***",
+        "ssl.key.password": "***",
+        "schema.registry.url": "https://avnadmin:***@registry.example.com:443",
+        "consumer": {"api_token": "***", "client.secret": "***"},
+        "urls": ["https://user:***@a.example.com", "https://b.example.com"],
+        "empty.password": "",
+        "timeout": 10,
+    }
+
+
+def test_redact_config_does_not_modify_original():
+    config = {"sasl.password": "s3cr3t-pw", "nested": {"url": "https://u:s3cr3t-pw@host"}}
+
+    redact_config(config)
+
+    assert config == {"sasl.password": "s3cr3t-pw", "nested": {"url": "https://u:s3cr3t-pw@host"}}
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "https://registry.example.com:443",
+        "https://user@registry.example.com",
+        "kafka-1:9092,kafka-2:9092",
+        "/etc/ssl/ca.pem",
+    ],
+)
+def test_redact_config_keeps_values_without_credentials(value):
+    assert redact_config({"some.setting": value}) == {"some.setting": value}
+
+
+@pytest.mark.parametrize(
+    "value, expected",
+    [
+        ("https://user:pa/ss@registry:443", "https://user:***@registry:443"),
+        ("https://user:pa/ss@registry:443/subjects", "https://user:***@registry:443/subjects"),
+        ("https://user:p@ss@registry:443", "https://user:***@registry:443"),
+        ("https://user:pa:ss@registry:443", "https://user:***@registry:443"),
+        ("https://user:p/a@s:s@registry:443/x?y=1", "https://user:***@registry:443/x?y=1"),
+    ],
+)
+def test_redact_config_masks_url_passwords_with_reserved_characters(value, expected):
+    redacted = redact_config({"schema.registry.url": value})
+
+    assert redacted == {"schema.registry.url": expected}
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "https://registry.example.com:443/subjects?page=1",
+        "not a url: user:pw@host",
+    ],
+)
+def test_redact_config_keeps_strings_without_url_credentials(value):
+    assert redact_config({"some.setting": value}) == {"some.setting": value}

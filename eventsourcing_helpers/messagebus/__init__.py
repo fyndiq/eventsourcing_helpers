@@ -2,7 +2,7 @@ from typing import Callable
 
 import structlog
 
-from eventsourcing_helpers.utils import import_backend
+from eventsourcing_helpers.utils import import_backend, redact_config
 
 BACKENDS = {
     "kafka_avro": "eventsourcing_helpers.messagebus.backends.kafka.KafkaAvroBackend",
@@ -28,7 +28,9 @@ class MessageBus:
         assert "backend_config" in config, "You must pass a backend config"
         backend_config = config.get("backend_config")
 
-        logger.debug("Using message bus backend", backend=backend_path, config=backend_config)
+        logger.debug(
+            "Using message bus backend", backend=backend_path, config=redact_config(backend_config)
+        )
         backend_class = importer(backend_path)
         self.backend = backend_class(config=backend_config, **kwargs)
 

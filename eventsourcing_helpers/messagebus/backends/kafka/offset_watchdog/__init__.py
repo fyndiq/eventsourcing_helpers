@@ -21,7 +21,7 @@ from eventsourcing_helpers.messagebus.backends.kafka.offset_watchdog.backends im
     OffsetWatchdogBackend,
 )
 from eventsourcing_helpers.metrics import base_metric, statsd
-from eventsourcing_helpers.utils import import_backend
+from eventsourcing_helpers.utils import import_backend, redact_config
 
 from confluent_kafka_helpers.message import Message
 
@@ -49,7 +49,9 @@ class OffsetWatchdog:
         backend_config = config.get("backend_config")
         self.config = backend_config
 
-        logger.debug("Using offset watchdog backend", backend=backend_path, config=self.config)
+        logger.debug(
+            "Using offset watchdog backend", backend=backend_path, config=redact_config(self.config)
+        )
         backend_class = importer(backend_path)
         self.backend: OffsetWatchdogBackend = backend_class(config=self.config)
 
