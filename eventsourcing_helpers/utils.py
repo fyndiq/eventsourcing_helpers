@@ -2,12 +2,10 @@ import re
 from copy import deepcopy
 from importlib import import_module
 from typing import Any, Callable, List
+from urllib.parse import urlsplit, urlunsplit
 
 REDACTED = "***"
 SENSITIVE_KEY_PATTERN = re.compile(r"password|secret|token|key", re.IGNORECASE)
-URL_USERINFO_PASSWORD_PATTERN = re.compile(
-    r"(?P<prefix>[A-Za-z][A-Za-z0-9+.-]*://[^/@:\s]*:)[^/@\s]+@"
-)
 
 
 def import_backend(location: str) -> Any:
@@ -122,6 +120,33 @@ def _is_sensitive(key: Any, value: Any) -> bool:
     return isinstance(key, str) and bool(SENSITIVE_KEY_PATTERN.search(key)) and has_value
 
 
+def _mask_url_password(value: str) -> str:
+    try:
+        parts = urlsplit(value)
+    except ValueError:
+        return value
+    if not parts.scheme or "@" not in value:
+        return value
+
+    if "@" in parts.netloc:
+        userinfo, _, host = parts.netloc.rpartition("@")
+    else:
+        # An unencoded '/', '?' or '#' in the password ends urlsplit's netloc early,
+        # so everything between the scheme and the last '@' is the userinfo instead.
+        prefix = f"{parts.scheme}://"
+        scheme_part, _, authority_and_rest = value.partition("://")
+        if f"{scheme_part.lower()}://" != prefix:
+            return value
+        userinfo, _, host_and_rest = authority_and_rest.rpartition("@")
+        parts = urlsplit(f"{prefix}{host_and_rest}")
+        host = parts.netloc
+
+    username, _, password = userinfo.partition(":")
+    if not password:
+        return value
+    return urlunsplit(parts._replace(netloc=f"{username}:{REDACTED}@{host}"))
+
+
 def redact_config(config: Any) -> Any:
     """
     Return a copy of a (possibly nested) config that is safe to log.
@@ -148,5 +173,5 @@ def redact_config(config: Any) -> Any:
     if isinstance(config, tuple):
         return tuple(redact_config(item) for item in config)
     if isinstance(config, str):
-        return URL_USERINFO_PASSWORD_PATTERN.sub(rf"\g<prefix>{REDACTED}@", config)
+        return _mask_url_password(config)
     return config

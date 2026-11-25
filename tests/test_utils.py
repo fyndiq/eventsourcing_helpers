@@ -146,3 +146,30 @@ def test_redact_config_does_not_modify_original():
 )
 def test_redact_config_keeps_values_without_credentials(value):
     assert redact_config({"some.setting": value}) == {"some.setting": value}
+
+
+@pytest.mark.parametrize(
+    "value, expected",
+    [
+        ("https://user:pa/ss@registry:443", "https://user:***@registry:443"),
+        ("https://user:pa/ss@registry:443/subjects", "https://user:***@registry:443/subjects"),
+        ("https://user:p@ss@registry:443", "https://user:***@registry:443"),
+        ("https://user:pa:ss@registry:443", "https://user:***@registry:443"),
+        ("https://user:p/a@s:s@registry:443/x?y=1", "https://user:***@registry:443/x?y=1"),
+    ],
+)
+def test_redact_config_masks_url_passwords_with_reserved_characters(value, expected):
+    redacted = redact_config({"schema.registry.url": value})
+
+    assert redacted == {"schema.registry.url": expected}
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "https://registry.example.com:443/subjects?page=1",
+        "not a url: user:pw@host",
+    ],
+)
+def test_redact_config_keeps_strings_without_url_credentials(value):
+    assert redact_config({"some.setting": value}) == {"some.setting": value}
