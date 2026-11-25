@@ -34,7 +34,8 @@ Direct uploads through `make publish` are disabled.
 
 ## Kafka offset commits
 
-The Kafka backend marks a message as consumed only after its handler returns. How depends on
+For single-message consumption (`consume`), the Kafka backend marks a message as consumed
+only after its handler returns. How depends on
 `enable.auto.commit` in the consumer config:
 
 - `False` (default): the offset is committed synchronously after each handled message.
@@ -85,6 +86,8 @@ Batch size and wait time come from these consumer config keys:
     "consumer": {
         "batch_max_size": 100,  # default
         "batch_max_wait": 1.0,  # seconds, default
+        "enable.auto.commit": False,  # required; also the default
+        "enable.auto.offset.store": True,  # leave enabled (default)
     }
 }
 ```
@@ -96,11 +99,12 @@ the exception propagates without advancing offsets for that batch. Kafka may
 redeliver messages whose processing already succeeded, so batch handlers must be
 idempotent.
 
-With `enable.auto.commit` enabled, set `enable.auto.offset.store` to `false` so
-polling doesn't advance offsets before processing. The backend stores offsets
-after the handler returns so Kafka can commit them later. With `enable.auto.commit`
-disabled, leave `enable.auto.offset.store` enabled: polling tracks the offsets
-locally and the backend commits them synchronously after the handler returns.
+Batch consumption requires `enable.auto.commit=False` (the default).
+`AvroConsumer.batches()` raises `ValueError` if auto-commit is enabled, so closing
+the consumer cannot automatically commit records left unprocessed during shutdown.
+Leave `enable.auto.offset.store` enabled (the default): reads track offsets locally,
+and the backend commits them synchronously only after the whole batch handler returns
+successfully. Auto-commit is supported only for single-message consumption.
 
 The whole batch must finish before `max.poll.interval.ms`, and
 OpenTelemetry keeps at most 128 span links by default; raise
