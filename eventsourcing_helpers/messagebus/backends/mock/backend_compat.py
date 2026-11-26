@@ -2,13 +2,16 @@ import copy
 import time
 from collections import deque
 from dataclasses import dataclass, field
+from functools import partial
 from typing import Callable, Deque, List, Union
 from unittest.mock import MagicMock
 
 import structlog
 
-from eventsourcing_helpers.messagebus.backends import MessageBusBackend
+from eventsourcing_helpers.messagebus.backends import MessageBusBackend, validate_delivery_timeout
+from eventsourcing_helpers.messagebus.backends.mock.utils import MockBatchConsumer, output_headers
 
+from confluent_kafka_helpers.context import propagated_headers
 from confluent_kafka_helpers.message import Message
 
 logger = structlog.get_logger(__name__)
@@ -84,19 +87,32 @@ class MockBackend(MessageBusBackend):
         self.config = config
 
     def produce(self, value: dict, key: str = None, **kwargs) -> None:
-        self.producer.add_message(dict(value=value, key=key, **kwargs))
+        self.producer.add_message(dict(value=value, key=key, **output_headers(kwargs)))
+
+    def produce_many(self, records, *, timeout=30.0) -> None:
+        for record in records:
+            self.produce(**record)
+
+    def get_batch_consumer(self, batch_size=100, timeout=0.1):
+        return partial(
+            MockBatchConsumer,
+            self.consumer.get_messages(),
+            self.config.get("consumer", {}),
+            batch_size=batch_size,
+            timeout=timeout,
+        )
 
     def consume(self, handler: Callable) -> None:
         messages = self.consumer.get_messages()
         while messages:
             handler(messages.popleft())
 
-    def consume_batches(self, handler: Callable) -> None:
-        batch_max_size = self.config.get("consumer", {}).get("batch_max_size", 100)
-        messages = self.consumer.get_messages()
-        while messages:
-            batch_size = min(batch_max_size, len(messages))
-            batch = [messages[index] for index in range(batch_size)]
-            handler(batch)
-            for _ in range(batch_size):
-                messages.popleft()
+    def consume_batches(
+        self, handler: Callable, *, batch_size=100, timeout=0.1, delivery_timeout=30.0
+    ) -> None:
+        validate_delivery_timeout(delivery_timeout)
+        with self.get_batch_consumer(batch_size, timeout)() as consumer:
+            for batch in consumer:
+                with propagated_headers({}):
+                    handler(batch)
+                consumer.commit_batch(batch)

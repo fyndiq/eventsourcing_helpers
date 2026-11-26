@@ -66,31 +66,29 @@ can only replay the input message.
 
 ## Batch consumption
 
-`consume_batches(handler)` is available on `KafkaAvroBackend`, `MessageBus`, and
-`eventsourcing_helpers.consumer.Consumer`.
+`consume_batches(handler, batch_size=100, timeout=0.1, delivery_timeout=30.0)` is
+available on `KafkaAvroBackend` and `MessageBus`. It uses the separate
+[`AvroBatchConsumer`](https://github.com/fyndiq/confluent_kafka_helpers/pull/110).
+This branch temporarily pins that library to its exact PR commit; replace the Git
+pin with a published release before merging.
 
 ```python
 def handle_batch(messages):
     bulk_write([message.value for message in messages])
+    messagebus.produce_many(
+        {"value": build_event(message), "source": message}
+        for message in messages
+    )
 
 
-messagebus.consume_batches(handle_batch)
+messagebus.consume_batches(handle_batch, batch_size=100, timeout=0.1, delivery_timeout=30.0)
 ```
 
-Kafka batch consumption requires a release of `confluent-kafka-helpers` that
-includes [`AvroConsumer.batches()`](https://github.com/fyndiq/confluent_kafka_helpers/pull/110).
-Batch size and wait time come from these consumer config keys:
-
-```python
-{
-    "consumer": {
-        "batch_max_size": 100,  # default
-        "batch_max_wait": 1.0,  # seconds, default
-        "enable.auto.commit": False,  # required; also the default
-        "enable.auto.offset.store": True,  # leave enabled (default)
-    }
-}
-```
+Pass size and timeout as method arguments, not `batch_max_size` / `batch_max_wait`
+consumer settings. Size must be an integer from 1 to 1,000,000; the read timeout
+must be finite and nonnegative. Batch consumers disable automatic commits **and**
+automatic offset storage, rejecting settings that enable either. Single-message
+APIs retain their existing behaviour.
 
 One handler receives a `list[Message]` per nonempty batch of messages that need
 processing. The backend treats a normal return as success for every message
@@ -99,13 +97,54 @@ the exception propagates without advancing offsets for that batch. Kafka may
 redeliver messages whose processing already succeeded, so batch handlers must be
 idempotent.
 
-Batch consumption requires `enable.auto.commit=False` (the default).
-`AvroConsumer.batches()` raises `ValueError` if auto-commit is enabled, so closing
-the consumer cannot automatically commit records left unprocessed during shutdown.
-Leave `enable.auto.offset.store` enabled (the default): reads track offsets locally,
-and the backend commits them synchronously only after the whole batch handler returns
-successfully. Auto-commit is supported only for single-message consumption.
+The backend filters watchdog-seen input without changing the remaining order.
+After successful handling, it confirms all output, marks handled records in the
+watchdog and synchronously commits the original batch's explicit partition offsets.
+An all-seen batch commits without invoking the handler. Handler, delivery or callback
+failures and delivery timeouts prevent watchdog advancement and input commits.
+Commit and assignment failures propagate and stop consumption for replay.
+
+Every publication on the configured producer is tracked during a batch, including
+ordinary `messagebus.produce()` calls from fallback handlers. The backend suppresses
+per-record flushes even when `producer.flush=True`, then confirms output once.
+The delivery timeout must be finite and positive; it starts before the handler and
+bounds queue waits and final delivery confirmation, but cannot interrupt application
+work or schema-registry requests. Join workers before the handler returns. Do not
+share the producer with unrelated work while handling a batch.
+
+`produce_many(records, timeout=30.0)` accepts ordinary production arguments and an
+optional `source=message` per record. It preserves source propagation headers and
+trace context; explicit business headers win. Without a source, output has no
+implicit input provenance. Outside batch consumption, it only queues output and
+honours the existing `flush` setting once per collection.
+
+For existing per-message handlers, explicitly preserve order and activate each
+input's processing span and headers:
+
+```python
+def handle_batch(messages):
+    for message in messages:
+        with message.process():
+            existing_handler(message)
+```
+
+`eventsourcing_helpers.consumer.Consumer.consume_batches(...)` calls
+`Handler.handle_batch(messages)`. Implement it explicitly; the default raises
+`NotImplementedError`. It never automatically groups commands or dispatches them
+through the single-message handler. Both mock backends support batch options,
+collection publishing and source headers; use `consume_message_batches` in tests.
+
+For custom loops, `messagebus.get_batch_consumer(batch_size=100, timeout=0.1)`
+returns a context-managed consumer factory. Direct callers own output confirmation
+and `consumer.commit_batch(messages)`. Commit only successful prefixes per
+partition: acknowledging a later offset also acknowledges earlier records.
+
+Kafka guarantees ordering within a partition, not across partitions or topics.
+Applications must preserve that order when applying changes. Processing is at
+least once: database writes and output can succeed before an input commit fails.
+Make both replay-safe. Producer idempotence does not deduplicate application replay
+or make database writes and Kafka publication atomic.
 
 The whole batch must finish before `max.poll.interval.ms`, and
 OpenTelemetry keeps at most 128 span links by default; raise
-`OTEL_SPAN_LINK_COUNT_LIMIT` if `batch_max_size` is higher than that.
+`OTEL_SPAN_LINK_COUNT_LIMIT` if `batch_size` is higher than that.

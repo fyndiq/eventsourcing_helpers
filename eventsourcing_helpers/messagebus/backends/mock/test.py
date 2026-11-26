@@ -36,8 +36,8 @@ def consume_messages(consumer, messagebus):
 def consume_message_batches(consumer, messagebus):
     """Add messages to the mocked messagebus consumer and consume them in batches."""
 
-    def consume(messages):
+    def consume(messages, **batch_options):
         messagebus.consumer.add_messages(messages)
-        consumer.consume_batches()
+        consumer.consume_batches(**batch_options)
 
     return consume

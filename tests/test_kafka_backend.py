@@ -1,5 +1,5 @@
 from functools import partial
-from unittest.mock import Mock, call
+from unittest.mock import MagicMock, Mock, call
 
 import pytest
 
@@ -25,6 +25,7 @@ class AvroConsumerMock:
         self.config = config
         self.is_auto_commit = False
         self.commit = Mock()
+        self.commit_batch = Mock()
         self.store_offsets = Mock()
         self.messages = iter([message, message])
         self.batch_values = []
@@ -48,13 +49,14 @@ class AvroConsumerMock:
 
 def make_batch_consumer(batches, *, is_auto_commit, calls=None):
     class BatchConsumerMock(AvroConsumerMock):
-        def __init__(self, config):
+        def __init__(self, config, **kwargs):
             super().__init__(config=config)
             self.is_auto_commit = is_auto_commit
             if calls is not None:
-                self.commit = calls.commit
+                self.commit_batch = calls.commit_batch
                 self.store_offsets = calls.store_offsets
             self.batch_values = batches
+            self.messages = iter(batches)
 
     return BatchConsumerMock
 
@@ -63,7 +65,7 @@ class KafkaBackendTests:
 
     def setup_method(self):
         self.consumer = AvroConsumerMock
-        self.producer = Mock()
+        self.producer = MagicMock()
         self.value_serializer = Mock()
         self.config = {"producer": {"foo": "bar"}, "consumer": {"group.id": "consumer.group.1"}}
         self.get_producer_config = Mock(return_value=self.config["producer"])
@@ -162,6 +164,7 @@ class KafkaBackendTests:
             self.get_producer_config,
             self.get_consumer_config,
             self.get_offset_watchdog_config,
+            batch_consumer=consumer,
         )
 
     def test_consume_batches_commits_once_per_batch(self):
@@ -176,21 +179,29 @@ class KafkaBackendTests:
         backend.consume_batches(handler=handler)
 
         assert handler.call_args_list == [call(batches[0]), call(batches[1])]
-        assert self.consumer.last_instance.commit.call_count == 2
+        assert self.consumer.last_instance.commit_batch.call_args_list == [
+            call(batches[0]),
+            call(batches[1]),
+        ]
 
-    def test_consume_batches_stores_offsets_after_success_when_auto_commit_is_enabled(self):
+    def test_consume_batches_confirms_delivery_before_commit(self):
         messages = [create_message(offset=1), create_message(offset=2)]
         calls = Mock()
-        self.consumer = make_batch_consumer([messages], is_auto_commit=True, calls=calls)
+        self.consumer = make_batch_consumer([messages], is_auto_commit=False, calls=calls)
         backend = self._backend_with_consumer(self.consumer)
+        scope = MagicMock()
+        scope.__enter__.side_effect = lambda: calls.delivery_start()
+        scope.__exit__.side_effect = lambda *args: calls.delivery_confirm() and False
+        backend.producer.delivery_scope.return_value = scope
+        backend.offset_watchdog = None
 
         backend.consume_batches(handler=calls.handler)
 
-        # The client can commit stored offsets in the background; we don't call commit().
         assert calls.mock_calls == [
+            call.delivery_start(),
             call.handler(messages),
-            call.store_offsets(message=messages[0]._raw),
-            call.store_offsets(message=messages[1]._raw),
+            call.delivery_confirm(),
+            call.commit_batch(messages),
         ]
 
     def test_consume_batches_commits_after_success_when_auto_commit_is_disabled(self):
@@ -201,10 +212,9 @@ class KafkaBackendTests:
 
         backend.consume_batches(handler=calls.handler)
 
-        # The synchronous commit covers the consumed batch without a store_offsets() call.
         assert calls.mock_calls == [
             call.handler(messages),
-            call.commit(asynchronous=False),
+            call.commit_batch(messages),
         ]
 
     def test_consume_batches_skips_empty_batches(self):
@@ -216,7 +226,7 @@ class KafkaBackendTests:
         backend.consume_batches(handler=handler)
 
         handler.assert_called_once_with(batches[1])
-        self.consumer.last_instance.commit.assert_called_once_with(asynchronous=False)
+        self.consumer.last_instance.commit_batch.assert_called_once_with(batches[1])
 
     @pytest.mark.parametrize(
         "is_auto_commit", [True, False], ids=["auto-commit", "explicit-commit"]
@@ -240,6 +250,7 @@ class KafkaBackendTests:
         backend.offset_watchdog.set_seen.assert_not_called()
         self.consumer.last_instance.store_offsets.assert_not_called()
         self.consumer.last_instance.commit.assert_not_called()
+        self.consumer.last_instance.commit_batch.assert_not_called()
 
     def test_consume_batches_skips_messages_seen_by_watchdog(self):
         messages = [create_message(offset=1), create_message(offset=2), create_message(offset=3)]
@@ -255,4 +266,57 @@ class KafkaBackendTests:
         backend.offset_watchdog.set_seen.assert_any_call(messages[0])
         backend.offset_watchdog.set_seen.assert_any_call(messages[2])
         assert backend.offset_watchdog.set_seen.call_count == 2
-        self.consumer.last_instance.commit.assert_called_once_with(asynchronous=False)
+        self.consumer.last_instance.commit_batch.assert_called_once_with(messages)
+
+    def test_all_seen_batch_commits_without_handler_or_delivery_scope(self):
+        messages = [create_message(offset=1)]
+        self.consumer = make_batch_consumer([messages], is_auto_commit=False)
+        backend = self._backend_with_consumer(self.consumer)
+        backend.offset_watchdog = Mock()
+        backend.offset_watchdog.seen.return_value = True
+        handler = Mock()
+        backend.consume_batches(handler)
+        handler.assert_not_called()
+        backend.producer.delivery_scope.assert_not_called()
+        backend.offset_watchdog.set_seen.assert_not_called()
+        self.consumer.last_instance.commit_batch.assert_called_once_with(messages)
+
+    def test_delivery_failure_does_not_advance_watchdog_or_offsets(self):
+        messages = [create_message(offset=1)]
+        self.consumer = make_batch_consumer([messages], is_auto_commit=False)
+        backend = self._backend_with_consumer(self.consumer)
+        backend.offset_watchdog = Mock()
+        backend.offset_watchdog.seen.return_value = False
+        backend.producer.delivery_scope.return_value.__exit__.side_effect = TimeoutError("output")
+        with pytest.raises(TimeoutError):
+            backend.consume_batches(Mock())
+        backend.offset_watchdog.set_seen.assert_not_called()
+        self.consumer.last_instance.commit_batch.assert_not_called()
+        assert backend._processing_batch is False
+
+    def test_consume_only_backend_does_not_require_producer(self):
+        messages = [create_message(offset=1)]
+        self.consumer = make_batch_consumer([messages], is_auto_commit=False)
+        backend = self._backend_with_consumer(self.consumer)
+        backend.producer = None
+        handler = Mock()
+        backend.consume_batches(handler)
+        handler.assert_called_once_with(messages)
+        self.consumer.last_instance.commit_batch.assert_called_once_with(messages)
+
+    def test_batch_produce_suppresses_per_message_flush_and_poll(self):
+        backend = self.backend()
+        backend.flush = True
+        backend._processing_batch = True
+        backend.produce("output")
+        backend.producer.produce.assert_called_once_with(key=None, value="output", topic=None)
+        backend.producer.flush.assert_not_called()
+        backend.producer.poll.assert_not_called()
+
+    def test_collection_flushes_once_outside_batch(self):
+        backend = self.backend()
+        backend.flush = True
+        records = [{"value": "one"}, {"value": "two"}]
+        backend.produce_many(records, timeout=5)
+        backend.producer.produce_many.assert_called_once_with(records, timeout=5)
+        backend.producer.flush.assert_called_once_with()

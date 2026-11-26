@@ -28,20 +28,20 @@ class MockBackendTests:
         self.backend.consume(handler=handler)
         assert handler.call_count == 2
 
-    def test_consume_batches_pops_batch_max_size_messages(self):
-        backend = MockBackend(config={"consumer": {"batch_max_size": 2}})
+    def test_consume_batches_pops_batch_size_messages(self):
+        backend = MockBackend(config={"consumer": {}})
         backend.consumer.add_message(message_class="a", data={"b": "c"})
         backend.consumer.add_message(message_class="d", data={"e": "f"})
         backend.consumer.add_message(message_class="g", data={"h": "i"})
         handler = Mock()
 
-        backend.consume_batches(handler=handler)
+        backend.consume_batches(handler=handler, batch_size=2)
 
         assert handler.call_count == 2
         assert [len(call.args[0]) for call in handler.call_args_list] == [2, 1]
 
     def test_consume_batches_keeps_batch_messages_when_handler_raises(self):
-        backend = MockBackend(config={"consumer": {"batch_max_size": 2}})
+        backend = MockBackend(config={"consumer": {}})
         backend.consumer.add_message(message_class="a", data={"b": "c"})
         backend.consumer.add_message(message_class="d", data={"e": "f"})
         messages = list(backend.consumer.get_messages())
