@@ -1,5 +1,6 @@
 import math
 import time
+from contextlib import nullcontext
 from contextvars import ContextVar
 from functools import partial
 from typing import Callable
@@ -18,74 +19,10 @@ from eventsourcing_helpers.messagebus.backends.kafka.offset_watchdog import Offs
 from eventsourcing_helpers.serializers import to_message_from_dto
 
 from confluent_kafka_helpers.consumer import AvroConsumer
-from confluent_kafka_helpers.exceptions import KafkaDeliveryError
 from confluent_kafka_helpers.message import Message
-from confluent_kafka_helpers.producer import AvroProducer
+from confluent_kafka_helpers.producer import AvroProducer, DeliveryScope
 
 logger = structlog.get_logger(__name__)
-
-
-class BatchDelivery:
-    def __init__(self, producer: AvroProducer, timeout: float):
-        self.producer = producer
-        self.timeout = timeout
-        self.deadline: float | None = None
-        self.pending = 0
-        self.sent = False
-        self.failure: Exception | None = None
-
-    def _remaining(self) -> float:
-        if self.deadline is None:
-            self.deadline = time.monotonic() + self.timeout
-        remaining = self.deadline - time.monotonic()
-        if remaining <= 0:
-            raise TimeoutError("Kafka batch delivery timed out")
-        return remaining
-
-    def _track(self, records):
-        for record in records:
-            if self.failure is not None:
-                raise self.failure
-            args = dict(record)
-            callback = args.pop("callback", None)
-            callback = args.pop("on_delivery", None) or callback
-            self.sent = True
-            self.pending += 1
-            yield {**args, "on_delivery": partial(self._delivered, callback)}
-
-    def _delivered(self, callback, error, message):
-        try:
-            try:
-                self.producer.delivery_callback(error, message)
-            finally:
-                if callback is not None:
-                    callback(error, message)
-            if error:
-                raise KafkaDeliveryError(str(error), message)
-        except Exception as failure:
-            if self.failure is None:
-                self.failure = failure
-        finally:
-            self.pending -= 1
-
-    def produce_many(self, records):
-        try:
-            self.producer.produce_many(self._track(records), timeout=self._remaining())
-        except Exception as failure:
-            if self.failure is None:
-                self.failure = failure
-            raise
-
-    def wait(self):
-        if self.failure is not None:
-            raise self.failure
-        if not self.sent:
-            return
-        outstanding = self.producer.flush(self._remaining())
-        if self.failure is not None:
-            raise self.failure
-        if outstanding or self.pending:
-            raise TimeoutError("Kafka batch still has unconfirmed output")
 
 
 class KafkaAvroBackend(MessageBusBackend):
@@ -102,7 +39,7 @@ class KafkaAvroBackend(MessageBusBackend):
         self.consumer = None
         self.producer = None
         self.offset_watchdog = None
-        self._batch_delivery: ContextVar[BatchDelivery | None] = ContextVar(
+        self._batch_delivery: ContextVar[DeliveryScope | None] = ContextVar(
             "batch_delivery", default=None
         )
 
@@ -225,13 +162,16 @@ class KafkaAvroBackend(MessageBusBackend):
     @metrics.call_counter("eventsourcing_helpers.messagebus.kafka.handle_batch.count")
     @metrics.timed("eventsourcing_helpers.messagebus.kafka.handle_batch.time")
     def _handle_batch(self, handler: Callable, messages: list[Message], delivery_timeout: float):
-        delivery = (
-            BatchDelivery(self.producer, delivery_timeout) if self.producer is not None else None
+        scope = (
+            self.producer.delivery_scope(delivery_timeout)
+            if self.producer is not None
+            else nullcontext()
         )
-        token = self._batch_delivery.set(delivery)
+        token = None
         try:
-            handler(list(messages))
-            if delivery is not None:
-                delivery.wait()
+            with scope as delivery:
+                token = self._batch_delivery.set(delivery)
+                handler(messages)
         finally:
-            self._batch_delivery.reset(token)
+            if token is not None:
+                self._batch_delivery.reset(token)

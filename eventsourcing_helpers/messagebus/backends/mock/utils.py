@@ -1,9 +1,11 @@
 import copy
 import time
+from collections import deque
 from contextvars import ContextVar
+from dataclasses import dataclass, field
 from functools import partial
 from itertools import islice
-from typing import Optional, Union
+from typing import Iterable, Optional, Union
 from unittest.mock import MagicMock
 
 from eventsourcing_helpers.messagebus.backends import MessageBusBackend
@@ -11,6 +13,29 @@ from eventsourcing_helpers.messagebus.backends import MessageBusBackend
 from confluent_kafka_helpers.message import Message
 
 _in_batch = ContextVar("mock_batch", default=False)
+
+
+@dataclass
+class MockConsumer:
+    messages: deque[Message] = field(default_factory=deque)
+    _next_offsets: dict[tuple[str | None, int], int] = field(
+        default_factory=dict, init=False, repr=False
+    )
+
+    def get_messages(self) -> deque[Message]:
+        return self.messages
+
+    def _append_message(self, key, value, topic, headers, partition: int) -> None:
+        offset = self._next_offsets.get((topic, partition), 0)
+        self.messages.append(create_message(key, value, topic, headers, partition, offset))
+        self._next_offsets[topic, partition] = offset + 1
+
+    def assert_one_message_added_with(
+        self, message_class: str, data: dict, headers: dict = None
+    ) -> None:
+        assert len(self.messages) == 1
+        assert {"class": message_class, "data": data} == self.messages[0].value
+        assert (headers or {}) == self.messages[0]._meta.headers
 
 
 class MockBatchConsumer:
@@ -46,19 +71,26 @@ class MockBatchConsumer:
             time.sleep(self.timeout)
         raise StopIteration
 
-    def commit_batch(self, messages):
-        raw_ids = {id(message._raw) for message in messages}
-        committed = max(
-            (
-                index
-                for index, message in enumerate(self.messages, 1)
-                if id(message._raw) in raw_ids
-            ),
-            default=0,
-        )
-        for _ in range(committed):
-            self.messages.popleft()
-            self.position -= 1
+    def commit_batch(self, messages: Iterable[Message]) -> None:
+        offsets: dict[tuple[str | None, int], int] = {}
+        for message in messages:
+            meta = message._meta
+            partition = (meta.topic, meta.partition)
+            offsets[partition] = max(offsets.get(partition, 0), meta.offset + 1)
+        if not offsets:
+            return
+
+        remaining: deque[Message] = deque()
+        position = self.position
+        for index, message in enumerate(self.messages):
+            meta = message._meta
+            if meta.offset >= offsets.get((meta.topic, meta.partition), 0):
+                remaining.append(message)
+            elif index < self.position:
+                position -= 1
+        self.messages.clear()
+        self.messages.extend(remaining)
+        self.position = position
 
 
 class MockBatchBackend(MessageBusBackend):
@@ -108,7 +140,12 @@ def apply_source_headers(kwargs):
 
 
 def create_message(
-    key: str, value: dict, topic: Optional[str], headers: Optional[Union[dict, list]]
+    key: Optional[str],
+    value: dict,
+    topic: Optional[str],
+    headers: Optional[Union[dict, list]],
+    partition: int = 0,
+    offset: int = 0,
 ) -> Message:
     if isinstance(headers, dict):
         headers = list(headers.items())
@@ -118,6 +155,8 @@ def create_message(
             "key.return_value": key,
             "value.return_value": copy.deepcopy(value),
             "topic.return_value": topic,
+            "partition.return_value": partition,
+            "offset.return_value": offset,
             "headers.return_value": headers,
             "timestamp.return_value": (0, time.time()),
         }

@@ -15,6 +15,8 @@ from confluent_kafka_helpers.producer import AvroProducer
 
 class Producer:
     produce_many = AvroProducer.produce_many
+    delivery_scope = AvroProducer.delivery_scope
+    _enqueue = AvroProducer._enqueue
 
     def __init__(self, sequence):
         self.sequence = sequence
@@ -23,7 +25,7 @@ class Producer:
         self.error = None
         self.flush_result = 0
         self.complete_at_flush = True
-        self.delivery_callback = Mock()
+        self._delivery_callback = Mock()
 
     def __len__(self):
         return len(self.callbacks)
@@ -99,7 +101,7 @@ def test_delivery_from_early_poll_and_final_barrier_precede_ack(setup_batch):
         ("commit", [seen]),
     ]
     per_record_callback.assert_called_once_with(None, "delivered")
-    assert producer.delivery_callback.call_count == 2
+    assert producer._delivery_callback.call_count == 2
 
 
 @pytest.mark.parametrize(
@@ -123,7 +125,7 @@ def test_batch_does_not_ack_on_failure(setup_batch, failure, expected):
     if failure in {"delivery", "early delivery"}:
         producer.error = "delivery rejected"
     elif failure == "configured callback":
-        producer.delivery_callback.side_effect = ValueError("configured callback failed")
+        producer._delivery_callback.side_effect = ValueError("configured callback failed")
     elif failure == "per-record callback":
         callback = Mock(side_effect=ValueError("per-record callback failed"))
     elif failure == "outstanding":
@@ -226,4 +228,34 @@ def test_mock_batches_preserve_dto_metadata_and_batch_order(backend):
     assert [
         message["headers"]["origin_action_type"] for message in bus.backend.producer.messages
     ] == ["0", "0", "1", "1", "2", "2"]
+    assert not bus.backend.consumer.messages
+
+
+@pytest.mark.parametrize("backend", ["mock", "mock_compat"])
+def test_mock_commit_only_acknowledges_offsets_in_the_committed_partition(backend):
+    module = "backend" if backend == "mock" else "backend_compat"
+    bus = MessageBus(
+        {
+            "backend": f"eventsourcing_helpers.messagebus.backends.mock.{module}.MockBackend",
+            "backend_config": {},
+        }
+    )
+    for number, partition in enumerate([0, 1, 0, 1]):
+        data = {"id": number}
+        if backend == "mock":
+            value = {"class": "Example", "data": data}
+            bus.backend.consumer.add_message(str(number), value, "commands", partition=partition)
+        else:
+            bus.backend.consumer.add_message("Example", data, topic="commands", partition=partition)
+
+    consumer_factory = bus.get_batch_consumer(batch_size=3)
+    with consumer_factory() as consumer:
+        batch = next(consumer)
+        assert [(m._meta.partition, m._meta.offset) for m in batch] == [(0, 0), (1, 0), (0, 1)]
+        consumer.commit_batch([batch[2]])
+        assert [m.value["data"]["id"] for m in next(consumer)] == [3]
+    with consumer_factory() as consumer:
+        replayed = next(consumer)
+        assert [m.value["data"]["id"] for m in replayed] == [1, 3]
+        consumer.commit_batch(replayed)
     assert not bus.backend.consumer.messages

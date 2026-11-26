@@ -2,8 +2,8 @@
 
 ## Opt in to Kafka batches
 
-The batch API is available in `eventsourcing-helpers==2.5.0rc2`. It requires
-`confluent-kafka-helpers>=1.8.0rc1`. Choose either the single-message API or the
+The batch API is available in `eventsourcing-helpers==2.5.0rc3`. It requires
+`confluent-kafka-helpers>=1.8.0rc2`. Choose either the single-message API or the
 batch API for each worker. For batch workers, set both `enable.auto.commit`
 and `enable.auto.offset.store` to false in the Kafka consumer configuration.
 

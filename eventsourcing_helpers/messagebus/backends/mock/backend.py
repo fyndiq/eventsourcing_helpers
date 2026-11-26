@@ -9,12 +9,10 @@ import structlog
 from eventsourcing_helpers.message import Message as MessageToKafka
 from eventsourcing_helpers.messagebus.backends.mock.utils import (
     MockBatchBackend,
+    MockConsumer,
     apply_source_headers,
-    create_message,
 )
 from eventsourcing_helpers.serializers import to_message_from_dto
-
-from confluent_kafka_helpers.message import Message as MessageFromKafka
 
 logger = structlog.get_logger(__name__)
 
@@ -30,35 +28,21 @@ else:
     SERIALIZABLE_DTOS += (PydanticMixin,)
 
 
-@dataclass
-class Consumer:
-    messages: Deque[MessageFromKafka] = field(default_factory=deque)
-
+class Consumer(MockConsumer):
     def add_message(
         self,
         key: str,
         value: dict,
         topic: Optional[str] = None,
         headers: Optional[dict] = None,
+        *,
+        partition: int = 0,
     ) -> None:
-        message = create_message(key=key, value=value, topic=topic, headers=headers)
-        self.messages.append(message)
+        self._append_message(key, value, topic, headers, partition)
 
     def add_messages(self, messages: list) -> None:
         for message in messages:
             self.add_message(**message)
-
-    def get_messages(self) -> Deque[MessageFromKafka]:
-        return self.messages
-
-    def assert_one_message_added_with(
-        self, message_class: str, data: dict, headers: dict = None
-    ) -> None:
-        if headers is None:
-            headers = {}
-        assert len(self.messages) == 1
-        assert {"class": message_class, "data": data} == self.messages[0].value
-        assert headers == self.messages[0]._meta.headers
 
 
 @dataclass

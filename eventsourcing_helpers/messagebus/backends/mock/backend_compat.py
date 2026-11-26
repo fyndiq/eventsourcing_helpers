@@ -1,15 +1,16 @@
-import copy
-import time
 from collections import deque
 from dataclasses import dataclass, field
 from typing import Callable, Deque, List, Union
-from unittest.mock import MagicMock
 
 import structlog
 
 from eventsourcing_helpers.messagebus.backends.mock.utils import (
     MockBatchBackend,
+    MockConsumer,
     apply_source_headers,
+)
+from eventsourcing_helpers.messagebus.backends.mock.utils import (
+    create_message as create_kafka_message,
 )
 
 from confluent_kafka_helpers.message import Message
@@ -18,37 +19,22 @@ logger = structlog.get_logger(__name__)
 
 
 def create_message(message_class: str, data: dict, headers: Union[None, dict]) -> Message:
-    kafka_message = MagicMock()
-    kafka_message.configure_mock(
-        **{
-            "value.return_value": {"class": message_class, "data": copy.deepcopy(data)},
-            "timestamp.return_value": (0, time.time()),
-            "headers.return_value": list(headers.items()) if isinstance(headers, dict) else headers,
-        }
-    )
-    message = Message(kafka_message=kafka_message)
-    return message
+    return create_kafka_message(None, {"class": message_class, "data": data}, None, headers)
 
 
-@dataclass
-class Consumer:
-    messages: Deque[Message] = field(default_factory=deque)
-
-    def add_message(self, message_class: str, data: dict, headers: dict = None) -> None:
-        message = create_message(message_class=message_class, data=data, headers=headers)
-        self.messages.append(message)
-
-    def get_messages(self) -> Deque[Message]:
-        return self.messages
-
-    def assert_one_message_added_with(
-        self, message_class: str, data: dict, headers: dict = None
+class Consumer(MockConsumer):
+    def add_message(
+        self,
+        message_class: str,
+        data: dict,
+        headers: dict = None,
+        *,
+        topic: str | None = None,
+        partition: int = 0,
     ) -> None:
-        if headers is None:
-            headers = {}
-        assert len(self.messages) == 1
-        assert {"class": message_class, "data": data} == self.messages[0].value
-        assert headers == self.messages[0]._meta.headers
+        self._append_message(
+            None, {"class": message_class, "data": data}, topic, headers, partition
+        )
 
 
 @dataclass
