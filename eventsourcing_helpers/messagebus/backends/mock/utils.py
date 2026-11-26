@@ -8,7 +8,6 @@ from unittest.mock import MagicMock
 
 from eventsourcing_helpers.messagebus.backends import MessageBusBackend
 
-from confluent_kafka_helpers import is_shutdown_requested
 from confluent_kafka_helpers.message import Message
 
 _in_batch = ContextVar("mock_batch", default=False)
@@ -35,6 +34,8 @@ class MockBatchConsumer:
         return self
 
     def __next__(self):
+        from confluent_kafka_helpers import is_shutdown_requested
+
         while not is_shutdown_requested():
             batch = list(islice(self.messages, self.position, self.position + self.batch_size))
             if batch:
