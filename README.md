@@ -69,8 +69,8 @@ can only replay the input message.
 `consume_batches(handler, batch_size=100, timeout=0.1, delivery_timeout=30.0)` is
 available on `KafkaAvroBackend` and `MessageBus`. It uses the separate
 [`AvroBatchConsumer`](https://github.com/fyndiq/confluent_kafka_helpers/pull/110).
-This branch temporarily pins that library to its exact PR commit; replace the Git
-pin with a published release before merging.
+The batch APIs are available in the pinned `confluent-kafka-helpers==1.8.0a4`
+alpha release.
 
 ```python
 def handle_batch(messages):
