@@ -75,6 +75,9 @@ publish-url = "https://europe-north1-python.pkg.dev/fyndiq/qlty/"
 explicit = true
 exclude-newer = false
 
+[tool.uv.sources]
+confluent-kafka-helpers = { git = "https://github.com/fyndiq/confluent_kafka_helpers.git", rev = "7331d4b2523cc796079d1e0f43899b5531f5c758" }
+
 [tool.black]
 line-length = 100
 
