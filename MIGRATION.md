@@ -2,8 +2,8 @@
 
 ## Opt in to Kafka batches
 
-The batch API is available in `eventsourcing-helpers==2.5.0rc4`. It requires
-`confluent-kafka-helpers>=1.8.0rc3`. Choose either the single-message API or the
+The batch API uses the Kafka helper release specified in the package dependencies.
+Choose either the single-message API or the
 batch API for each worker. For batch workers, set both `enable.auto.commit`
 and `enable.auto.offset.store` to false in the Kafka consumer configuration.
 
@@ -61,19 +61,23 @@ assert bus.backend.producer.messages[0]["headers"]["origin_action_type"] == "pau
 On Kafka, `source` supplies the propagated business headers and trace context
 for its output. Explicit business headers take precedence. When calling an
 existing per-message handler, scope its ordinary `produce()` calls to that
-input with `message_context(message)`. Omitting `source` or passing
+input with `message.process()`. Omitting `source` or passing
 `source=None` uses the active context. Outside a per-message scope, output
 uses the batch span and inherits no input record's business headers.
 
 ```python
-from confluent_kafka_helpers.context import message_context
-
-
 def handle_batch(messages):
     for message in messages:
-        with message_context(message):
+        with message.process():
             existing_handler(message)
 ```
+
+The delivery timeout starts before the handler runs. It bounds producer queue waits
+and confirmation, but cannot interrupt a database call. Join workers and propagate
+their exceptions before returning. All output on this producer is tracked, so do not
+share it with unrelated work during the batch. Keep processing within Kafka's
+`max.poll.interval.ms`. Outside a managed batch, `produce_many(records, timeout=...)`
+sets the queue-wait budget.
 
 ### Manage offsets directly
 

@@ -97,9 +97,9 @@ class KafkaAvroBackend(MessageBusBackend):
                 self.producer.poll(timeout=0.5)
         self.producer.finish_producing(flush=self.flush)
 
-    def produce_many(self, records) -> None:
+    def produce_many(self, records, *, timeout=30.0) -> None:
         assert self.producer is not None, "Producer is not configured"
-        self.producer.produce_many(records)
+        self.producer.produce_many(records, timeout=timeout)
         self.producer.finish_producing(flush=self.flush)
 
     def get_consumer(self) -> AvroConsumer:

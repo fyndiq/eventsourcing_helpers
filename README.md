@@ -45,7 +45,7 @@ in seconds.
 
 Publish with `MessageBus.produce_many(records)` and set each record's `source` to
 the input that caused it. This gives each output its own source headers and
-trace context. Use `message_context(message)` when calling existing handlers
+trace context. Use `message.process()` when calling existing handlers
 that publish without an explicit source.
 
 The managed Kafka loop waits for output delivery before committing input

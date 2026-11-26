@@ -57,9 +57,9 @@ class MessageBus:
         """Return a batch consumer factory for callers managing offsets directly."""
         return self.backend.get_batch_consumer(batch_size=batch_size, timeout=timeout)
 
-    def produce_many(self, records):
+    def produce_many(self, records, *, timeout=30.0):
         """Publish a collection of records in order."""
-        self.backend.produce_many(records)
+        self.backend.produce_many(records, timeout=timeout)
 
     def consume(self, handler: Callable):
         """

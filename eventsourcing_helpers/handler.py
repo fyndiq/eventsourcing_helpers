@@ -2,7 +2,6 @@ from typing import Callable, Iterable
 
 from eventsourcing_helpers.serializers import from_message_to_dto
 
-from confluent_kafka_helpers.context import message_context
 from confluent_kafka_helpers.message import Message
 
 
@@ -18,5 +17,5 @@ class Handler:
 
     def handle_batch(self, messages: Iterable[Message]) -> None:
         for message in messages:
-            with message_context(message):
+            with message.process():
                 self.handle(message)

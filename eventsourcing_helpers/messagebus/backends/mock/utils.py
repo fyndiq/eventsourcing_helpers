@@ -12,7 +12,7 @@ from eventsourcing_helpers.messagebus.backends import MessageBusBackend
 
 from confluent_kafka_helpers import is_shutdown_requested
 from confluent_kafka_helpers.consumer import get_propagate_header_keys, validate_batch_options
-from confluent_kafka_helpers.context import get_propagated_headers, propagated_headers_context
+from confluent_kafka_helpers.context import get_propagated_headers, propagated_headers
 from confluent_kafka_helpers.message import Message
 from confluent_kafka_helpers.utils import validate_timeout
 
@@ -44,6 +44,12 @@ class MockConsumer:
 
 class MockBatchConsumer:
     def __init__(self, messages, config, batch_size, timeout):
+        for key in ("enable.auto.commit", "enable.auto.offset.store"):
+            if str(config.get(key, False)).lower() not in {"false", "0"}:
+                raise ValueError(f"Batch consumption requires {key}=false")
+        for key in ("poll_timeout", "non_blocking", "batch_max_size", "batch_max_wait"):
+            if key in config:
+                raise ValueError(f"Use batch_size and timeout; batch consumer rejects {key}")
         self.messages = messages
         self.batch_size = batch_size
         self.timeout = timeout
@@ -111,13 +117,14 @@ class MockBatchBackend(MessageBusBackend):
             for batch in consumer:
                 token = _in_batch.set(True)
                 try:
-                    with propagated_headers_context({}):
+                    with propagated_headers({}):
                         handler(batch)
                 finally:
                     _in_batch.reset(token)
                 consumer.commit_batch(batch)
 
-    def produce_many(self, records):
+    def produce_many(self, records, *, timeout=30.0):
+        validate_timeout(timeout)
         for record in records:
             self.produce(**record)
 

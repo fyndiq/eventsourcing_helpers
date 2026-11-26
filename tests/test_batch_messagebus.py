@@ -1,5 +1,4 @@
 from contextlib import nullcontext
-from contextvars import ContextVar
 from unittest.mock import Mock
 
 import pytest
@@ -9,7 +8,6 @@ from eventsourcing_helpers.handler import Handler
 from eventsourcing_helpers.messagebus import MessageBus
 from eventsourcing_helpers.messagebus.backends.kafka import KafkaAvroBackend
 
-from confluent_kafka_helpers.context import message_context
 from confluent_kafka_helpers.exceptions import KafkaDeliveryError
 from confluent_kafka_helpers.producer import AvroProducer
 
@@ -23,12 +21,12 @@ class Producer(AvroProducer):
         self.flush_result = 0
         self.complete_at_flush = True
         self._delivery_callback = Mock()
-        self._delivery = ContextVar("test_delivery", default=None)
+        self._active_delivery_scope = None
 
     def __len__(self):
         return len(self.callbacks)
 
-    def _produce(self, value, *_args, on_delivery=None, **kwargs):
+    def _produce_once(self, value, *_args, on_delivery=None, **kwargs):
         if len(self.callbacks) >= self.capacity:
             self.sequence.append("full")
             raise BufferError
@@ -258,7 +256,7 @@ def test_mock_batches_preserve_dto_metadata_and_batch_order(backend):
             for command, source in zip(commands, messages):
                 assert command.Meta.headers["origin_action_type"] == str(command.id)
                 bus.produce_many([{"value": {"id": command.id}, "source": source}])
-                with message_context(source):
+                with source.process():
                     bus.produce({"fallback": command.id})
 
     for number in range(3):
