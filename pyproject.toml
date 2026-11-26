@@ -12,7 +12,7 @@ license = {text = "MIT"}
 dependencies = [
     "structlog>=17.2.0",
     "jsonpickle>=0.9.6",
-    "confluent-kafka-helpers>=1.0.0",
+    "confluent-kafka-helpers==1.8.0rc1",
 ]
 
 [project.urls]
@@ -74,9 +74,6 @@ url = "https://oauth2accesstoken@europe-north1-python.pkg.dev/fyndiq/qlty/simple
 publish-url = "https://europe-north1-python.pkg.dev/fyndiq/qlty/"
 explicit = true
 exclude-newer = false
-
-[tool.uv.sources]
-confluent-kafka-helpers = { git = "https://github.com/fyndiq/confluent_kafka_helpers.git", rev = "7331d4b2523cc796079d1e0f43899b5531f5c758" }
 
 [tool.black]
 line-length = 100

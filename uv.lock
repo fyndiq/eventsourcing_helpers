@@ -325,13 +325,17 @@ avro = [
 
 [[package]]
 name = "confluent-kafka-helpers"
-version = "1.7.2"
-source = { git = "https://github.com/fyndiq/confluent_kafka_helpers.git?rev=7331d4b2523cc796079d1e0f43899b5531f5c758#7331d4b2523cc796079d1e0f43899b5531f5c758" }
+version = "1.8.0rc1"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "confluent-kafka", extra = ["avro"] },
     { name = "opentelemetry-api" },
     { name = "opentelemetry-semantic-conventions" },
     { name = "structlog" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/01/3e/8cadad4f0f2d01c2fe3003ce455420f86312cce2536014a12d04e8a631f8/confluent_kafka_helpers-1.8.0rc1.tar.gz", hash = "sha256:0c6144aa62d4e9898cece9d36b2f5cc8110ef211fdcce4c1cbef860c7ebb0d97", size = 32809, upload-time = "2026-11-26T10:50:43.443Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ab/bd/9cc101bb757a617686e42634ad4b2821f99dbae8b3be5ed13183d9e2b113/confluent_kafka_helpers-1.8.0rc1-py3-none-any.whl", hash = "sha256:6edf10e8a5d69e732aff4e0c3f05d9364875331f74c35c0aa90a409e0862ee03", size = 40283, upload-time = "2026-11-26T10:50:42.501Z" },
 ]
 
 [[package]]
@@ -531,7 +535,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "cnamedtuple", marker = "extra == 'cnamedtuple'", specifier = ">=0.1.6" },
-    { name = "confluent-kafka-helpers", git = "https://github.com/fyndiq/confluent_kafka_helpers.git?rev=7331d4b2523cc796079d1e0f43899b5531f5c758" },
+    { name = "confluent-kafka-helpers", specifier = "==1.8.0rc1" },
     { name = "hiredis", marker = "extra == 'redis'", specifier = ">=0.2.0" },
     { name = "jsonpickle", specifier = ">=0.9.6" },
     { name = "pydantic", marker = "extra == 'pydantic'", specifier = ">=2" },
