@@ -7,7 +7,10 @@ from unittest.mock import MagicMock
 
 import structlog
 
-from eventsourcing_helpers.messagebus.backends import MessageBusBackend
+from eventsourcing_helpers.messagebus.backends.mock.utils import (
+    MockBatchBackend,
+    apply_source_headers,
+)
 
 from confluent_kafka_helpers.message import Message
 
@@ -20,7 +23,7 @@ def create_message(message_class: str, data: dict, headers: Union[None, dict]) -
         **{
             "value.return_value": {"class": message_class, "data": copy.deepcopy(data)},
             "timestamp.return_value": (0, time.time()),
-            "headers.return_value": headers,
+            "headers.return_value": list(headers.items()) if isinstance(headers, dict) else headers,
         }
     )
     message = Message(kafka_message=kafka_message)
@@ -77,12 +80,14 @@ class Producer:
         assert len(self.messages) == 1
 
 
-class MockBackend(MessageBusBackend):
+class MockBackend(MockBatchBackend):
     def __init__(self, config: dict) -> None:
+        self.config = config
         self.consumer = Consumer()
         self.producer = Producer()
 
     def produce(self, value: dict, key: str = None, **kwargs) -> None:
+        apply_source_headers(kwargs)
         self.producer.add_message(dict(value=value, key=key, **kwargs))
 
     def consume(self, handler: Callable) -> None:

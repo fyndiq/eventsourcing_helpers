@@ -53,8 +53,22 @@ class MessageBus:
         """
         return self.backend.get_consumer()
 
+    def get_batch_consumer(self, batch_size=100, timeout=0.1):
+        """Return a batch consumer factory for callers managing offsets directly."""
+        return self.backend.get_batch_consumer(batch_size=batch_size, timeout=timeout)
+
+    def produce_many(self, records):
+        """Publish a collection of records in order."""
+        self.backend.produce_many(records)
+
     def consume(self, handler: Callable):
         """
         Consume and handle messages indefinitely.
         """
         self.backend.consume(handler)
+
+    def consume_batch(self, handler: Callable, batch_size=100, timeout=0.1, delivery_timeout=30.0):
+        """Handle ordered batches and acknowledge after successful output delivery."""
+        self.backend.consume_batch(
+            handler, batch_size=batch_size, timeout=timeout, delivery_timeout=delivery_timeout
+        )

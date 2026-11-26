@@ -13,3 +13,11 @@ class Consumer:
 
     def consume(self) -> None:
         self._messagebus.consume(handler=self._handler.handle)
+
+    def consume_batch(self, batch_size=100, timeout=0.1, delivery_timeout=30.0) -> None:
+        self._messagebus.consume_batch(
+            handler=self._handler.handle_batch,
+            batch_size=batch_size,
+            timeout=timeout,
+            delivery_timeout=delivery_timeout,
+        )

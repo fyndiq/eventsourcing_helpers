@@ -7,8 +7,11 @@ from typing import Callable, Deque, Optional
 import structlog
 
 from eventsourcing_helpers.message import Message as MessageToKafka
-from eventsourcing_helpers.messagebus.backends import MessageBusBackend
-from eventsourcing_helpers.messagebus.backends.mock.utils import create_message
+from eventsourcing_helpers.messagebus.backends.mock.utils import (
+    MockBatchBackend,
+    apply_source_headers,
+    create_message,
+)
 from eventsourcing_helpers.serializers import to_message_from_dto
 
 from confluent_kafka_helpers.message import Message as MessageFromKafka
@@ -124,7 +127,7 @@ class Producer:
             raise AssertionError("Invalid message envelope", self.messages)
 
 
-class MockBackend(MessageBusBackend):
+class MockBackend(MockBatchBackend):
     def __init__(self, config: dict) -> None:
         self.consumer = Consumer()
         self.producer = Producer()
@@ -139,6 +142,7 @@ class MockBackend(MessageBusBackend):
     ) -> None:
         if isinstance(value, SERIALIZABLE_DTOS):
             value = value_serializer(value)
+        apply_source_headers(kwargs)
         self.producer.add_message(dict(value=value, key=key, **kwargs))
 
     def consume(self, handler: Callable) -> None:
