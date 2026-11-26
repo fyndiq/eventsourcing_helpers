@@ -2,16 +2,16 @@
 
 ## Opt in to Kafka batches
 
-The batch API is available in `eventsourcing-helpers==2.5.0rc3`. It requires
-`confluent-kafka-helpers>=1.8.0rc2`. Choose either the single-message API or the
+The batch API is available in `eventsourcing-helpers==2.5.0rc4`. It requires
+`confluent-kafka-helpers>=1.8.0rc3`. Choose either the single-message API or the
 batch API for each worker. For batch workers, set both `enable.auto.commit`
 and `enable.auto.offset.store` to false in the Kafka consumer configuration.
 
-Implement `Handler.handle_batch(messages)` and call
-`Consumer.consume_batch(batch_size=100, timeout=0.1, delivery_timeout=30.0)`
-to use the existing handler and DTO configuration. The base handler raises
-`NotImplementedError` for batches. Converted DTOs retain their input metadata.
-Or pass a callable directly to
+Call `Consumer.consume_batch(batch_size=100, timeout=0.1, delivery_timeout=30.0)`
+to run your existing handler. By default, `Handler.handle_batch(messages)`
+calls `handle(message)` in order with each input's own headers and trace
+context. Override it to process records together. Converted DTOs retain their
+input metadata. You can also pass a callable directly to
 `MessageBus.consume_batch(handler, batch_size=100, timeout=0.1, delivery_timeout=30.0)`.
 
 `batch_size` is a maximum of 1 to 1,000,000 records. The Kafka fetch can return
@@ -19,8 +19,10 @@ fewer records or none after `timeout` seconds. An empty fetch does not invoke
 the handler. `delivery_timeout` must be finite and positive and bounds the
 delivery wait. The managed loop commits input offsets after the handler
 returns and Kafka confirms delivery of its output, including calls to
-`produce()` made inside the handler. Handler and delivery errors leave the
-batch uncommitted. Outside the managed loop, `produce_many()` follows the
+`produce()` made inside the handler. Offsets advance once per successful
+batch, even when the handler processes one message at a time. Handler and
+delivery errors leave the batch uncommitted, so records already handled in
+that batch can replay. Outside the managed loop, `produce_many()` follows the
 producer's configured flush policy.
 
 This example uses the mock backend to publish an output for each input and

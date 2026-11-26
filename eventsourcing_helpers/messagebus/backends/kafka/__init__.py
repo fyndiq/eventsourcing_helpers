@@ -1,7 +1,5 @@
-import math
 import time
 from contextlib import nullcontext
-from contextvars import ContextVar
 from functools import partial
 from typing import Callable
 
@@ -20,7 +18,8 @@ from eventsourcing_helpers.serializers import to_message_from_dto
 
 from confluent_kafka_helpers.consumer import AvroConsumer
 from confluent_kafka_helpers.message import Message
-from confluent_kafka_helpers.producer import AvroProducer, DeliveryScope
+from confluent_kafka_helpers.producer import AvroProducer
+from confluent_kafka_helpers.utils import validate_timeout
 
 logger = structlog.get_logger(__name__)
 
@@ -39,9 +38,6 @@ class KafkaAvroBackend(MessageBusBackend):
         self.consumer = None
         self.producer = None
         self.offset_watchdog = None
-        self._batch_delivery: ContextVar[DeliveryScope | None] = ContextVar(
-            "batch_delivery", default=None
-        )
 
         producer_config = get_producer_config(config)
         consumer_config = get_consumer_config(config)
@@ -93,33 +89,18 @@ class KafkaAvroBackend(MessageBusBackend):
     def produce(self, value: dict, key: str = None, topic: str = None, **kwargs) -> None:
         assert self.producer is not None, "Producer is not configured"
 
-        if delivery := self._batch_delivery.get():
-            delivery.produce_many([dict(key=key, value=value, topic=topic, **kwargs)])
-            return
-
         while True:
             try:
                 self.producer.produce(key=key, value=value, topic=topic, **kwargs)
                 break
             except BufferError:
                 self.producer.poll(timeout=0.5)
-            continue
-
-        self.producer.poll(0)
-
-        if self.flush:
-            self.producer.flush()
+        self.producer.finish_producing(flush=self.flush)
 
     def produce_many(self, records) -> None:
         assert self.producer is not None, "Producer is not configured"
-        if delivery := self._batch_delivery.get():
-            delivery.produce_many(records)
-            return
-
         self.producer.produce_many(records)
-        self.producer.poll(0)
-        if self.flush:
-            self.producer.flush()
+        self.producer.finish_producing(flush=self.flush)
 
     def get_consumer(self) -> AvroConsumer:
         assert self.consumer is not None, "Consumer is not configured"
@@ -146,17 +127,15 @@ class KafkaAvroBackend(MessageBusBackend):
 
     def consume_batch(self, handler: Callable, batch_size=100, timeout=0.1, delivery_timeout=30.0):
         assert callable(handler), "You must pass a batch handler"
-        if not math.isfinite(delivery_timeout) or delivery_timeout <= 0:
-            raise ValueError("delivery_timeout must be finite and positive")
+        validate_timeout(delivery_timeout, name="delivery_timeout", allow_zero=False)
         Consumer = self.get_batch_consumer(batch_size, timeout)
         with Consumer() as consumer:
             for batch in consumer:
                 messages = [message for message in batch if self._shall_handle(message)]
                 if messages:
                     self._handle_batch(handler, messages, delivery_timeout)
-                    if self.offset_watchdog:
-                        for message in messages:
-                            self.offset_watchdog.set_seen(message)
+                    for message in messages:
+                        self._set_handled(message)
                 consumer.commit_batch(batch)
 
     @metrics.call_counter("eventsourcing_helpers.messagebus.kafka.handle_batch.count")
@@ -167,11 +146,5 @@ class KafkaAvroBackend(MessageBusBackend):
             if self.producer is not None
             else nullcontext()
         )
-        token = None
-        try:
-            with scope as delivery:
-                token = self._batch_delivery.set(delivery)
-                handler(messages)
-        finally:
-            if token is not None:
-                self._batch_delivery.reset(token)
+        with scope:
+            handler(messages)

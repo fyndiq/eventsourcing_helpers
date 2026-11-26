@@ -12,7 +12,7 @@ license = {text = "MIT"}
 dependencies = [
     "structlog>=17.2.0",
     "jsonpickle>=0.9.6",
-    "confluent-kafka-helpers>=1.8.0rc2",
+    "confluent-kafka-helpers>=1.8.0rc3",
 ]
 
 [project.urls]

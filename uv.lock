@@ -325,7 +325,7 @@ avro = [
 
 [[package]]
 name = "confluent-kafka-helpers"
-version = "1.8.0rc2"
+version = "1.8.0rc3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "confluent-kafka", extra = ["avro"] },
@@ -333,9 +333,9 @@ dependencies = [
     { name = "opentelemetry-semantic-conventions" },
     { name = "structlog" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/91/82/20869b1187785f3b033670afa7db5d516fbdc4200fe4fa4aa053ac76a6d6/confluent_kafka_helpers-1.8.0rc2.tar.gz", hash = "sha256:ec1efcbbb90dabb903396e0fcb9f6ff6f58308c36fd69a8f75afcfbb81943c33", size = 34243, upload-time = "2026-11-26T11:25:14.98Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/05/a4/564abbe9a8f052d25b7f24b89261df229f991fd97e09af75645b1d077a84/confluent_kafka_helpers-1.8.0rc3.tar.gz", hash = "sha256:82888298f2ada1c168795fd30bd08cea2c799893610589b366b18a1b1b7b867f", size = 35528, upload-time = "2026-11-26T12:54:03.469Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/81/ad/809ad44c6f3fd019d566ab6a519bb4d2ab0a60600b22e14ca9f401367572/confluent_kafka_helpers-1.8.0rc2-py3-none-any.whl", hash = "sha256:4fc575efa21c4b9a2e572f4df6fe8b6d1725546660f4115080a34d1890d8faa5", size = 41461, upload-time = "2026-11-26T11:25:14.14Z" },
+    { url = "https://files.pythonhosted.org/packages/3e/1e/eecac7807cc4362e3827dac79a5b5674cc0e645564adc54a14b3be2e3300/confluent_kafka_helpers-1.8.0rc3-py3-none-any.whl", hash = "sha256:138d9bb3f79c2bf434c7a9228cf3122d07fb8b7dab5c56eb9a18ed4a411be32a", size = 42788, upload-time = "2026-11-26T12:54:02.509Z" },
 ]
 
 [[package]]
@@ -535,7 +535,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "cnamedtuple", marker = "extra == 'cnamedtuple'", specifier = ">=0.1.6" },
-    { name = "confluent-kafka-helpers", specifier = ">=1.8.0rc2" },
+    { name = "confluent-kafka-helpers", specifier = ">=1.8.0rc3" },
     { name = "hiredis", marker = "extra == 'redis'", specifier = ">=0.2.0" },
     { name = "jsonpickle", specifier = ">=0.9.6" },
     { name = "pydantic", marker = "extra == 'pydantic'", specifier = ">=2" },

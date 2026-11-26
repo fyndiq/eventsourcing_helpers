@@ -1,4 +1,5 @@
 from contextlib import nullcontext
+from contextvars import ContextVar
 from unittest.mock import Mock
 
 import pytest
@@ -13,11 +14,7 @@ from confluent_kafka_helpers.exceptions import KafkaDeliveryError
 from confluent_kafka_helpers.producer import AvroProducer
 
 
-class Producer:
-    produce_many = AvroProducer.produce_many
-    delivery_scope = AvroProducer.delivery_scope
-    _enqueue = AvroProducer._enqueue
-
+class Producer(AvroProducer):
     def __init__(self, sequence):
         self.sequence = sequence
         self.callbacks = []
@@ -26,11 +23,12 @@ class Producer:
         self.flush_result = 0
         self.complete_at_flush = True
         self._delivery_callback = Mock()
+        self._delivery = ContextVar("test_delivery", default=None)
 
     def __len__(self):
         return len(self.callbacks)
 
-    def produce(self, value, *, on_delivery=None, **kwargs):
+    def _produce(self, value, *_args, on_delivery=None, **kwargs):
         if len(self.callbacks) >= self.capacity:
             self.sequence.append("full")
             raise BufferError
@@ -180,6 +178,55 @@ def test_commit_error_stops_batch_iteration(setup_batch):
     with pytest.raises(RuntimeError, match="commit failed"):
         bus.consume_batch(handler)
     handler.assert_called_once()
+
+
+def test_watchdog_update_failure_does_not_block_input_commit(setup_batch):
+    bus, _, watchdog, consumer, _, fetch = setup_batch
+    batch = [Mock(), Mock()]
+    fetch(batch)
+    watchdog.set_seen.side_effect = [RuntimeError("watchdog unavailable"), None]
+    bus.consume_batch(lambda _: bus.produce("output"))
+    assert watchdog.set_seen.call_count == 2
+    consumer.commit_batch.assert_called_once_with(batch)
+
+
+def test_default_batch_handler_keeps_context_and_failed_batch_replays():
+    bus = MessageBus(
+        {
+            "backend": "eventsourcing_helpers.messagebus.backends.mock.backend.MockBackend",
+            "backend_config": {},
+        }
+    )
+
+    class SequentialHandler(Handler):
+        handlers = {"Example": Mock()}
+        fail = True
+
+        def handle(self, message):
+            index = message.value["data"]["id"]
+            if index == 1 and self.fail:
+                raise RuntimeError("handler failed")
+            bus.produce({"id": index})
+
+    for index in range(3):
+        bus.backend.consumer.add_message(
+            key=str(index),
+            value={"class": "Example", "data": {"id": index}},
+            headers={"origin_action_type": str(index)},
+        )
+
+    handler = SequentialHandler()
+    consumer = Consumer(bus, handler)
+    with pytest.raises(RuntimeError, match="handler failed"):
+        consumer.consume_batch()
+    assert len(bus.backend.consumer.messages) == 3
+    handler.fail = False
+    consumer.consume_batch()
+    assert [
+        (event["value"]["id"], event["headers"]["origin_action_type"])
+        for event in bus.backend.producer.messages
+    ] == [(0, "0"), (0, "0"), (1, "1"), (2, "2")]
+    assert not bus.backend.consumer.messages
 
 
 def test_bulk_flushing_outside_consumer_uses_config_once():
