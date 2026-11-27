@@ -70,7 +70,7 @@ class EventHandler(Handler):
         self.dispatch(message)
 
     def dispatch(self, message: Message) -> Any:
-        """Deserialize and call the registered handler, returning its result or None if unhandled."""
+        """Return the registered handler's result, or None for an unhandled event."""
         if not self._can_handle_command(message):
             return None
 
