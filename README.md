@@ -32,7 +32,33 @@ all introduced commit messages, builds distributions, and previews the release.
 Merges to `master` publish through the [Release workflow](docs/releases.md).
 Direct uploads through `just publish` are disabled.
 
-## Kafka offset commits
+## Kafka batch processing
+
+Choose one consumer mode per worker. Use
+`MessageBus.consume_batch(handler, batch_size=100, timeout=0.1, delivery_timeout=30.0)`
+with a callable that takes a list of messages, or use
+`Consumer.consume_batch(batch_size=100, timeout=0.1, delivery_timeout=30.0)`
+with an existing handler. By default, `Handler.handle_batch(messages)` calls
+`handle(message)` in order with each message's own headers and trace context.
+Override it for bulk processing. The batch size is a maximum and timeouts are
+in seconds.
+
+Publish with `MessageBus.produce_many(records)` and set each record's `source` to
+the input that caused it. This gives each output its own source headers and
+trace context. Use `message.process()` when calling existing handlers
+that publish without an explicit source.
+
+The managed Kafka loop waits for output delivery before committing input
+offsets for the batch. A failed batch can replay earlier records that already
+ran. Process records in the supplied order to preserve order within each
+partition. Kafka provides no global ordering across partitions. Delivery is
+at least once, so applications own replay safety for business writes and
+emitted events.
+
+See the [migration guide](MIGRATION.md#opt-in-to-kafka-batches) for an example
+and the manual offset API.
+
+## Single-message Kafka offset commits
 
 The Kafka backend marks a message as consumed only after its handler returns. How depends on
 `enable.auto.commit` in the consumer config:
