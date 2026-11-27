@@ -16,7 +16,7 @@ from eventsourcing_helpers.messagebus.backends.kafka.config import (
 from eventsourcing_helpers.messagebus.backends.kafka.offset_watchdog import OffsetWatchdog
 from eventsourcing_helpers.serializers import to_message_from_dto
 
-from confluent_kafka_helpers.consumer import AvroConsumer
+from confluent_kafka_helpers.consumer import AvroBatchConsumer, AvroConsumer, validate_batch_options
 from confluent_kafka_helpers.message import Message
 from confluent_kafka_helpers.producer import AvroProducer
 from confluent_kafka_helpers.utils import validate_timeout
@@ -107,8 +107,6 @@ class KafkaAvroBackend(MessageBusBackend):
         return self.consumer
 
     def get_batch_consumer(self, batch_size=100, timeout=0.1):
-        from confluent_kafka_helpers.consumer import AvroBatchConsumer, validate_batch_options
-
         validate_batch_options(batch_size, timeout)
         assert self._batch_consumer_config is not None, "Consumer is not configured"
         return partial(

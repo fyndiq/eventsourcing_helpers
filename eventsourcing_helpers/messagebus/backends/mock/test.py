@@ -33,7 +33,7 @@ def consume_messages(consumer, messagebus):
 
 
 @pytest.fixture
-def consume_message_batches(consumer, messagebus):
+def consume_batch(consumer, messagebus):
     """Add messages to the mocked messagebus consumer and consume them in batches."""
 
     def consume(messages, **batch_options):
