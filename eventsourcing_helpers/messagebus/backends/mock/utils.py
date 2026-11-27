@@ -1,7 +1,6 @@
 import copy
 import time
 from collections import deque
-from contextvars import ContextVar
 from dataclasses import dataclass, field
 from functools import partial
 from itertools import islice
@@ -15,8 +14,6 @@ from confluent_kafka_helpers.consumer import get_propagate_header_keys, validate
 from confluent_kafka_helpers.context import get_propagated_headers, propagated_headers
 from confluent_kafka_helpers.message import Message
 from confluent_kafka_helpers.utils import validate_timeout
-
-_in_batch = ContextVar("mock_batch", default=False)
 
 
 @dataclass
@@ -115,12 +112,8 @@ class MockBatchBackend(MessageBusBackend):
         consumer_factory = self.get_batch_consumer(batch_size, timeout)
         with consumer_factory() as consumer:
             for batch in consumer:
-                token = _in_batch.set(True)
-                try:
-                    with propagated_headers({}):
-                        handler(batch)
-                finally:
-                    _in_batch.reset(token)
+                with propagated_headers({}):
+                    handler(batch)
                 consumer.commit_batch(batch)
 
     def produce_many(self, records, *, timeout=30.0):
@@ -133,10 +126,8 @@ def apply_source_headers(kwargs):
     source = kwargs.pop("source", None)
     if source is not None:
         propagated_headers = source.propagated_headers
-    elif _in_batch.get():
-        propagated_headers = get_propagated_headers()
     else:
-        return
+        propagated_headers = get_propagated_headers()
     if propagated_headers:
         kwargs["headers"] = {**propagated_headers, **(kwargs.get("headers") or {})}
 

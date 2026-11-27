@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import nullcontext
 from unittest.mock import Mock
 
@@ -8,6 +9,7 @@ from eventsourcing_helpers.handler import Handler
 from eventsourcing_helpers.messagebus import MessageBus
 from eventsourcing_helpers.messagebus.backends.kafka import KafkaAvroBackend
 
+from confluent_kafka_helpers.context import get_propagated_headers, propagated_headers
 from confluent_kafka_helpers.exceptions import KafkaDeliveryError
 from confluent_kafka_helpers.producer import AvroProducer
 
@@ -226,6 +228,58 @@ def test_default_batch_handler_keeps_context_and_failed_batch_replays():
         for event in bus.backend.producer.messages
     ] == [(0, "0"), (0, "0"), (1, "1"), (2, "2")]
     assert not bus.backend.consumer.messages
+
+
+@pytest.mark.parametrize("threaded", [False, True])
+def test_mock_batch_publish_uses_processed_message_headers(threaded):
+    bus = MessageBus(
+        {
+            "backend": "eventsourcing_helpers.messagebus.backends.mock.backend.MockBackend",
+            "backend_config": {},
+        }
+    )
+    bus.backend.consumer.add_message(
+        key="input",
+        value={"class": "Example", "data": {"id": 1}},
+        headers={"origin_action_type": "input", "action_started_at": "source-start"},
+    )
+    restored_contexts = []
+
+    def handler(batch):
+        (message,) = batch
+        assert get_propagated_headers() == {}
+        with propagated_headers(
+            {"origin_action_type": "outer", "action_started_at": "outer-start"}
+        ):
+            with message.process():
+                assert get_propagated_headers() == {
+                    "origin_action_type": "input",
+                    "action_started_at": "source-start",
+                }
+                bus.produce({"id": "implicit"})
+                bus.produce({"id": "explicit"}, headers={"origin_action_type": "explicit"})
+            restored_contexts.append(get_propagated_headers())
+        assert get_propagated_headers() == {}
+
+    if threaded:
+        def handle_in_worker(batch):
+            with ThreadPoolExecutor(max_workers=1) as workers:
+                workers.submit(handler, batch).result()
+
+        bus.backend.consume_batch(handle_in_worker)
+    else:
+        bus.backend.consume_batch(handler)
+
+    assert restored_contexts == [
+        {"origin_action_type": "outer", "action_started_at": "outer-start"}
+    ]
+    assert [
+        message["headers"] for message in bus.backend.producer.messages
+    ] == [
+        {"origin_action_type": "input", "action_started_at": "source-start"},
+        {"origin_action_type": "explicit", "action_started_at": "source-start"},
+    ]
+    assert get_propagated_headers() == {}
 
 
 def test_bulk_flushing_outside_consumer_uses_config_once():
