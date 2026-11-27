@@ -22,6 +22,7 @@ class Producer(AvroProducer):
         self.complete_at_flush = True
         self._delivery_callback = Mock()
         self._active_delivery_scope = None
+        self._delivery_report_only_error = False
 
     def __len__(self):
         return len(self.callbacks)
