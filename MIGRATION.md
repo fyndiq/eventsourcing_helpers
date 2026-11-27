@@ -2,6 +2,9 @@
 
 ## Opt in to Kafka batches
 
+See the [v2 batch migration steps](docs/migration_guides/v2.md#opt-in-to-kafka-batch-processing)
+for configuration changes and migrating an existing handler or bulk worker.
+
 The batch API uses the Kafka helper release specified in the package dependencies.
 Choose either the single-message API or the
 batch API for each worker. For batch workers, set both `enable.auto.commit`
