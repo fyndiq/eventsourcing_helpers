@@ -1,3 +1,5 @@
+from typing import Any
+
 import structlog
 
 from eventsourcing_helpers import metrics
@@ -65,8 +67,12 @@ class EventHandler(Handler):
         Args:
             message: Consumed message from the bus.
         """
+        self.dispatch(message)
+
+    def dispatch(self, message: Message) -> Any:
+        """Deserialize and call the registered handler, returning its result or None if unhandled."""
         if not self._can_handle_command(message):
-            return
+            return None
 
         event_class = message.value["class"]
         logger.info("Handling event", event_class=event_class)
@@ -97,4 +103,4 @@ class EventHandler(Handler):
                     f"handler:{handler_name}",
                 ],
             )(handler)
-            handler_wrapper(event)
+            return handler_wrapper(event)

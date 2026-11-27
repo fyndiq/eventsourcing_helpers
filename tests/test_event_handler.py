@@ -72,6 +72,19 @@ class EventHandlerTests:
         can_handle = self.handler._can_handle_command(self.message)
         assert can_handle is False
 
+    def test_dispatch_returns_registered_handler_result(self):
+        result = [object()]
+        self.event_handler.return_value = result
+        assert self.handler.dispatch(self.message) is result
+        self.message_deserializer.assert_called_once_with(self.message, deserialize_class=None)
+        self.event_handler.assert_called_once_with(self.event)
+        assert self.handler.handle(self.message) is None
+
+    def test_dispatch_skips_unregistered_event_before_deserialization(self):
+        self.message.value["class"] = "Unknown"
+        assert self.handler.dispatch(self.message) is None
+        self.message_deserializer.assert_not_called()
+
     def test_can_handle_command_with_class_key(self):
         """
         Test that we can handle class keys in handlers dict.
